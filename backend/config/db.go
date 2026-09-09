@@ -45,7 +45,7 @@ func ConnectDatabases() {
 	myUser := getEnv("DB_MYSQL_USER", "root")
 	myPass := getEnv("DB_MYSQL_PASS", "stagingdev@6177")
 	myName := getEnv("DB_MYSQL_NAME", "selada_dev")
-	dsnMS := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", myUser, myPass, myHost, myPort, myName)
+	dsnMS := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&sql_mode=''", myUser, myPass, myHost, myPort, myName)
 
 	DBMysql, err = gorm.Open(mysql.Open(dsnMS), &gorm.Config{})
 	if err != nil {

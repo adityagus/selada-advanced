@@ -1,71 +1,77 @@
 <template>
-  <div class="login-wrapper">
-    <div class="login-decor-1"></div>
-    <div class="login-decor-2"></div>
+  <div class="login-flex">
 
-    <div class="login-card">
-      <div class="login-header">
-        <div class="login-logo">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+    <div class="banner">
+      <img src="/assets/img/banner.jpg" alt="" class="img-banner">
+      <!-- <NuxtImg src="/assets/img/logo-gadaimulia.png" alt="Logo Optimasi" style="width: 40px;" /> -->
+
+    </div>
+
+    <div class="login-content login-wrapper">
+      <div class="login-card bg-neutral-800">
+        <div class="login-header">
+          <div class="login-logo">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 17L12 22L22 17" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M2 12L12 17L22 12" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h1>SELADA <span>Advanced</span></h1>
+          <!-- <p class="text-muted">Masuk untuk mengakses sistem taksiran & rencana</p> -->
         </div>
-        <h1>SELADA <span>V2</span></h1>
-        <p class="text-muted">Masuk untuk mengakses sistem taksiran & rencana</p>
-      </div>
-
-      <!-- Error message banner -->
-      <div v-if="errorMessage" class="error-banner">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        {{ errorMessage }}
-      </div>
-
-      <form @submit.prevent="handleLogin" class="login-form">
-        <div class="form-group">
-          <label class="form-label" for="username">Username</label>
-          <input
-            id="username"
-            v-model="username"
-            @blur="validateUsername"
-            @input="validateUsername"
-            type="text"
-            placeholder="Ketik username Anda"
-            class="form-input"
-            :class="{ 'has-error': usernameError }"
-            :disabled="isLoading"
-          />
-          <span v-if="usernameError" class="error-text">{{ usernameError }}</span>
+  
+        <!-- Error message banner -->
+        <div v-if="errorMessage" class="error-banner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 9V13M12 17H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          {{ errorMessage }}
         </div>
-
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <div class="password-container">
+  
+        <form @submit.prevent="handleLogin" class="login-form">
+          <div class="form-group">
+            <label class="form-label" for="username">Username</label>
             <input
-              id="password"
-              v-model="password"
-              @blur="validatePassword"
-              @input="validatePassword"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="••••••••••••"
-              class="form-input password-field"
-              :class="{ 'has-error': passwordError }"
+              id="username"
+              v-model="username"
+              @blur="validateUsername"
+              @input="validateUsername"
+              type="text"
+              placeholder="Ketik username Anda"
+              class="form-input"
+              :class="{ 'has-error': usernameError }"
               :disabled="isLoading"
             />
-            <button type="button" @click="togglePassword" class="password-toggle" :disabled="isLoading" tabindex="-1">
-              <svg v-if="!showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" stroke-width="2"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" stroke-width="2"/></svg>
-              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </button>
+            <span v-if="usernameError" class="error-text">{{ usernameError }}</span>
           </div>
-          <span v-if="passwordError" class="error-text">{{ passwordError }}</span>
-        </div>
-
-        <button type="submit" class="btn btn-primary login-btn" :disabled="isLoading || !!usernameError || !!passwordError">
-          <span v-if="isLoading" class="spinner-small"></span>
-          <span v-else>Masuk Sekarang</span>
-        </button>
-      </form>
+  
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <div class="password-container">
+              <input
+                id="password"
+                v-model="password"
+                @blur="validatePassword"
+                @input="validatePassword"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="••••••••••••"
+                class="form-input password-field"
+                :class="{ 'has-error': passwordError }"
+                :disabled="isLoading"
+              />
+              <button type="button" @click="togglePassword" class="password-toggle" :disabled="isLoading" tabindex="-1">
+                <svg v-if="!showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" stroke-width="2"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" stroke-width="2"/></svg>
+                <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <span v-if="passwordError" class="error-text">{{ passwordError }}</span>
+          </div>
+  
+          <button type="submit" class="btn btn-primary login-btn" :disabled="isLoading || !!usernameError || !!passwordError">
+            <span v-if="isLoading" class="spinner-small"></span>
+            <span v-else>Masuk</span>
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -74,6 +80,7 @@
 import { ref } from 'vue'
 import { useCookie, navigateTo } from '#app'
 import { useApi } from '~/composables/useApi'
+import { parseJwt } from '~/utils/auth'
 
 // Do not wrap login page with main default sidebar layout
 definePageMeta({
@@ -90,6 +97,7 @@ const showPassword = ref(false)
 
 // Declare session cookies at setup hook level for proper Nuxt reactivity
 const token = useCookie('auth_token', { maxAge: 60 * 60 * 24 }) // 24 hours
+const tokenExpiry = useCookie('token_expiry', { maxAge: 60 * 60 * 24 })
 const name = useCookie('user_name')
 const branch = useCookie('user_branch')
 const fkUser = useCookie('fk_user')
@@ -135,7 +143,7 @@ const handleLogin = async () => {
   const isPasswordValid = validatePassword()
 
   if (!isUsernameValid || !isPasswordValid) {
-    errorMessage.value = 'Silakan perbaiki kesalahan input sebelum masuk.'
+    errorMessage.value = 'Username atau password anda salah.'
     return
   }
 
@@ -159,6 +167,20 @@ const handleLogin = async () => {
 
   if (data && data.token) {
     token.value = data.token
+    
+    // Store expiration time if exp or expiry claim exists in token
+    const payload = parseJwt(data.token)
+    if (payload) {
+      if (typeof payload.exp === 'number') {
+        tokenExpiry.value = String(payload.exp * 1000)
+      } else if (payload.expiry) {
+        const expMs = new Date(payload.expiry).getTime()
+        if (!isNaN(expMs)) {
+          tokenExpiry.value = String(expMs)
+        }
+      }
+    }
+
     name.value = data.nama
     branch.value = data.cabang
     fkUser.value = data.fk_user
@@ -168,6 +190,29 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
+.login-flex {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.banner {
+  width: 25%;
+  height: 100%;
+}
+
+.login-content {
+  width: 75%;
+}
+
+.img-banner {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 40% center;
+}
+
 .login-wrapper {
   display: flex;
   align-items: center;

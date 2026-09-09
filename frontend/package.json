@@ -11,9 +11,14 @@
   },
   "dependencies": {
     "@nuxt/image": "^2.1.0",
+    "@tanstack/vue-query": "^5.66.1",
+    "@vee-validate/zod": "^4.15.0",
+    "axios": "^1.7.9",
     "nuxt": "^4.4.8",
+    "vee-validate": "^4.15.0",
     "vue": "^3.5.38",
-    "vue-router": "^5.1.0"
+    "vue-router": "^5.1.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@nuxtjs/tailwindcss": "^6.14.0",

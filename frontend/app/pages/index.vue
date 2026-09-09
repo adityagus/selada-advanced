@@ -8,17 +8,20 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useCookie, navigateTo } from '#app'
+import { isTokenExpired, clearAuthCookies } from '~/utils/auth'
 
 definePageMeta({
   layout: false
 })
 
 const token = useCookie('auth_token')
+const tokenExpiry = useCookie('token_expiry')
 
 onMounted(async () => {
-  if (token.value) {
+  if (!isTokenExpired(token.value, tokenExpiry.value)) {
     await navigateTo('/dashboard')
   } else {
+    clearAuthCookies()
     await navigateTo('/login')
   }
 })

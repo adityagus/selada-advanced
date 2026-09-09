@@ -1,120 +1,213 @@
 <template>
-  <div class="report-container">
+  <div class="space-y-6 pb-12 font-sans">
     <!-- Header -->
-    <div class="report-header mb-8">
-      <h1>Report</h1>
-      <p class="text-muted">Laporan data aktivitas booking berdasarkan bulan dan tahun.</p>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-semibold text-slate-800 tracking-tight">Laporan Rekapitulasi & Performance</h1>
+        <p class="text-slate-500 text-sm">Monitoring realisasi aktivitas sales, tingkat konversi, dan rekapitulasi per periode bulan & tahun.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button @click="printReport" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2.5 rounded-xl text-sm transition-all border border-slate-300 cursor-pointer">
+          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Cetak Laporan
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary Performance Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Booking Periodik</span>
+        <div class="text-2xl font-bold text-slate-800 mt-1">{{ summaryMetrics.totalBookings }}</div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pencairan SBG (Deal)</span>
+        <div class="text-2xl font-bold text-emerald-600 mt-1">{{ summaryMetrics.totalSbg }}</div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Conversion Rate</span>
+        <div class="text-2xl font-bold text-amber-600 mt-1">{{ summaryMetrics.conversionRate }}%</div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Estimasi UP Terkumpul</span>
+        <div class="text-xl font-bold text-blue-600 mt-1">Rp {{ formatNum(summaryMetrics.totalEstimatedUp) }}</div>
+      </div>
     </div>
 
     <!-- Main Report Card -->
-    <div class="report-card card">
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-6">
       <!-- Tabs -->
-      <div class="tabs-bar mb-6">
+      <div class="flex gap-6 border-b border-slate-200">
         <button
           v-for="t in tabs"
           :key="t"
           @click="activeTab = t"
-          class="tab-btn"
-          :class="{ active: activeTab === t }"
+          class="pb-3 text-sm font-medium transition-all cursor-pointer relative"
+          :class="activeTab === t ? 'text-amber-600 border-b-2 border-amber-500 font-semibold' : 'text-slate-500 hover:text-slate-800'"
         >
           {{ t }}
         </button>
       </div>
 
-      <!-- Filter Controls -->
-      <div class="filter-controls mb-6">
-        <div class="filter-group">
-          <label class="form-label" for="month-select">Bulan</label>
-          <select id="month-select" v-model="inputMonth" class="form-select select-inline">
+      <!-- Filter Controls Bar -->
+      <div class="flex flex-col sm:flex-row items-end gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div class="w-full sm:w-48">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1" for="month-select">Bulan</label>
+          <select id="month-select" v-model="inputMonth" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-800">
             <option v-for="(m, idx) in months" :key="idx" :value="idx + 1">
               {{ m }}
             </option>
           </select>
         </div>
 
-        <div class="filter-group">
-          <label class="form-label" for="year-select">Tahun</label>
-          <select id="year-select" v-model="inputYear" class="form-select select-inline">
+        <div class="w-full sm:w-36">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1" for="year-select">Tahun</label>
+          <select id="year-select" v-model="inputYear" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-800">
             <option v-for="y in years" :key="y" :value="y">
               {{ y }}
             </option>
           </select>
         </div>
 
-        <button @click="applyFilter" class="btn btn-primary filter-btn">
-          🔎 Apply Filter
+        <div class="w-full sm:w-48">
+          <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status Lead</label>
+          <select v-model="inputStatus" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-800">
+            <option value="all">Semua Status</option>
+            <option value="Leads">Leads</option>
+            <option value="Prospect">Prospect</option>
+            <option value="Hot Prospect">Hot Prospect</option>
+            <option value="SBG">SBG (Deal)</option>
+            <option value="Batal">Batal</option>
+          </select>
+        </div>
+
+        <button @click="applyFilter" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl text-sm transition-all shadow-sm flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          Apply Filter
         </button>
       </div>
 
-      <!-- Tab Content: Booking List -->
+      <!-- TAB CONTENT 1: DAFTAR BOOKING -->
       <div v-if="activeTab === 'Daftar Booking'">
-        <div v-if="showTable" class="table-responsive">
-          <table class="report-table">
+        <div v-if="showTable" class="overflow-x-auto border border-slate-200/80 rounded-xl">
+          <table class="w-full text-left border-collapse text-sm">
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nama Customer</th>
-                <th>Tanggal Rencana / Booking</th>
-                <th>Status</th>
-                <th class="text-center">Action</th>
+              <tr class="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <th class="px-5 py-3.5">No</th>
+                <th class="px-5 py-3.5">Nama Customer</th>
+                <th class="px-5 py-3.5">Tanggal Rencana / Booking</th>
+                <th class="px-5 py-3.5">Sumber Leads</th>
+                <th class="px-5 py-3.5">Status Akhir</th>
+                <th class="px-5 py-3.5 text-center">Aksi Detail</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-slate-100 text-slate-700">
               <tr v-if="isLoading">
-                <td colspan="5" class="text-center py-6">
-                  <div class="spinner-small centered"></div>
+                <td colspan="6" class="text-center py-8">
+                  <div class="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                 </td>
               </tr>
               <tr v-else-if="filteredBookings.length === 0">
-                <td colspan="5" class="text-center py-6 text-muted">
+                <td colspan="6" class="text-center py-8 text-slate-400 font-medium">
                   Tidak ada data booking/rencana untuk periode yang dipilih.
                 </td>
               </tr>
-              <tr v-for="(row, idx) in filteredBookings" :key="idx">
-                <td>{{ idx + 1 }}</td>
-                <td><strong>{{ row.nama }}</strong></td>
-                <td>{{ formatDate(row.tgl_rencana) }}</td>
-                <td>
-                  <span class="badge" :class="getStatusBadgeClass(row.status)">
+              <tr v-for="(row, idx) in filteredBookings" :key="idx" class="hover:bg-amber-50/30 transition-all">
+                <td class="px-5 py-3.5 text-slate-500">{{ idx + 1 }}</td>
+                <td class="px-5 py-3.5 font-semibold text-slate-800">{{ row.nama }}</td>
+                <td class="px-5 py-3.5 text-slate-600 whitespace-nowrap">{{ formatDate(row.tgl_rencana) }}</td>
+                <td class="px-5 py-3.5">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
+                    {{ row.source || 'Walk In' }}
+                  </span>
+                </td>
+                <td class="px-5 py-3.5">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide" :class="getStatusBadgeClass(row.status)">
                     {{ row.status }}
                   </span>
                 </td>
-                <td>
-                  <div class="action-buttons-cell">
-                    <button @click="showDetail(row)" class="btn btn-secondary btn-small">Detail 👁️</button>
-                  </div>
+                <td class="px-5 py-3.5 text-center">
+                  <button @click="showDetail(row)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all inline-flex items-center gap-1 cursor-pointer">
+                    Detail <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  </button>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div v-else class="empty-state text-muted py-6">
+        <div v-else class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 font-medium">
           Silakan pilih periode Bulan & Tahun lalu klik "Apply Filter" untuk melihat data laporan.
         </div>
       </div>
 
-      <!-- Tab Content: Lainnya -->
-      <div v-else class="empty-state text-muted py-6">
-        Laporan statistik lainnya akan segera hadir.
+      <!-- TAB CONTENT 2: RINGKASAN PERFORMANCE -->
+      <div v-else class="space-y-6">
+        <h3 class="text-base font-semibold text-slate-800">Breakdown Performa Leads Berdasarkan Sumber</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sumber Leads Breakdown</h4>
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs font-medium text-slate-700">
+                <span>Walk In (Kunjungan Outlet)</span>
+                <span>{{ getSourceCount('Walk In') }} Leads</span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2">
+                <div class="bg-amber-500 h-2 rounded-full" :style="{ width: `${getSourcePct('Walk In')}%` }"></div>
+              </div>
+
+              <div class="flex justify-between text-xs font-medium text-slate-700 pt-1">
+                <span>Media Sosial (FB / IG / WA)</span>
+                <span>{{ getSourceCount('Media Sosial') }} Leads</span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2">
+                <div class="bg-blue-500 h-2 rounded-full" :style="{ width: `${getSourcePct('Media Sosial')}%` }"></div>
+              </div>
+
+              <div class="flex justify-between text-xs font-medium text-slate-700 pt-1">
+                <span>Referensi Pelanggan</span>
+                <span>{{ getSourceCount('Referensi') }} Leads</span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2">
+                <div class="bg-emerald-500 h-2 rounded-full" :style="{ width: `${getSourcePct('Referensi')}%` }"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status Konversi</h4>
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between text-slate-700"><span>Leads Terkumpul:</span> <strong class="font-semibold text-slate-800">{{ filteredBookings.length }}</strong></div>
+              <div class="flex justify-between text-slate-700"><span>Prospek Berminat:</span> <strong class="font-semibold text-blue-600">{{ getStatusCount('Prospect') }}</strong></div>
+              <div class="flex justify-between text-slate-700"><span>Hot Prospect:</span> <strong class="font-semibold text-rose-600">{{ getStatusCount('Hot Prospect') }}</strong></div>
+              <div class="flex justify-between text-slate-700"><span>SBG Deal (Pencairan):</span> <strong class="font-semibold text-emerald-600">{{ getStatusCount('SBG') }}</strong></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Detail Modal -->
-    <div v-if="selectedItem" class="modal-backdrop">
-      <div class="modal-content card detail-modal">
-        <div class="modal-header">
-          <h3>Detail Laporan Booking</h3>
-          <button @click="selectedItem = null" class="close-btn">✕</button>
+    <!-- DETAIL MODAL -->
+    <div v-if="selectedItem" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 class="font-semibold text-slate-800 text-base">Detail Laporan Booking</h3>
+          <button @click="selectedItem = null" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
         </div>
-        <div class="detail-grid">
-          <div class="detail-row"><span class="detail-lbl">Customer:</span> <span class="detail-val">{{ selectedItem.nama }}</span></div>
-          <div class="detail-row"><span class="detail-lbl">Status:</span> <span class="badge" :class="getStatusBadgeClass(selectedItem.status)">{{ selectedItem.status }}</span></div>
-          <div class="detail-row"><span class="detail-lbl">Source:</span> <span class="detail-val">{{ selectedItem.source || 'Walk In' }}</span></div>
-          <div class="detail-row"><span class="detail-lbl">Tanggal:</span> <span class="detail-val">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
-          <div class="detail-row"><span class="detail-lbl">Keterangan:</span> <span class="detail-val remarks">{{ selectedItem.keterangan || '-' }}</span></div>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between py-1 border-b border-slate-100"><span class="text-slate-500 font-medium">Customer:</span> <span class="font-semibold text-slate-800">{{ selectedItem.nama }}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-100"><span class="text-slate-500 font-medium">Status:</span> <span class="font-semibold" :class="getStatusBadgeClass(selectedItem.status)">{{ selectedItem.status }}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-100"><span class="text-slate-500 font-medium">Sumber:</span> <span class="text-slate-700">{{ selectedItem.source || 'Walk In' }}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-100"><span class="text-slate-500 font-medium">Tanggal:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
+          <div class="py-1">
+            <span class="text-slate-500 font-medium block mb-1">Catatan Keterangan:</span>
+            <p class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-xs leading-relaxed whitespace-pre-wrap">{{ selectedItem.keterangan || '-' }}</p>
+          </div>
         </div>
-        <div class="modal-actions">
-          <button @click="selectedItem = null" class="btn btn-secondary">Tutup</button>
+        <div class="flex justify-end pt-2">
+          <button @click="selectedItem = null" class="px-5 py-2 border border-slate-300 text-slate-600 rounded-xl text-sm font-medium">Tutup</button>
         </div>
       </div>
     </div>
@@ -122,10 +215,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useApi } from '~/composables/useApi'
 
-const tabs = ['Daftar Booking', 'Statistik Lainnya']
+const tabs = ['Daftar Booking', 'Ringkasan Performance']
 const activeTab = ref('Daftar Booking')
 const isLoading = ref(false)
 const selectedItem = ref<any>(null)
@@ -139,37 +232,62 @@ const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
 
 const inputMonth = ref(new Date().getMonth() + 1)
 const inputYear = ref(currentYear)
+const inputStatus = ref('all')
 
-const selectedMonth = ref<number | null>(null)
-const selectedYear = ref<number | null>(null)
-const showTable = ref(false)
-
+const showTable = ref(true)
+const allBookings = ref<any[]>([])
 const filteredBookings = ref<any[]>([])
 
+const summaryMetrics = reactive({
+  totalBookings: 0,
+  totalSbg: 0,
+  conversionRate: 0,
+  totalEstimatedUp: 0
+})
+
+onMounted(() => {
+  applyFilter()
+})
+
 const applyFilter = async () => {
-  selectedMonth.value = inputMonth.value
-  selectedYear.value = inputYear.value
   showTable.value = true
   isLoading.value = true
 
-  // Fetch from backend
   const { data } = await useApi('/inquiry/filter', {
-    params: { start: 0, length: 150 }
+    params: { start: 0, length: 300 }
   })
   isLoading.value = false
 
-  if (data && data.data) {
-    // Filter local records by chosen month and year
-    filteredBookings.value = data.data.filter((row: any) => {
+  const rawList = Array.isArray(data) ? data : (data?.data || [])
+
+  if (rawList) {
+    const list = rawList.map((row: any) => ({
+      ...row,
+      nama: row.nama || row.nm_customer || row.name || 'Customer',
+      status: row.nama_hslaktiv || row.status || 'Leads',
+      source: row.nm_ref_cust || row.id_sumbercust || row.source || 'Walk In',
+      keterangan: row.ket_rencana || row.ket_aktivitas || row.keterangan || '-'
+    }))
+    allBookings.value = list
+    filteredBookings.value = list.filter((row: any) => {
       if (!row.tgl_rencana) return false
       const d = new Date(row.tgl_rencana)
-      return (
-        d.getMonth() + 1 === selectedMonth.value &&
-        d.getFullYear() === selectedYear.value
-      )
+      const matchDate = (d.getMonth() + 1 === inputMonth.value && d.getFullYear() === inputYear.value)
+      const matchStatus = inputStatus.value === 'all' || (row.status || '').toLowerCase() === inputStatus.value.toLowerCase()
+      return matchDate && matchStatus
     })
+
+    // Calculate Summary Metrics
+    summaryMetrics.totalBookings = filteredBookings.value.length
+    summaryMetrics.totalSbg = filteredBookings.value.filter(r => (r.status || '').toLowerCase().includes('sbg')).length
+    summaryMetrics.conversionRate = summaryMetrics.totalBookings > 0 ? Math.round((summaryMetrics.totalSbg / summaryMetrics.totalBookings) * 100) : 0
+    summaryMetrics.totalEstimatedUp = summaryMetrics.totalSbg * 5500000 // Estimated average UP
   } else {
     filteredBookings.value = []
+    summaryMetrics.totalBookings = 0
+    summaryMetrics.totalSbg = 0
+    summaryMetrics.conversionRate = 0
+    summaryMetrics.totalEstimatedUp = 0
   }
 }
 
@@ -177,14 +295,33 @@ const showDetail = (item: any) => {
   selectedItem.value = item
 }
 
+const printReport = () => {
+  if (typeof window !== 'undefined') {
+    window.print()
+  }
+}
+
+const getSourceCount = (src: string) => {
+  return filteredBookings.value.filter(b => (b.source || 'Walk In').toLowerCase() === src.toLowerCase()).length
+}
+
+const getSourcePct = (src: string) => {
+  if (!filteredBookings.value.length) return 0
+  return Math.round((getSourceCount(src) / filteredBookings.value.length) * 100)
+}
+
+const getStatusCount = (st: string) => {
+  return filteredBookings.value.filter(b => (b.status || '').toLowerCase().includes(st.toLowerCase())).length
+}
+
 const getStatusBadgeClass = (status: string) => {
   switch (status) {
-    case 'Leads': return 'badge-warning'
-    case 'Prospect': return 'badge-info'
-    case 'Hot Prospect': return 'badge-danger'
-    case 'SBG': return 'badge-success'
-    case 'Batal': return 'badge-danger'
-    default: return 'badge-info'
+    case 'Leads': return 'bg-amber-100 text-amber-800 border border-amber-200'
+    case 'Prospect': return 'bg-blue-100 text-blue-800 border border-blue-200'
+    case 'Hot Prospect': return 'bg-rose-100 text-rose-800 border border-rose-200'
+    case 'SBG': return 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+    case 'Batal': return 'bg-slate-100 text-slate-600 border border-slate-200'
+    default: return 'bg-slate-100 text-slate-600'
   }
 }
 
@@ -193,217 +330,9 @@ const formatDate = (dateStr: string) => {
   const d = new Date(dateStr)
   return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
+
+const formatNum = (val: number) => {
+  if (!val && val !== 0) return '0'
+  return new Intl.NumberFormat('id-ID').format(val)
+}
 </script>
-
-<style scoped>
-.report-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.report-header h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-}
-
-.tabs-bar {
-  display: flex;
-  gap: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 2rem;
-}
-
-.tab-btn {
-  background: none;
-  border: none;
-  padding: 0.75rem 0.5rem;
-  color: var(--text-muted);
-  font-weight: 600;
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  transition: var(--transition-smooth);
-  font-family: var(--font-body);
-}
-
-.tab-btn:hover, .tab-btn.active {
-  color: var(--selada-400);
-}
-
-.tab-btn.active {
-  border-bottom-color: var(--selada-400);
-}
-
-.filter-controls {
-  display: flex;
-  gap: 1.5rem;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  background: #f9fafb;
-  padding: 1.25rem;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-}
-
-.select-inline {
-  min-width: 160px;
-}
-
-.filter-btn {
-  margin-bottom: 0.25rem;
-}
-
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
-  margin-top: 1.5rem;
-}
-
-.report-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.report-table th, .report-table td {
-  padding: 0.85rem 1.25rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.report-table th {
-  background: #f9fafb;
-  color: var(--text-muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-}
-
-.report-table tr:hover td {
-  background: #fffbeb;
-}
-
-.text-center { text-align: center; }
-.py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
-
-.empty-state {
-  text-align: center;
-  padding: 3rem 1.5rem;
-  border: 1px dashed var(--border-color);
-  border-radius: 12px;
-  background: #fafafa;
-}
-
-.action-buttons-cell {
-  display: flex;
-  justify-content: center;
-}
-
-.btn-small {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
-}
-
-/* Modal */
-.modal-backdrop {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  padding: 1rem;
-}
-
-.modal-content {
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: fadeIn 0.3s ease-out;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.modal-header h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-
-.close-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: #f3f4f6;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: var(--transition-smooth);
-  color: var(--text-muted);
-}
-
-.close-btn:hover {
-  background: #e5e7eb;
-  color: var(--text-main);
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.detail-modal {
-  max-width: 480px;
-}
-
-.detail-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 1rem;
-}
-
-.detail-row {
-  display: flex;
-}
-
-.detail-lbl {
-  width: 100px;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.detail-val {
-  flex-grow: 1;
-  color: var(--text-main);
-}
-
-.remarks {
-  white-space: pre-wrap;
-  background: #f9fafb;
-  padding: 0.75rem;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-}
-
-.centered {
-  margin: 0 auto;
-}
-</style>

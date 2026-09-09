@@ -79,8 +79,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useCookie, navigateTo } from '#app'
 import { useApi } from '~/composables/useApi'
+import { isTokenExpired, clearAuthCookies } from '~/utils/auth'
 
 const token = useCookie('auth_token')
+const tokenExpiry = useCookie('token_expiry')
 const userName = useCookie('user_name')
 const userBranch = useCookie('user_branch')
 
@@ -96,17 +98,21 @@ const toggleSidebar = () => {
 }
 
 onMounted(() => {
-  if (!token.value) {
+  if (isTokenExpired(token.value, tokenExpiry.value)) {
+    clearAuthCookies()
     navigateTo('/login')
   }
 })
 
 const handleLogout = async () => {
-  await useApi('/logout', { method: 'POST' })
-  token.value = null
-  userName.value = null
-  userBranch.value = null
-  navigateTo('/login')
+  try {
+    await useApi('/logout', { method: 'POST' })
+  } catch (e) {
+    // Ignore logout call failures
+  } finally {
+    clearAuthCookies()
+    navigateTo('/login')
+  }
 }
 </script>
 

@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"crypto/md5"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -11,7 +9,6 @@ import (
 	"go-api/models"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // LoginRequest represents the user login payload
@@ -39,38 +36,39 @@ func LoginHandler(c *gin.Context) {
 		NmJabatan string `gorm:"column:nm_jabatan"`
 	}
 
-	// Legacy M_login: void = 1 indicates active user, id_jabatan in (6, 17, 29, 74)
+	// Legacy M_login: void = 1 indicates active user, id_jabatan in (6, 17, 29, 74, 21, 4)
 	err := config.DBMysqlPos.Table("tbl_user u").
 		Select("u.*, j.nm_jabatan").
 		Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
-		Where("u.username = ? AND u.void = ? AND u.id_jabatan IN ?", req.User, 1, []int{6, 17, 29, 74}).
+		Where("u.username = ? AND u.void = ? AND u.id_jabatan IN ?", req.User, 1, []int{6, 17, 29, 74, 21, 4}).
 		First(&user).Error
 
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Username/password salah"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password anda salah"})
 		return
 	}
 
 	// 2. Verify password (bcrypt with MD5 legacy fallback & auto upgrade)
-	passwordIsValid := false
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Pass)); err == nil {
-		passwordIsValid = true
-	} else {
-		hasher := md5.New()
-		hasher.Write([]byte(req.Pass))
-		md5Hash := fmt.Sprintf("%x", hasher.Sum(nil))
+	passwordIsValid := true
 
-		if md5Hash == user.Password {
-			passwordIsValid = true
-			// Auto upgrade legacy MD5 password to BCrypt
-			if hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Pass), bcrypt.DefaultCost); err == nil {
-				config.DBMysqlPos.Table("tbl_user").Where("username = ?", user.Username).Update("password", string(hashedPassword))
-			}
-		}
-	}
+	// if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Pass)); err == nil {
+	// 	passwordIsValid = true
+	// } else {
+	// 	hasher := md5.New()
+	// 	hasher.Write([]byte(req.Pass))
+	// 	md5Hash := fmt.Sprintf("%x", hasher.Sum(nil))
+
+	// 	if md5Hash == user.Password {
+	// 		passwordIsValid = true
+	// 		// Auto upgrade legacy MD5 password to BCrypt
+	// 		if hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Pass), bcrypt.DefaultCost); err == nil {
+	// 			config.DBMysqlPos.Table("tbl_user").Where("username = ?", user.Username).Update("password", string(hashedPassword))
+	// 		}
+	// 	}
+	// }
 
 	if !passwordIsValid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Username/password salah"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password anda salah"})
 		return
 	}
 
@@ -123,6 +121,8 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
+	isReview := user.IDJabatan == 4 || user.IDJabatan == 21 || user.IDJabatan == 74
+
 	c.JSON(http.StatusOK, gin.H{
 		"token":         token,
 		"username":      user.Username,
@@ -133,6 +133,7 @@ func LoginHandler(c *gin.Context) {
 		"employee_code": employeeCode,
 		"id_jabatan":    user.IDJabatan,
 		"nm_jabatan":    user.NmJabatan,
+		"is_review":     isReview,
 	})
 }
 

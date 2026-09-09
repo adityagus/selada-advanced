@@ -1,3 +1,5 @@
+import { clearAuthCookies, isTokenExpired } from '~/utils/auth'
+
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   body?: any
@@ -11,23 +13,11 @@ const getCookieClient = (name: string): string | null => {
   const nameEQ = name + '='
   const ca = document.cookie.split(';')
   for (let i = 0; i < ca.length; i++) {
-    let c = ca[i]
+    let c : any  = ca[i]
     while (c.charAt(0) === ' ') c = c.substring(1, c.length)
     if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length)
   }
   return null
-}
-
-// Client-side helper to delete/write cookies
-const setCookieClient = (name: string, value: string, days?: number) => {
-  if (typeof document === 'undefined') return
-  let expires = ""
-  if (days) {
-    const date = new Date()
-    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000))
-    expires = "; expires=" + date.toUTCString()
-  }
-  document.cookie = name + "=" + (value || "")  + expires + "; path=/"
 }
 
 export const useApi = async <T = any>(endpoint: string, options: FetchOptions = {}) => {
@@ -43,20 +33,42 @@ export const useApi = async <T = any>(endpoint: string, options: FetchOptions = 
     // Context lost - use default
   }
 
-  const url = `${apiBase}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint
+  const url = `${apiBase}${cleanEndpoint}`
+  const isLoginEndpoint = cleanEndpoint === '/login'
+
+  // Retrieve token safely
+  let tokenVal: string | null = null
+  let tokenExpiryVal: string | null = null
+  try {
+    const token = useCookie('auth_token')
+    const tokenExpiry = useCookie('token_expiry')
+    tokenVal = token.value || null
+    tokenExpiryVal = tokenExpiry.value || null
+  } catch (e) {
+    tokenVal = getCookieClient('auth_token')
+    tokenExpiryVal = getCookieClient('token_expiry')
+  }
+
+  // Pre-flight check: if not a login endpoint and token is missing or expired, auto-redirect to login
+  if (!isLoginEndpoint && isTokenExpired(tokenVal, tokenExpiryVal)) {
+    clearAuthCookies()
+    try {
+      navigateTo('/login')
+    } catch (e) {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'
+      }
+    }
+    return {
+      data: null,
+      error: 'Token tidak ada atau sudah kedaluwarsa. Silakan login kembali.'
+    }
+  }
 
   // Standardize request headers
   const headers: Record<string, string> = {
     ...options.headers,
-  }
-
-  // Retrieve token safely
-  let tokenVal: string | null = null
-  try {
-    const token = useCookie('auth_token')
-    tokenVal = token.value || null
-  } catch (e) {
-    tokenVal = getCookieClient('auth_token')
   }
 
   if (tokenVal) {
@@ -70,18 +82,10 @@ export const useApi = async <T = any>(endpoint: string, options: FetchOptions = 
     })
     return { data, error: null }
   } catch (err: any) {
-    // Auto-logout in case of 401 Unauthorized responses
-    if (err.status === 401) {
-      // Clear token safely
-      try {
-        const token = useCookie('auth_token')
-        token.value = null
-      } catch (e) {
-        setCookieClient('auth_token', '', -1)
-        setCookieClient('user_name', '', -1)
-        setCookieClient('user_branch', '', -1)
-        setCookieClient('fk_user', '', -1)
-      }
+    const status = err.status || err.statusCode || err.response?.status
+    // Auto-logout in case of 401 Unauthorized or 403 Forbidden responses
+    if (status === 401 || status === 403) {
+      clearAuthCookies()
 
       // Redirect safely
       try {
@@ -95,7 +99,8 @@ export const useApi = async <T = any>(endpoint: string, options: FetchOptions = 
     
     return {
       data: null,
-      error: err.data?.error || err.message || 'Terjadi kesalahan sistem'
+      error: err.data?.error || err.data?.message || err.message || 'Terjadi kesalahan sistem'
     }
   }
 }
+

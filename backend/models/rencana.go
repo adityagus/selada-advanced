@@ -25,6 +25,11 @@ type RencanaDet struct {
 	Status       int       `gorm:"column:status"`
 }
 
+type ApplicationSource struct {
+	Code string `json:"code" gorm:"column:code"`
+	Name string `json:"name" gorm:"column:name"`
+}
+
 // TableName overrides the default table name for RencanaDet
 func (RencanaDet) TableName() string {
 	return "tb_rencana_det"

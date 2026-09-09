@@ -1,5 +1,6 @@
 package models
 
+import "time"
 // JenisBarang represents tbljenis_barang in PostgreSQL
 type JenisBarang struct {
 	KdJenisBarang string `gorm:"column:kd_jenis_barang;primaryKey"`
@@ -74,4 +75,20 @@ type ProdukDetailBiayaAdmin struct {
 // TableName overrides the default table name for ProdukDetailBiayaAdmin
 func (ProdukDetailBiayaAdmin) TableName() string {
 	return "tblproduk_detail_biaya_admin"
+}
+
+// TaksiranHistory represents history of estimation simulations in MySQL
+type TaksiranHistory struct {
+	ID            uint      `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
+	CreatedBy     string    `json:"created_by" gorm:"column:created_by;index"`
+	JenisBarang   string    `json:"jenis_barang" gorm:"column:jenis_barang"`
+	NamaBarang    string    `json:"nama_barang" gorm:"column:nama_barang"`
+	NilaiTaksir   float64   `json:"nilai_taksir" gorm:"column:nilai_taksir"`
+	NilaiPinjaman float64   `json:"nilai_pinjaman" gorm:"column:nilai_pinjaman"`
+	DetailData    string    `json:"detail_data" gorm:"column:detail_data;type:text"`
+	CreatedAt     time.Time `json:"created_at" gorm:"column:created_at"`
+}
+
+func (TaksiranHistory) TableName() string {
+	return "tb_taksiran_history"
 }
