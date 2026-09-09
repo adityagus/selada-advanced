@@ -124,7 +124,7 @@
               </td>
               <td class="px-5 py-3.5 text-center">
                 <div class="inline-flex items-center gap-1.5" >
-                  <NuxtLink to="/input-do" class="p-1.5 text-green-600 hover-green-500 rounded-lg border border-green-200 transition-all" title="Submit SBG" v-if="item.id_hslaktiv == 3">
+                  <NuxtLink :to="`/input-rencana?id=${item.id_rencana || item.id_customer}&step=SBG`" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-all" title="Submit SBG" v-if="item.id_hslaktiv == 3">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
 </svg>
@@ -224,11 +224,22 @@
           <h3 class="font-semibold text-slate-800 text-base">Detail Aktivitas</h3>
           <button @click="selectedItem = null" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
         </div>
-        <div class="space-y-3 text-sm">
-          <div class="flex justify-between py-1 border-b border-slate-100"><span class="text-slate-500 font-medium">Nama:</span> <span class="font-semibold text-slate-800">{{ selectedItem.nama }}</span></div>
-          <div class="flex justify-between py-1 border-b border-slate-100"><span class="text-slate-500 font-medium">Status:</span> <span class="font-semibold" :class="getStatusBadgeClass(selectedItem.status)">{{ selectedItem.status }}</span></div>
-          <div class="flex justify-between py-1 border-b border-slate-100"><span class="text-slate-500 font-medium">Sumber:</span> <span class="text-slate-700">{{ selectedItem.source || 'Walk In' }}</span></div>
-          <div class="flex justify-between py-1 border-b border-slate-100"><span class="text-slate-500 font-medium">Tanggal Rencana:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
+        <div class="text-sm grid grid-cols-2 gap-4">
+          <div class="flex justify-between border-b border-slate-100"><span class="text-slate-500 font-medium">Nama:</span> <span class="font-semibold text-slate-800">{{ selectedItem.nama }}</span></div>
+          <div class="flex justify-between border-b border-slate-100"><span class="text-slate-500 font-medium">Sumber:</span> <span class="text-slate-700">{{ selectedItem.source || 'Walk In' }}</span></div>
+          <div class="flex justify-between border-b border-slate-100"><span class="text-slate-500 font-medium">Status:</span> <span class="font-semibold" :class="getStatusBadgeClass(selectedItem.status)">{{ selectedItem.status }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Tanggal Rencana:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Alamat:</span> <span class="text-slate-700">{{ selectedItem }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">RT:</span> <span class="text-slate-700">{{ selectedItem.rt }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">RW:</span> <span class="text-slate-700">{{ selectedItem.rw }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Kelurahan:</span> <span class="text-slate-700">{{ selectedItem.kelurahan }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Kecamatan:</span> <span class="text-slate-700">{{ selectedItem.kecamatan }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Kota:</span> <span class="text-slate-700">{{ selectedItem.kota }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Tipe Transaksi:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">SOA:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Status Customer:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Keterangan Aktivitas:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
+          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Keterangan:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
           <div class="py-1">
             <span class="text-slate-500 font-medium block mb-1">Catatan Keterangan:</span>
             <p class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-xs leading-relaxed whitespace-pre-wrap">{{ selectedItem.keterangan || '-' }}</p>
@@ -331,6 +342,7 @@ const fetchInquiries = async () => {
   const rawList = Array.isArray(data) ? data : (data?.data || [])
 
   if (rawList && rawList.length >= 0) {
+    console.log('rawlist', rawList);
     let list = rawList.map((i: any) => {
       const source = appSource.data?.find((value : any) => { return value.kd_ref_cust === i.id_sumbercust})?.nm_ref_cust || i.id_sumbercust || 'Walk In'
       return {

@@ -8,13 +8,10 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Kembali
         </NuxtLink>
         <div>
           <h1 class="text-2xl font-bold text-slate-800 tracking-tight">Progress Sales
           </h1>
-          <p class="text-slate-500 text-sm">Halaman input dinamis berdasarkan tahapan status (Leads &rarr;
-            Prospek &rarr; Hot Prospek &rarr; SBG).</p>
         </div>
       </div>
       <div class="flex items-center gap-2">
@@ -724,7 +721,12 @@ watch([sourcesQueryData, inquiryQueryData], ([sourcesRes, rawList]) => {
     customerInfo.kecamatan = found.nm_kecamatan || found.kecamatan || ''
     customerInfo.kota = found.nm_kota || found.kota || ''
 
-    form.newStatus = found.nama_hslaktiv || found.status || 'Leads'
+    const queryStep = route.query.step as string
+    if (queryStep && pipelineSteps.includes(queryStep)) {
+      form.newStatus = queryStep
+    } else {
+      form.newStatus = found.nama_hslaktiv || found.status || 'Leads'
+    }
 
     // Build history entries matching customer
     const matches = rawList.filter((i: any) =>

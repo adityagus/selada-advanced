@@ -205,11 +205,13 @@ func InquiryListHandler(c *gin.Context) {
 	}
 
 	err := baseQuery.
-		Select("a.id_rencana, a.id_customer, b.nama, b.hp, rd.tgl_rencana, ha.nama_hslaktiv, rd.id_hslaktiv, rd.ket_rencana, rd.id_rencana_det, rd.ket_aktivitas, a.id_sumbercust").
+		Select("a.id_rencana, a.id_customer, b.nama, b.hp, rd.tgl_rencana, ha.nama_hslaktiv, rd.id_hslaktiv, rd.ket_rencana, rd.id_rencana_det, rd.ket_aktivitas, a.id_sumbercust, b.nama as nama_cust").
 		Order("rd.id_rencana_det DESC").
 		Offset(req.Start).
 		Limit(req.Length).
 		Scan(&items).Error
+
+	fmt.Println("err", err)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil list inquiry"})

@@ -30,17 +30,13 @@ func loadDotEnv() {
 			key := strings.TrimSpace(parts[0])
 			val := strings.TrimSpace(parts[1])
 			val = strings.Trim(val, `"'`)
-			// Hanya set jika belum ada di env (misal dari docker compose)
-			if os.Getenv(key) == "" {
-				os.Setenv(key, val)
-			}
+			os.Setenv(key, val)
 		}
 	}
 }
 
 func main() {
-	// 0. Load .env kustom untuk local development jika ada
-	fmt.Print("testing")
+	fmt.Println("Backend recompiled successfully!")
 	loadDotEnv()
 
 	// 1. Initialize Database Connections

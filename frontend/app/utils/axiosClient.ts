@@ -13,16 +13,28 @@ const getCookieClient = (name: string): string | null => {
   return null
 }
 
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+    const protocol = window.location.protocol || 'http:'
+    const hostname = window.location.hostname
+    return `${protocol}//${hostname}:3000/api`
+  }
+  // return 'http://localhost:3000/api'
+}
+
 const axiosClient = axios.create({
-  baseURL: 'http://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
 })
 
-// Request Interceptor: Attach JWT Bearer Token
+// Request Interceptor: Attach JWT Bearer Token & Dynamic Base URL
 axiosClient.interceptors.request.use((config) => {
+  if (!config.baseURL || config.baseURL === 'http://localhost:3000/api') {
+    config.baseURL = getApiBaseUrl()
+  }
+
   let tokenVal: string | null = null
   let tokenExpiryVal: string | null = null
 
