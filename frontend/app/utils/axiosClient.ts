@@ -19,7 +19,7 @@ const getApiBaseUrl = () => {
     const hostname = window.location.hostname
     return `${protocol}//${hostname}:3000/api`
   }
-  // return 'http://localhost:3000/api'
+  return 'http://10.10.10.8:3000/api'
 }
 
 const axiosClient = axios.create({

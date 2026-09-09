@@ -21,7 +21,7 @@ const getCookieClient = (name: string): string | null => {
 }
 
 export const useApi = async <T = any>(endpoint: string, options: FetchOptions = {}) => {
-  let apiBase = ''
+  let apiBase = 'http://10.10.10.8:3000/api'
   
   // Try getting runtime config safely
   try {
@@ -39,7 +39,7 @@ export const useApi = async <T = any>(endpoint: string, options: FetchOptions = 
       const hostname = window.location.hostname
       apiBase = `${protocol}//${hostname}:3000/api`
     } else {
-      apiBase = 'http://localhost:3000/api'
+      apiBase = 'http://10.10.10.8:3000/api'
     }
   }
 

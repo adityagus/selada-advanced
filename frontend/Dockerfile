@@ -34,9 +34,9 @@ RUN chown -R appuser:appgroup /app
 USER appuser
 
 # Expose default port
-EXPOSE 3000
+EXPOSE 3001
 
-ENV PORT=3000
+ENV PORT=3001
 ENV HOST=0.0.0.0
 ENV NODE_ENV=production
 

@@ -170,21 +170,31 @@ const handleLogin = async () => {
     
     // Store expiration time if exp or expiry claim exists in token
     const payload = parseJwt(data.token)
+    let expiryMs = 0
     if (payload) {
       if (typeof payload.exp === 'number') {
-        tokenExpiry.value = String(payload.exp * 1000)
+        expiryMs = payload.exp * 1000
       } else if (payload.expiry) {
         const expMs = new Date(payload.expiry).getTime()
         if (!isNaN(expMs)) {
-          tokenExpiry.value = String(expMs)
+          expiryMs = expMs
         }
       }
     }
+    if (!expiryMs || isNaN(expiryMs)) {
+      expiryMs = Date.now() + 24 * 60 * 60 * 1000
+    }
+    tokenExpiry.value = String(expiryMs)
 
-    name.value = data.nama
-    branch.value = data.cabang
-    fkUser.value = data.fk_user
-    await navigateTo('/dashboard')
+    name.value = data.nama || ''
+    branch.value = data.cabang || ''
+    fkUser.value = data.fk_user || ''
+
+    if (typeof window !== 'undefined') {
+      window.location.href = '/dashboard'
+    } else {
+      await navigateTo('/dashboard')
+    }
   }
 }
 </script>
