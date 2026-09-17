@@ -42,10 +42,24 @@ export interface NonEmasCardInfo {
   is_nonemas_bonus_done: boolean
 }
 
+export interface LeaderboardPerformer {
+  rank: number
+  employee_id: number
+  name: string
+  total_omzet: number
+  total_emas?: number
+  total_non_emas?: number
+  points?: number
+}
+
 export interface LeaderboardInfo {
   rank: number
   total_participants: number
   gap_to_next: number
+  total_omzet?: number
+  total_emas?: number
+  total_non_emas?: number
+  top_performers?: LeaderboardPerformer[]
 }
 
 export interface DashboardMetricsResponse {

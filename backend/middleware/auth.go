@@ -16,11 +16,12 @@ import (
 
 // TokenClaims represents the payload of our custom secure token
 type TokenClaims struct {
-	Username string    `json:"username"`
-	Nama     string    `json:"nama"`
-	Cabang   string    `json:"cabang"`
-	FkUser   string    `json:"fk_user"`
-	Expiry   time.Time `json:"expiry"`
+	Username   string    `json:"username"`
+	Nama       string    `json:"nama"`
+	Cabang     string    `json:"cabang"`
+	BranchName string    `json:"branch_name"`
+	FkUser     string    `json:"fk_user"`
+	Expiry     time.Time `json:"expiry"`
 }
 
 func getSecret() []byte {

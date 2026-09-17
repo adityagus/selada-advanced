@@ -2,13 +2,14 @@ package models
 
 // UserPos represents the user table in the MySQL POS database (sam_pos.tbl_user)
 type UserPos struct {
-	Username  string `gorm:"column:username;primaryKey"`
-	Nama      string `gorm:"column:nama"`
-	Password  string `gorm:"column:password"`
-	IDCabang  string `gorm:"column:id_cabang"`
-	IDJabatan int    `gorm:"column:id_jabatan"`
-	NmJabatan string `gorm:"column:nm_jabatan"`
-	Void      int    `gorm:"column:void"`
+	Username   string `gorm:"column:username;primaryKey"`
+	Nama       string `gorm:"column:nama"`
+	Password   string `gorm:"column:password"`
+	IDCabang   string `gorm:"column:id_cabang"`
+	BranchName string `gorm:"column:branch_name"`
+	IDJabatan  int    `gorm:"column:id_jabatan"`
+	NmJabatan  string `gorm:"column:nm_jabatan"`
+	Void       int    `gorm:"column:void"`
 }
 
 // TableName overrides the default table name for UserPos

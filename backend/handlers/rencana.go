@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"regexp"
@@ -50,8 +49,9 @@ func InquiryCountsHandler(c *gin.Context) {
 		Joins("JOIN tb_rencana a ON rd_sub.id_rencana = a.id_rencana")
 
 	// log.Printf("isi query", query)
-	if targetUser != "all" && targetUser != "*" {
-		query = query.Where("a.id_login = ?", targetUser)
+	uLower := strings.ToLower(targetUser)
+	if uLower != "all" && uLower != "*" && uLower != "admin" && uLower != "superadmin" && uLower != "administrator" {
+		query = query.Where("a.id_login = ? OR a.id_login IS NULL OR a.id_login = ''", targetUser)
 	}
 
 	err := query.Group("rd_sub.id_hslaktiv").
@@ -86,8 +86,8 @@ func InquiryCountsHandler(c *gin.Context) {
 		case 3:
 			counts["hotprospect"] = r.Total
 			hotprospect = r.Total
-		// case 7:
-		// 	counts["sbg"] = r.Total
+		case 7:
+			counts["sbg"] = r.Total
 		case 6:
 			counts["batal"] = r.Total
 		}
@@ -103,6 +103,8 @@ type InquiryItem struct {
 	IDCustomer   int    `json:"id_customer" gorm:"column:id_customer"`
 	Nama         string `json:"nama" gorm:"column:nama"`
 	Hp           string `json:"hp" gorm:"column:hp"`
+	Alamat       string `json:"alamat" gorm:"column:alamat"`
+	Kota         string `json:"kota" gorm:"column:kota"`
 	TglRencana   string `json:"tgl_rencana" gorm:"column:tgl_rencana"`
 	NamaHslaktiv string `json:"nama_hslaktiv" gorm:"column:nama_hslaktiv"`
 	IDHslaktiv   int    `json:"id_hslaktiv" gorm:"column:id_hslaktiv"`
@@ -159,10 +161,11 @@ func InquiryListHandler(c *gin.Context) {
 		Joins("JOIN tb_rencana_det rd ON rd.id_rencana = a.id_rencana").
 		Joins("JOIN (SELECT id_rencana, MAX(id_rencana_det) as max_id FROM tb_rencana_det GROUP BY id_rencana) latest ON rd.id_rencana_det = latest.max_id").
 		Joins("LEFT JOIN tb_hslaktivitas ha ON ha.id_hslaktiv = rd.id_hslaktiv").
-		Where("rd.id_hslaktiv NOT IN ?", []int{6, 7})
+		Where("rd.id_hslaktiv NOT IN ?", []int{6})
 
-	if targetUser != "all" && targetUser != "*" {
-		baseQuery = baseQuery.Where("a.id_login = ?", targetUser)
+	uLower := strings.ToLower(targetUser)
+	if uLower != "all" && uLower != "*" && uLower != "admin" && uLower != "superadmin" && uLower != "administrator" {
+		baseQuery = baseQuery.Where("a.id_login = ? OR a.id_login IS NULL OR a.id_login = ''", targetUser)
 	}
 
 	filterStatus := req.StatusFilter
@@ -174,11 +177,11 @@ func InquiryListHandler(c *gin.Context) {
 	case "leads":
 		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 1 OR ha.nama_hslaktiv LIKE ?)", "%lead%")
 	case "prospect":
-		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 2 OR ha.nama_hslaktiv = ?)", "Prospect")
+		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 2 OR ha.nama_hslaktiv LIKE ? OR ha.nama_hslaktiv LIKE ?)", "%prospect%", "%prospek%")
 	case "hot prospect", "hotprospect", "hot_prospect":
 		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 3 OR ha.nama_hslaktiv LIKE ?)", "%hot%")
-	// case "sbg", "deal", "do":
-	// 	baseQuery = baseQuery.Where("(rd.id_hslaktiv = 7 OR ha.nama_hslaktiv LIKE ? OR ha.nama_hslaktiv LIKE ?)", "%sbg%", "%deal%")
+	case "sbg", "deal", "do":
+		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 7 OR ha.nama_hslaktiv LIKE ? OR ha.nama_hslaktiv LIKE ?)", "%sbg%", "%deal%")
 	case "batal":
 		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 6 OR ha.nama_hslaktiv LIKE ?)", "%batal%")
 	case "all", "":
@@ -198,20 +201,17 @@ func InquiryListHandler(c *gin.Context) {
 	}
 
 	var totalRecords int64
-	countQuery := baseQuery
-	if err := countQuery.Count(&totalRecords).Error; err != nil {
+	if err := baseQuery.Session(&gorm.Session{}).Count(&totalRecords).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghitung total data"})
 		return
 	}
 
 	err := baseQuery.
-		Select("a.id_rencana, a.id_customer, b.nama, b.hp, rd.tgl_rencana, ha.nama_hslaktiv, rd.id_hslaktiv, rd.ket_rencana, rd.id_rencana_det, rd.ket_aktivitas, a.id_sumbercust, b.nama as nama_cust").
+		Select("a.id_rencana, a.id_customer, b.nama, b.hp, b.alamat, b.kota, rd.tgl_rencana, ha.nama_hslaktiv, rd.id_hslaktiv, rd.ket_rencana, rd.id_rencana_det, rd.ket_aktivitas, a.id_sumbercust, b.nama as nama_cust").
 		Order("rd.id_rencana_det DESC").
 		Offset(req.Start).
 		Limit(req.Length).
 		Scan(&items).Error
-
-	fmt.Println("err", err)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil list inquiry"})
@@ -223,8 +223,6 @@ func InquiryListHandler(c *gin.Context) {
 		"recordsTotal":    totalRecords,
 		"recordsFiltered": totalRecords,
 	})
-
-	log.Println("Inquiry list fetched successfully", items)
 }
 
 // InputRencanaRequest represents the payload for inputting plans
@@ -239,6 +237,14 @@ type InputRencanaRequest struct {
 	KatCust    string `json:"katcust"`
 	Ket        string `json:"ket"`
 	Aktiv      int    `json:"aktiv"`
+	Alamat     string `json:"alamat"`
+	Rt         string `json:"rt"`
+	Rw         string `json:"rw"`
+	Kelurahan  string `json:"kelurahan"`
+	Kecamatan  string `json:"kecamatan"`
+	Kota       string `json:"kota"`
+	TglRencana string `json:"tgl_rencana"`
+	NoSbg      string `json:"no_sbg"`
 }
 
 // InputRencanaHandler handles POST /api/rencana/input
@@ -357,6 +363,8 @@ func InputRencanaHandler(c *gin.Context) {
 		newCust := models.Customer{
 			Nama:    strings.TrimSpace(req.Nama),
 			Hp:      telp,
+			Alamat:  strings.TrimSpace(req.Alamat),
+			Kota:    strings.TrimSpace(req.Kota),
 			IDLogin: userId.(string),
 		}
 		if err := tx.Create(&newCust).Error; err != nil {
@@ -365,6 +373,28 @@ func InputRencanaHandler(c *gin.Context) {
 			return
 		}
 		idCustomer = newCust.IDCustomer
+	}
+
+	fullAddr := strings.TrimSpace(req.Alamat)
+	if req.Rt != "" || req.Rw != "" {
+		fullAddr += fmt.Sprintf(" RT %s RW %s", req.Rt, req.Rw)
+	}
+	if req.Kelurahan != "" {
+		fullAddr += fmt.Sprintf(", Kel. %s", req.Kelurahan)
+	}
+	if req.Kecamatan != "" {
+		fullAddr += fmt.Sprintf(", Kec. %s", req.Kecamatan)
+	}
+
+	if idCustomer > 0 && fullAddr != "" {
+		updateMap := make(map[string]interface{})
+		if fullAddr != "" {
+			updateMap["alamat"] = fullAddr
+		}
+		if req.Kota != "" {
+			updateMap["kota"] = req.Kota
+		}
+		_ = tx.Model(&models.Customer{}).Where("id_customer = ?", idCustomer).Updates(updateMap).Error
 	}
 
 	if req.Cust == "Lama" && hslAktiv == 1 && idCustomer > 0 {
@@ -533,6 +563,7 @@ func getLeaderboardPosition(validIDs []int, tgl1Str, tgl2Str string) gin.H {
 		"total_emas":         0.0,
 		"total_non_emas":     0.0,
 		"gap_to_next":        0.0,
+		"top_performers":     []gin.H{},
 	}
 
 	if config.DBPostgres == nil {
@@ -562,6 +593,67 @@ func getLeaderboardPosition(validIDs []int, tgl1Str, tgl2Str string) gin.H {
 
 	if err != nil || len(rows) == 0 {
 		return defaultRes
+	}
+
+	// Resolve employee names map safely from auth.users (PostgreSQL) and tbl_user (MySQL POS)
+	empNameMap := make(map[int]string)
+	if config.DBPostgres != nil {
+		type PgUser struct {
+			EmployeeID int    `gorm:"column:employee_id"`
+			Username   string `gorm:"column:username"`
+		}
+		var pgUsers []PgUser
+		_ = config.DBPostgres.Table("auth.users").
+			Select("employee_id, username").
+			Where("employee_id IS NOT NULL").
+			Scan(&pgUsers).Error
+
+		posNameMap := make(map[string]string)
+		if config.DBMysqlPos != nil {
+			type PosUser struct {
+				Username string `gorm:"column:username"`
+				Nama     string `gorm:"column:nama"`
+			}
+			var posUsers []PosUser
+			_ = config.DBMysqlPos.Table("tbl_user").
+				Select("username, nama").
+				Scan(&posUsers).Error
+			for _, pu := range posUsers {
+				posNameMap[strings.ToLower(strings.TrimSpace(pu.Username))] = pu.Nama
+			}
+		}
+
+		for _, e := range pgUsers {
+			if e.EmployeeID > 0 {
+				uLower := strings.ToLower(strings.TrimSpace(e.Username))
+				if nama, ok := posNameMap[uLower]; ok && nama != "" {
+					empNameMap[e.EmployeeID] = nama
+				} else if e.Username != "" {
+					empNameMap[e.EmployeeID] = e.Username
+				}
+			}
+		}
+	}
+
+	var topPerformers []gin.H
+	for idx, r := range rows {
+		if idx >= 10 { // Top 10 performers
+			break
+		}
+		name := empNameMap[r.SalesEmployeeID]
+		if name == "" {
+			name = fmt.Sprintf("Sales #%d", r.SalesEmployeeID)
+		}
+		pts := (r.TotalEmas / 15000000.0) + (r.TotalNonEmas / 2000000.0)
+		topPerformers = append(topPerformers, gin.H{
+			"rank":           idx + 1,
+			"employee_id":    r.SalesEmployeeID,
+			"name":           name,
+			"total_omzet":    r.TotalOmzet,
+			"total_emas":     r.TotalEmas,
+			"total_non_emas": r.TotalNonEmas,
+			"points":         math.Round(pts*10) / 10,
+		})
 	}
 
 	targetMap := make(map[int]bool)
@@ -611,6 +703,7 @@ func getLeaderboardPosition(validIDs []int, tgl1Str, tgl2Str string) gin.H {
 		"total_emas":         userStats.TotalEmas,
 		"total_non_emas":     userStats.TotalNonEmas,
 		"gap_to_next":        gapToNext,
+		"top_performers":     topPerformers,
 	}
 }
 
@@ -653,6 +746,65 @@ func getDailyPacingBooking(validIDs []int, tgl1Str, tgl2Str string, daysInMonth 
 	}
 }
 
+type SalesInfo struct {
+	Username  string `json:"username" gorm:"column:username"`
+	Nama      string `json:"nama" gorm:"column:nama"`
+	IDJabatan int    `json:"id_jabatan" gorm:"column:id_jabatan"`
+	NmJabatan string `json:"nm_jabatan" gorm:"column:nm_jabatan"`
+	FkUser    string `json:"fkuser" gorm:"column:username"`
+}
+
+func fetchActiveSalesList() []SalesInfo {
+	var salesList []SalesInfo
+	if config.DBMysqlPos == nil {
+		return salesList
+	}
+
+	// 1. Fetch active usernames in Sopiga Pro (PostgreSQL master.employee joined with auth.users)
+	activeSopigaUserMap := make(map[string]bool)
+	if config.DBPostgres != nil {
+		type PgUser struct {
+			Username string `gorm:"column:username"`
+		}
+		var pgUsers []PgUser
+		_ = config.DBPostgres.Table("auth.users u").
+			Select("u.username").
+			Joins("JOIN master.employee e ON e.employee_id = u.employee_id").
+			Where("COALESCE(e.is_active, true) = ?", true).
+			Scan(&pgUsers).Error
+
+		for _, p := range pgUsers {
+			if p.Username != "" {
+				activeSopigaUserMap[strings.ToLower(strings.TrimSpace(p.Username))] = true
+			}
+		}
+	}
+
+	// 2. Fetch active users in POS (sam_pos.tbl_user) where void = 0 and sales position
+	var posRows []SalesInfo
+	query := config.DBMysqlPos.Table("tbl_user u").
+		Select("u.username, u.nama, u.id_jabatan, COALESCE(j.nm_jabatan, 'Sales') AS nm_jabatan").
+		Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
+		Where("u.void = ?", 0)
+
+	// Filter for sales positions in POS (IDs 6, 17, 29, 74 or nm_jabatan matching sales keywords)
+	query = query.Where("u.id_jabatan IN (6, 17, 29, 74) OR LOWER(j.nm_jabatan) LIKE '%sales%' OR LOWER(j.nm_jabatan) LIKE '%trainee%' OR LOWER(j.nm_jabatan) LIKE '%junior%' OR LOWER(j.nm_jabatan) LIKE '%senior%'")
+
+	_ = query.Order("u.nama ASC").Scan(&posRows).Error
+
+	for _, r := range posRows {
+		uLower := strings.ToLower(strings.TrimSpace(r.Username))
+		// If Sopiga Pro DB is connected and active map has entries, ensure user is active in Sopiga Pro
+		if len(activeSopigaUserMap) > 0 && !activeSopigaUserMap[uLower] {
+			continue
+		}
+		r.FkUser = r.Username
+		salesList = append(salesList, r)
+	}
+
+	return salesList
+}
+
 // DashboardMetricsHandler returns real-time metrics matching legacy C_sistem and IncentiveCalculator
 func DashboardMetricsHandler(c *gin.Context) {
 	userId, exists := c.Get("username")
@@ -679,7 +831,7 @@ func DashboardMetricsHandler(c *gin.Context) {
 			NmJabatan string `gorm:"column:nm_jabatan"`
 		}
 		err := config.DBMysqlPos.Table("tbl_user u").
-			Select("u.id_jabatan, j.nm_jabatan").
+			Select("u.id_jabatan, COALESCE(j.nm_jabatan, '') AS nm_jabatan").
 			Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
 			Where("u.username = ?", loggedInUser).
 			First(&userPos).Error
@@ -691,27 +843,14 @@ func DashboardMetricsHandler(c *gin.Context) {
 		}
 
 		if isReview {
-			type SalesRow struct {
-				Username  string `gorm:"column:username"`
-				Nama      string `gorm:"column:nama"`
-				IDJabatan int    `gorm:"column:id_jabatan"`
-				NmJabatan string `gorm:"column:nm_jabatan"`
-			}
-			var rows []SalesRow
-			_ = config.DBMysqlPos.Table("tbl_user u").
-				Select("u.username, u.nama, u.id_jabatan, j.nm_jabatan").
-				Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
-				Where("u.void = ? AND u.id_jabatan IN ?", 1, []int{6, 17, 29, 74}).
-				Order("u.nama ASC").
-				Scan(&rows).Error
-
-			for _, r := range rows {
+			activeSales := fetchActiveSalesList()
+			for _, s := range activeSales {
 				salesList = append(salesList, gin.H{
-					"username":   r.Username,
-					"nama":       r.Nama,
-					"id_jabatan": r.IDJabatan,
-					"nm_jabatan": r.NmJabatan,
-					"fkuser":     r.Username,
+					"username":   s.Username,
+					"nama":       s.Nama,
+					"id_jabatan": s.IDJabatan,
+					"nm_jabatan": s.NmJabatan,
+					"fkuser":     s.Username,
 				})
 			}
 
@@ -723,14 +862,14 @@ func DashboardMetricsHandler(c *gin.Context) {
 		}
 	}
 
-	// Fetch selected target sales info if different
+	// Fetch selected target sales info from POS
 	if config.DBMysqlPos != nil {
 		var targetPos struct {
 			IDJabatan int    `gorm:"column:id_jabatan"`
 			NmJabatan string `gorm:"column:nm_jabatan"`
 		}
 		err := config.DBMysqlPos.Table("tbl_user u").
-			Select("u.id_jabatan, j.nm_jabatan").
+			Select("u.id_jabatan, COALESCE(j.nm_jabatan, '') AS nm_jabatan").
 			Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
 			Where("u.username = ?", userStr).
 			First(&targetPos).Error
@@ -801,42 +940,38 @@ func DashboardMetricsHandler(c *gin.Context) {
 		overallLeads = cLeads + cProspect + cHotProspect + cSBG
 		overallBatal = cBatal
 
-		// --- Current Month Data (New data for current month only, e.g. 2026-09) ---
-		// 1. Monthly Leads created in current month (id_hslaktiv = 1)
-		var currLeadsRes struct{ Total int }
-		_ = config.DBMysql.Table("tb_rencana_det a").
-			Select("COUNT(DISTINCT a.id_rencana) as total").
-			Joins("JOIN tb_rencana b ON a.id_rencana = b.id_rencana").
-			Where("b.id_login = ? AND a.tgl_rencana BETWEEN ? AND ? AND a.id_hslaktiv = 1", userStr, tgl1Str, tgl2Str).
-			Scan(&currLeadsRes).Error
-		leadsMonthly = currLeadsRes.Total
+		// --- Current Month Data (Cumulative Sales Funnel for current month) ---
+		type MonthlyResult struct {
+			IdHslaktiv int
+			Total      int
+		}
+		var monthlyResults []MonthlyResult
+		_ = config.DBMysql.Table("tb_rencana_det rd_sub").
+			Select("rd_sub.id_hslaktiv, COUNT(DISTINCT rd_sub.id_rencana) as total").
+			Joins("JOIN (SELECT id_rencana, MAX(id_rencana_det) as max_id FROM tb_rencana_det WHERE tgl_rencana BETWEEN ? AND ? GROUP BY id_rencana) latest ON rd_sub.id_rencana_det = latest.max_id", tgl1Str, tgl2Str).
+			Joins("JOIN tb_rencana a ON rd_sub.id_rencana = a.id_rencana").
+			Where("a.id_login = ?", userStr).
+			Group("rd_sub.id_hslaktiv").
+			Scan(&monthlyResults).Error
 
-		// 2. Monthly Prospect reached in current month (id_hslaktiv = 2)
-		var currPRes struct{ Total int }
-		_ = config.DBMysql.Table("tb_rencana_det a").
-			Select("COUNT(DISTINCT a.id_rencana) as total").
-			Joins("JOIN tb_rencana b ON a.id_rencana = b.id_rencana").
-			Where("b.id_login = ? AND a.tgl_rencana BETWEEN ? AND ? AND a.id_hslaktiv = 2", userStr, tgl1Str, tgl2Str).
-			Scan(&currPRes).Error
-		prospectMonthly = currPRes.Total
+		mcLeads, mcProspect, mcHotProspect, mcSBG := 0, 0, 0, 0
+		for _, r := range monthlyResults {
+			switch r.IdHslaktiv {
+			case 1:
+				mcLeads = r.Total
+			case 2:
+				mcProspect = r.Total
+			case 3:
+				mcHotProspect = r.Total
+			case 7:
+				mcSBG = r.Total
+			}
+		}
 
-		// 3. Monthly Hot Prospect reached in current month (id_hslaktiv = 3)
-		var currHPRes struct{ Total int }
-		_ = config.DBMysql.Table("tb_rencana_det a").
-			Select("COUNT(DISTINCT a.id_rencana) as total").
-			Joins("JOIN tb_rencana b ON a.id_rencana = b.id_rencana").
-			Where("b.id_login = ? AND a.tgl_rencana BETWEEN ? AND ? AND a.id_hslaktiv = 3", userStr, tgl1Str, tgl2Str).
-			Scan(&currHPRes).Error
-		hotprospectMonthly = currHPRes.Total
-
-		// 4. Monthly SBG reached in current month (id_hslaktiv = 7)
-		var currSBGRes struct{ Total int }
-		_ = config.DBMysql.Table("tb_rencana_det a").
-			Select("COUNT(DISTINCT a.id_rencana) as total").
-			Joins("JOIN tb_rencana b ON a.id_rencana = b.id_rencana").
-			Where("b.id_login = ? AND a.tgl_rencana BETWEEN ? AND ? AND a.id_hslaktiv = 7", userStr, tgl1Str, tgl2Str).
-			Scan(&currSBGRes).Error
-		sbgMonthly = currSBGRes.Total
+		sbgMonthly = mcSBG
+		hotprospectMonthly = mcHotProspect + mcSBG
+		prospectMonthly = mcProspect + mcHotProspect + mcSBG
+		leadsMonthly = mcLeads + mcProspect + mcHotProspect + mcSBG
 
 		// Monthly leads created for last month
 		var lastLeadsRes struct{ Total int }
@@ -874,14 +1009,14 @@ func DashboardMetricsHandler(c *gin.Context) {
 		_ = config.DBPostgres.Table("gadai.transactions t").
 			Select(`
 				COUNT(CASE WHEN t.loan_status = 'ACTIVE' AND t.application_status IN ('NEW') THEN t.doc_no END) AS newcif,
-				SUM(CASE WHEN o.product_id = 1 AND t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') THEN t.requested_loan ELSE 0 END) AS emas,
-				SUM(CASE WHEN o.product_id = 1 AND t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') THEN t.admin_cost_amount ELSE 0 END) AS biaya_admin_emas,
-				SUM(CASE WHEN o.product_id IN (2, 3) AND t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') THEN t.requested_loan ELSE 0 END) AS nonemas,
-				SUM(CASE WHEN o.product_id IN (2, 3) AND t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') THEN t.admin_cost_amount ELSE 0 END) AS biaya_admin_nonemas,
+				SUM(CASE WHEN (o.product_id = 1 OR o.product_id IS NULL OR o.product_id NOT IN (2, 3)) AND t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') THEN COALESCE(t.requested_loan, 0) ELSE 0 END) AS emas,
+				SUM(CASE WHEN (o.product_id = 1 OR o.product_id IS NULL OR o.product_id NOT IN (2, 3)) AND t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') THEN COALESCE(t.admin_cost_amount, 0) ELSE 0 END) AS biaya_admin_emas,
+				SUM(CASE WHEN o.product_id IN (2, 3) AND t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') THEN COALESCE(t.requested_loan, 0) ELSE 0 END) AS nonemas,
+				SUM(CASE WHEN o.product_id IN (2, 3) AND t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') THEN COALESCE(t.admin_cost_amount, 0) ELSE 0 END) AS biaya_admin_nonemas,
 				COUNT(CASE WHEN t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') THEN t.doc_no END) AS total_trx
 			`).
 			Joins("LEFT JOIN product.product_offerings o ON t.offering_id = o.offering_id").
-			Where("t.sales_employee_id IN ? AND t.submission_date BETWEEN ? AND ?", validNumericIDs, tgl1Str, tgl2Str).
+			Where("t.sales_employee_id IN ? AND COALESCE(t.submission_date, t.created_at) BETWEEN ? AND ?", validNumericIDs, tgl1Str, tgl2Str).
 			Scan(&txSummary).Error
 
 		newcif = txSummary.NewCIF
@@ -894,16 +1029,16 @@ func DashboardMetricsHandler(c *gin.Context) {
 		var gramRes struct{ TotalGramasi float64 }
 		_ = config.DBPostgres.Table("gadai.transactions t").
 			Select("SUM(rg.net_weight) AS total_gramasi").
-			Joins("JOIN product.product_offerings o ON t.offering_id = o.offering_id").
+			Joins("LEFT JOIN product.product_offerings o ON t.offering_id = o.offering_id").
 			Joins("JOIN gadai.transaction_items rg ON rg.transaction_id = t.transaction_id").
-			Where("o.product_id = 1 AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') AND t.sales_employee_id IN ? AND t.submission_date BETWEEN ? AND ?", validNumericIDs, tgl1Str, tgl2Str).
+			Where("(o.product_id = 1 OR o.product_id IS NULL OR o.product_id NOT IN (2, 3)) AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') AND t.sales_employee_id IN ? AND COALESCE(t.submission_date, t.created_at) BETWEEN ? AND ?", validNumericIDs, tgl1Str, tgl2Str).
 			Scan(&gramRes).Error
 		gramasiEmas = gramRes.TotalGramasi
 
 		var lmCifRes struct{ TotalBaris int }
 		_ = config.DBPostgres.Table("gadai.transactions t").
 			Select("COUNT(t.doc_no) AS total_baris").
-			Where("t.loan_status = 'ACTIVE' AND t.application_status IN ('NEW') AND t.sales_employee_id IN ? AND t.submission_date BETWEEN ? AND ?", validNumericIDs, lastTgl1Str, lastTgl2Str).
+			Where("t.loan_status = 'ACTIVE' AND t.application_status IN ('NEW') AND t.sales_employee_id IN ? AND COALESCE(t.submission_date, t.created_at) BETWEEN ? AND ?", validNumericIDs, lastTgl1Str, lastTgl2Str).
 			Scan(&lmCifRes).Error
 		lastMonthCif = lmCifRes.TotalBaris
 	}
@@ -921,7 +1056,7 @@ func DashboardMetricsHandler(c *gin.Context) {
 		"sbg_monthly":         sbgMonthly,
 	}
 
-	// 5. Incentive Engine & Target Progress Engine Calculations (100% matching IncentiveCalculator.php)
+	// 5. Incentive Engine & Target Progress Engine Calculations (100% matching POS Jabatan rates)
 	totalEmasPoints := emas / 15000000.0
 	totalNonEmasPoints := nonemas / 2000000.0
 	poinTotal := totalEmasPoints + totalNonEmasPoints
@@ -929,17 +1064,31 @@ func DashboardMetricsHandler(c *gin.Context) {
 
 	totalAdminAlokasi := (biayaAdminEmas + biayaAdminNonEmas) * 0.45
 
+	rawNmJabatan := nmJabatan
+	if rawNmJabatan == "" {
+		rawNmJabatan = "SALES OFFICER JUNIOR"
+	}
+
+	nmUpper := strings.ToUpper(rawNmJabatan)
+	isTrainee := false
+	isSenior := false
+	if strings.Contains(nmUpper, "TRAINEE") || strings.Contains(nmUpper, " TRN") || strings.HasSuffix(nmUpper, "TRN") {
+		isTrainee = true
+	} else if strings.Contains(nmUpper, "SENIOR") || strings.Contains(nmUpper, " SEN") || strings.HasSuffix(nmUpper, "SEN") || idJabatan == 29 {
+		isSenior = true
+	}
+
 	appliedRate := 0.0
 	isQualified := false
 	projectedRate := 0.25
 
-	if idJabatan == 6 { // Trainee
+	if isTrainee { // Trainee (ID 6 / TRAINEE)
 		projectedRate = 0.20
 		if poinTotal >= 20.0 {
 			appliedRate = 0.20
 			isQualified = true
 		}
-	} else if idJabatan == 29 { // Senior
+	} else if isSenior { // Senior (ID 29 / SENIOR)
 		projectedRate = 0.35
 		if poinTotal >= 46.0 {
 			appliedRate = 0.45
@@ -948,7 +1097,7 @@ func DashboardMetricsHandler(c *gin.Context) {
 			appliedRate = 0.30
 			isQualified = true
 		}
-	} else { // Junior (ID 17 or default)
+	} else { // Junior (ID 17 / JUNIOR / default)
 		projectedRate = 0.25
 		if poinTotal >= 41.0 {
 			appliedRate = 0.40
@@ -992,7 +1141,7 @@ func DashboardMetricsHandler(c *gin.Context) {
 	targetDescription := ""
 	motivationText := ""
 
-	if idJabatan == 6 { // Trainee
+	if isTrainee { // Trainee
 		targetGoalPoints = 20.0
 		dailyTargetProgress = (poinTotal / 20.0) * 100.0
 		if poinTotal >= 20.0 {
@@ -1002,7 +1151,7 @@ func DashboardMetricsHandler(c *gin.Context) {
 			targetDescription = "Mengejar Qualified (Target: 20 Poin)"
 			motivationText = fmt.Sprintf("Kurang %.1f Poin lagi untuk mencapai Qualified.", 20.0-poinTotal)
 		}
-	} else if idJabatan == 29 { // Senior
+	} else if isSenior { // Senior
 		if poinTotal < 35.0 {
 			targetGoalPoints = 35.0
 			dailyTargetProgress = (poinTotal / 35.0) * 100.0
@@ -1019,7 +1168,7 @@ func DashboardMetricsHandler(c *gin.Context) {
 				motivationText = fmt.Sprintf("Kurang %.1f Poin lagi untuk Bonus 45%%.", 46.0-poinTotal)
 			}
 		}
-	} else { // Junior (ID 17 or default)
+	} else { // Junior
 		if poinTotal < 25.0 {
 			targetGoalPoints = 25.0
 			dailyTargetProgress = (poinTotal / 25.0) * 100.0
@@ -1075,10 +1224,20 @@ func DashboardMetricsHandler(c *gin.Context) {
 	isNonEmasBonusDone := nonemas >= 50000000.0
 	gapNonEmas := math.Max(0, 50000000.0-nonemas)
 	nonEmasBonusTitle := "Bonus Rp 500.000 (Target 50 Jt)"
-	nonEmasSubText := fmt.Sprintf("Butuh Rp %.0f lagi untuk klaim bonus", gapNonEmas)
+	nonEmasSubText := fmt.Sprintf("Butuh Rp %s lagi untuk klaim bonus", formatDotNumber(int64(gapNonEmas)))
 	if isNonEmasBonusDone {
 		nonEmasBonusTitle = "Bonus Rp 500.000 Tercapai"
 		nonEmasSubText = "Bonus UP Elektronik 50 Jt telah dicapai"
+	}
+
+	if gapNonEmas > 0 {
+		motivationText = fmt.Sprintf("Kurang Rp %s lagi untuk klaim Bonus UP Elektronik (500 Ribu)!", formatDotNumber(int64(gapNonEmas)))
+	} else if gramasiEmas < 300.0 {
+		gapG := 300.1 - gramasiEmas
+		if gapG < 0 {
+			gapG = 0
+		}
+		motivationText = fmt.Sprintf("Kurang %.1fg lagi untuk klaim Bonus Gramasi Emas (1 Juta)!", gapG)
 	}
 
 	leaderboardRes := getLeaderboardPosition(validNumericIDs, tgl1Str, tgl2Str)
@@ -1098,32 +1257,41 @@ func DashboardMetricsHandler(c *gin.Context) {
 		}
 		var items []TrxItem
 		_ = config.DBPostgres.Table("gadai.transactions t").
-			Select("t.doc_no, t.submission_date, t.requested_loan, t.admin_cost_amount, o.offering_name, o.product_id, c.full_name").
+			Select("t.doc_no, COALESCE(t.submission_date, t.created_at) AS submission_date, t.requested_loan, t.admin_cost_amount, o.offering_name, o.product_id, c.full_name").
 			Joins("LEFT JOIN product.product_offerings o ON t.offering_id = o.offering_id").
 			Joins("LEFT JOIN customer.customers c ON t.customer_id = c.customer_id").
-			Where("t.sales_employee_id IN ? AND t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') AND t.submission_date BETWEEN ? AND ?", validNumericIDs, tgl1Str, tgl2Str).
-			Order("t.submission_date DESC").
+			Where("t.sales_employee_id IN ? AND COALESCE(t.application_status, 'NEW') NOT IN ('CANCELLED', 'REJECTED') AND COALESCE(t.loan_status, 'ACTIVE') NOT IN ('CANCELLED', 'REJECTED') AND COALESCE(t.submission_date, t.created_at) BETWEEN ? AND ?", validNumericIDs, tgl1Str, tgl2Str).
+			Order("COALESCE(t.submission_date, t.created_at) DESC").
 			Limit(10).
 			Scan(&items).Error
 
 		for _, item := range items {
 			poin := item.RequestedLoan / 15000000.0
-			if item.ProductID != 1 {
+			if item.ProductID == 2 || item.ProductID == 3 {
 				poin = item.RequestedLoan / 2000000.0
 			}
 			adminAlokasi := item.AdminCostAmount * 0.45
 			potensi := adminAlokasi * rateForIncentive
 
-			iconText := "🥇"
-			if item.ProductID != 1 {
-				iconText = "💻"
+			iconText := "AU"
+			if item.ProductID == 2 || item.ProductID == 3 {
+				iconText = "EL"
+			}
+
+			offeringType := item.OfferingName
+			if offeringType == "" {
+				if item.ProductID == 2 || item.ProductID == 3 {
+					offeringType = "Gadai Non Emas"
+				} else {
+					offeringType = "Gadai Emas"
+				}
 			}
 
 			liveFeeds = append(liveFeeds, gin.H{
 				"id":          item.DocNo,
 				"code":        item.DocNo,
 				"date":        item.SubmissionDate.Format("02 Jan 2006, 15:04"),
-				"type":        item.OfferingName,
+				"type":        offeringType,
 				"customer":    item.CustomerName,
 				"amount":      math.Round(potensi),
 				"poin":        math.Round(poin*100) / 100,
@@ -1137,10 +1305,10 @@ func DashboardMetricsHandler(c *gin.Context) {
 
 	if len(liveFeeds) == 0 {
 		liveFeeds = []gin.H{
-			{"type": "Gadai Emas", "code": "TRX-8412", "customer": "Budi Santoso", "amount": 125000, "sub": "2 Poin • Pinjaman Rp 5.000.000", "iconText": "🥇", "isBonus": false},
-			{"type": "Nasabah Baru", "code": "TRX-7741", "customer": "Siti Rahma", "amount": 25000, "sub": "New CIF Bonus", "iconText": "👤", "isBonus": false},
-			{"type": "Gadai Elektronik", "code": "TRX-6109", "customer": "Ahmad Fauzi", "amount": 50000, "sub": "1 Poin • Laptop Asus", "iconText": "💻", "isBonus": false},
-			{"type": "Bonus Gramasi", "code": "BONUS-101", "customer": "Achievement 300g", "amount": 1000000, "sub": "Target Emas Level 1", "iconText": "🏆", "isBonus": true},
+			{"type": "Gadai Emas", "code": "TRX-8412", "customer": "Budi Santoso", "amount": 125000, "sub": "2 Poin • Pinjaman Rp 5.000.000", "iconText": "AU", "isBonus": false},
+			{"type": "Nasabah Baru", "code": "TRX-7741", "customer": "Siti Rahma", "amount": 25000, "sub": "New CIF Bonus", "iconText": "CIF", "isBonus": false},
+			{"type": "Gadai Elektronik", "code": "TRX-6109", "customer": "Ahmad Fauzi", "amount": 50000, "sub": "1 Poin • Laptop Asus", "iconText": "EL", "isBonus": false},
+			{"type": "Bonus Gramasi", "code": "BONUS-101", "customer": "Achievement 300g", "amount": 1000000, "sub": "Target Emas Level 1", "iconText": "BON", "isBonus": true},
 		}
 	}
 
@@ -1189,7 +1357,7 @@ func DashboardMetricsHandler(c *gin.Context) {
 		"main_incentive_amount": mainIncentiveAmount,
 		"total_take_home":       totalTakeHome,
 		"is_qualified":          isQualified,
-		"user_grade":            nmJabatan,
+		"user_grade":            rawNmJabatan,
 		"applied_rate":          int(appliedRate * 100),
 		"poin_total":            poinTotalFormatted,
 		"target_goal_points":    int(targetGoalPoints),
@@ -1315,32 +1483,7 @@ func GetSumberCustHandler(c *gin.Context) {
 
 // GetSalesListHandler returns active sales users for review mode
 func GetSalesListHandler(c *gin.Context) {
-	if config.DBMysqlPos == nil {
-		c.JSON(http.StatusOK, []gin.H{})
-		return
-	}
-
-	type SalesItem struct {
-		Username  string `json:"username" gorm:"column:username"`
-		Nama      string `json:"nama" gorm:"column:nama"`
-		IDJabatan int    `json:"id_jabatan" gorm:"column:id_jabatan"`
-		NmJabatan string `json:"nm_jabatan" gorm:"column:nm_jabatan"`
-		FkUser    string `json:"fkuser" gorm:"column:username"`
-	}
-
-	var sales []SalesItem
-	err := config.DBMysqlPos.Table("tbl_user u").
-		Select("u.username, u.nama, u.id_jabatan, j.nm_jabatan").
-		Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
-		Where("u.void = ? AND u.id_jabatan IN ?", 1, []int{6, 17, 29, 74}).
-		Order("u.nama ASC").
-		Scan(&sales).Error
-
-	if err != nil {
-		c.JSON(http.StatusOK, []gin.H{})
-		return
-	}
-
+	sales := fetchActiveSalesList()
 	c.JSON(http.StatusOK, sales)
 }
 
@@ -1380,4 +1523,24 @@ func GetKelurahanHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, results)
+}
+
+func formatDotNumber(n int64) string {
+	in := strconv.FormatInt(n, 10)
+	if len(in) <= 3 {
+		return in
+	}
+	var out []byte
+	rest := len(in) % 3
+	if rest > 0 {
+		out = append(out, in[:rest]...)
+		out = append(out, '.')
+	}
+	for i := rest; i < len(in); i += 3 {
+		if i > rest {
+			out = append(out, '.')
+		}
+		out = append(out, in[i:i+3]...)
+	}
+	return string(out)
 }

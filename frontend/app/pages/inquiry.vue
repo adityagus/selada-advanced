@@ -15,23 +15,23 @@
     </div>
 
     <!-- Summary Metrics Bar -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-      <div @click="selectedStatus = 'Leads'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-amber-400 transition-all cursor-pointer">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div @click="selectedStatus = 'Leads'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-amber-400 transition-all cursor-pointer" :class="{ 'ring-2 ring-amber-400 bg-amber-50/20': selectedStatus === 'Leads' }">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Leads</span>
-        <div class="text-2xl font-bold text-slate-800 mt-1">{{ summaryCounts.leads }}</div>
+        <div class="text-2xl font-bold text-amber-600 mt-1">{{ summaryCounts.leads }}</div>
       </div>
-      <div @click="selectedStatus = 'Prospect'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-blue-400 transition-all cursor-pointer">
+      <div @click="selectedStatus = 'Prospect'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-blue-400 transition-all cursor-pointer" :class="{ 'ring-2 ring-blue-400 bg-blue-50/20': selectedStatus === 'Prospect' }">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Prospect</span>
         <div class="text-2xl font-bold text-blue-600 mt-1">{{ summaryCounts.prospect }}</div>
       </div>
-      <div @click="selectedStatus = 'Hot Prospect'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-rose-400 transition-all cursor-pointer">
+      <div @click="selectedStatus = 'Hot Prospect'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-rose-400 transition-all cursor-pointer" :class="{ 'ring-2 ring-rose-400 bg-rose-50/20': selectedStatus === 'Hot Prospect' }">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Hot Prospect</span>
         <div class="text-2xl font-bold text-rose-600 mt-1">{{ summaryCounts.hotProspect }}</div>
       </div>
-      <!-- <div @click="selectedStatus = 'SBG'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-emerald-400 transition-all cursor-pointer">
-        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">SBG (Deal)</span>
-        <div class="text-2xl font-bold text-emerald-600 mt-1">{{ summaryCounts.sbg }}</div>
-      </div> -->
+      <div @click="selectedStatus = 'all'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-emerald-400 transition-all cursor-pointer" :class="{ 'ring-2 ring-emerald-400 bg-emerald-50/20': selectedStatus === 'all' }">
+        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Semua Active</span>
+        <div class="text-2xl font-bold text-emerald-600 mt-1">{{ summaryCounts.leads + summaryCounts.prospect + summaryCounts.hotProspect }}</div>
+      </div>
     </div>
 
     <!-- Search & Filter Card -->
@@ -86,12 +86,12 @@
           </thead>
           <tbody class="divide-y divide-slate-100 text-slate-700">
             <tr v-if="isLoadingTable">
-              <td colspan="6" class="text-center py-8">
+              <td colspan="7" class="text-center py-8">
                 <div class="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
               </td>
             </tr>
             <tr v-else-if="inquiries.length === 0">
-              <td colspan="6" class="text-center py-8 text-slate-400 font-medium">
+              <td colspan="7" class="text-center py-8 text-slate-400 font-medium">
                 Tidak ada data inquiry ditemukan.
               </td>
             </tr>
@@ -124,7 +124,7 @@
               </td>
               <td class="px-5 py-3.5 text-center">
                 <div class="inline-flex items-center gap-1.5" >
-                  <NuxtLink :to="`/input-rencana?id=${item.id_rencana || item.id_customer}&step=SBG`" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-all" title="Submit SBG" v-if="item.id_hslaktiv == 3">
+                  <NuxtLink :to="`/input-sbg?id=${item.id_rencana || item.id_customer}`" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-all" title="Submit SBG" v-if="item.id_hslaktiv == 3">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
 </svg>
@@ -324,78 +324,69 @@ const fetchInquiries = async () => {
   isLoadingTable.value = true
   const statusParam = selectedStatus.value === 'all' ? '' : selectedStatus.value
 
+  try {
+    const appSource = await useApi('/sumbercust')
+    const sourcesData = Array.isArray(appSource?.data) ? appSource.data : []
 
-  const  appSource  = await useApi('/sumbercust')
-  
-  const { data } = await useApi('/inquiry/filter', {
-    params: {
-      status: statusParam,
-      status_filter: statusParam,
-      search: searchQuery.value || '',
-      start: 0,
-      length: 300
-    }
-  })
-  console.log('data', data)
-  isLoadingTable.value = false
-
-  const rawList = Array.isArray(data) ? data : (data?.data || [])
-
-  if (rawList && rawList.length >= 0) {
-    console.log('rawlist', rawList);
-    let list = rawList.map((i: any) => {
-      const source = appSource.data?.find((value : any) => { return value.kd_ref_cust === i.id_sumbercust})?.nm_ref_cust || i.id_sumbercust || 'Walk In'
-      return {
-        ...i,
-        id_customer: i.id_customer || i.id_rencana,
-        nama: i.nama ,
-        hp: i.hp,
-        status: i.nama_hslaktiv,
-        source: source,
-        aktivitas: i.ket_aktivitas,
-        keterangan_barang: i.ket_rencana
+    const { data } = await useApi('/inquiry/filter', {
+      params: {
+        status: statusParam,
+        status_filter: statusParam,
+        search: searchQuery.value || '',
+        start: 0,
+        length: 300
       }
     })
 
-    // Exclude SBG / Deal status from Inquiry page list
-    list = list.filter((i: any) => {
-      const st = (i.status || i.nama_hslaktiv || '').toLowerCase()
-      const idAktiv = Number(i.id_hslaktiv)
-      return idAktiv !== 7 && !st.includes('sbg') && !st.includes('deal') && !st.includes('do')
-    })
+    const rawList = Array.isArray(data) ? data : (data?.data || [])
 
-    if (selectedSource.value !== 'all') {
-      list = list.filter((i: any) => (i.source || 'Walk In').toLowerCase().includes(selectedSource.value.toLowerCase()))
+    if (rawList && rawList.length >= 0) {
+      let list = rawList.map((i: any) => {
+        const sourceObj = sourcesData.find((value: any) => value.kd_ref_cust === i.id_sumbercust)
+        const source = sourceObj?.nm_ref_cust || i.id_sumbercust || 'Walk In'
+        const statusName = i.nama_hslaktiv || (Number(i.id_hslaktiv) === 1 ? 'Leads' : Number(i.id_hslaktiv) === 2 ? 'Prospect' : Number(i.id_hslaktiv) === 3 ? 'Hot Prospect' : Number(i.id_hslaktiv) === 7 ? 'SBG' : 'Leads')
+        return {
+          ...i,
+          id_customer: i.id_customer || i.id_rencana,
+          nama: i.nama || i.nm_customer || i.name || 'Customer',
+          hp: i.hp || i.phone || i.no_hp || '-',
+          status: statusName,
+          source: source,
+          aktivitas: i.ket_aktivitas || '-',
+          keterangan_barang: i.ket_rencana || i.keterangan || '-'
+        }
+      })
+
+      // Exclude SBG / Deal status from Inquiry page list unless SBG selected
+      if (selectedStatus.value !== 'SBG') {
+        list = list.filter((i: any) => {
+          const st = (i.status || i.nama_hslaktiv || '').toLowerCase()
+          const idAktiv = Number(i.id_hslaktiv)
+          return idAktiv !== 7 && !st.includes('sbg') && !st.includes('deal') && !st.includes('do')
+        })
+      }
+
+      if (selectedSource.value !== 'all') {
+        list = list.filter((i: any) => (i.source || 'Walk In').toLowerCase().includes(selectedSource.value.toLowerCase()))
+      }
+
+      inquiries.value = list
+
+      // Recalculate summary metrics if summaryCounts are 0
+      if (summaryCounts.leads === 0 && summaryCounts.prospect === 0 && summaryCounts.hotProspect === 0) {
+        summaryCounts.leads = rawList.filter((i: any) => Number(i.id_hslaktiv) === 1 || (i.nama_hslaktiv || '').toLowerCase().includes('lead')).length
+        summaryCounts.prospect = rawList.filter((i: any) => Number(i.id_hslaktiv) === 2 || (i.nama_hslaktiv || '').toLowerCase() === 'prospect').length
+        summaryCounts.hotProspect = rawList.filter((i: any) => Number(i.id_hslaktiv) === 3 || (i.nama_hslaktiv || '').toLowerCase().includes('hot')).length
+        summaryCounts.sbg = rawList.filter((i: any) => Number(i.id_hslaktiv) === 7 || (i.nama_hslaktiv || '').toLowerCase().includes('sbg')).length
+      }
+    } else {
+      inquiries.value = []
     }
-    inquiries.value = list
-    console.log('inquiries', inquiries.value);
-
-    // Recalculate summary metrics if count endpoint not fetched
-    console.log('inquiries', inquiries);
-    console.log('rawlist', rawList);
-    if (summaryCounts.leads === 0 && summaryCounts.prospect === 0) {
-      summaryCounts.leads = rawList.filter((i: any) => {
-        const st = (i.nama_hslaktiv || i.status || '').toLowerCase()
-        return st.includes('lead') || st === ''
-      }).length
-
-      summaryCounts.prospect = rawList.filter((i: any) => {
-        const st = (i.nama_hslaktiv || i.status || '').toLowerCase()
-        return st === 'prospect'
-      }).length
-
-      summaryCounts.hotProspect = rawList.filter((i: any) => {
-        const st = (i.nama_hslaktiv || i.status || '').toLowerCase()
-        return st.includes('hot')
-      }).length
-
-      summaryCounts.sbg = rawList.filter((i: any) => {
-        const st = (i.nama_hslaktiv || i.status || '').toLowerCase()
-        return st.includes('sbg') || st.includes('do') || st.includes('deal')
-      }).length
-    }
-  } else {
+  } catch (err) {
+    console.error('Failed to fetch inquiries:', err)
     inquiries.value = []
+  } finally {
+    isLoadingTable.value = false
   }
 }
 

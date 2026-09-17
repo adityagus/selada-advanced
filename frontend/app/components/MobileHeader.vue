@@ -31,9 +31,10 @@ defineEmits(['logout'])
   position: sticky;
   top: 0;
   z-index: 30;
-  background: linear-gradient(135deg, var(--selada-400), var(--selada-500));
+  background: linear-gradient(180deg, #0b0f17 0%, #111827 100%);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25);
   padding: 1rem 1.5rem;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 @media (max-width: 767px) {
@@ -55,12 +56,12 @@ defineEmits(['logout'])
 
 .mobile-welcome {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(229, 231, 235, 0.7);
 }
 
 .mobile-username {
   font-weight: 700;
-  color: #ffffff;
+  color: #fbbf24;
   font-size: 1rem;
 }
 
@@ -69,18 +70,19 @@ defineEmits(['logout'])
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 8px;
-  color: #ffffff;
+  color: #f87171;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: var(--transition-smooth);
   font-family: var(--font-body);
 }
 
 .mobile-logout-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(239, 68, 68, 0.3);
+  color: #ffffff;
 }
 </style>

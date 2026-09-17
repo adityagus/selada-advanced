@@ -6,7 +6,8 @@ export function useDashboardMetricsQuery(salesUserRef?: Ref<string | undefined> 
   return useQuery({
     queryKey: computed(() => ['dashboard-metrics', salesUserRef?.value || '']),
     queryFn: () => dashboardService.getMetrics(salesUserRef?.value),
-    staleTime: 1000 * 60 * 2
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    gcTime: 1000 * 60 * 10
   })
 }
 
@@ -14,6 +15,7 @@ export function useInquiryCountsQuery(salesUserRef?: Ref<string | undefined> | C
   return useQuery({
     queryKey: computed(() => ['inquiry-counts', salesUserRef?.value || '']),
     queryFn: () => dashboardService.getInquiryCounts(salesUserRef?.value),
-    staleTime: 1000 * 60 * 2
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10
   })
 }

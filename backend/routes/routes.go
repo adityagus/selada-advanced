@@ -32,6 +32,14 @@ func SetupRouter() *gin.Engine {
 		protected.POST("/rencana/input", handlers.InputRencanaHandler)
 		protected.DELETE("/rencana/:id", handlers.DeleteRencanaHandler)
 
+		// Sopiga Pro Transactions Lookup for SBG
+		protected.GET("/sopiga/transactions", handlers.SearchSopigaTransactionsHandler)
+		protected.GET("/sopiga/getsbglist", handlers.GetSbgListHandler)
+		protected.GET("/sopiga/getproduk", handlers.GetSbgProdukHandler)
+		protected.POST("/sopiga/getproduk", handlers.GetSbgProdukHandler)
+		protected.POST("/sopiga/inputdo", handlers.InputDOHandler)
+		protected.GET("/sopiga/inquiry-context", handlers.GetInquiryContextHandler)
+
 		// Catalog / Katalog
 		protected.GET("/katalog/point", handlers.GetKatalogPointHandler)
 		protected.GET("/katalog/list/:category", handlers.GetKatalogListHandler)
@@ -54,6 +62,8 @@ func SetupRouter() *gin.Engine {
 		protected.GET("/taksiran/history", handlers.GetTaksiranHistoryHandler)
 
 		// Reference & Lookup Endpoints (PHP Parity)
+		protected.GET("/customer/list", handlers.GetCustomerListHandler)
+		protected.GET("/customer/:id/inquiries", handlers.GetCustomerInquiriesHandler)
 		protected.GET("/customer/select", handlers.GetCustomerSelectHandler)
 		protected.GET("/sumbercust", handlers.GetSumberCustHandler)
 		protected.GET("/sales/list", handlers.GetSalesListHandler)

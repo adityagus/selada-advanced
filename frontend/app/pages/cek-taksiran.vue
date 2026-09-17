@@ -3,8 +3,8 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Cek Taksiran</h1>
-        <p class="text-slate-500 text-sm md:text-base">Simulasi presisi & riwayat taksiran Elektronik & Emas berdasarkan pembuat (sales).</p>
+        <h1 class="text-xl md:text-2xl font-semibold text-slate-900 tracking-tight">Cek Taksiran</h1>
+        <!-- <p class="text-slate-500 text-sm md:text-base">Simulasi presisi & riwayat taksiran Elektronik & Emas berdasarkan pembuat (sales).</p> -->
       </div>
       <div class="flex items-center gap-3">
         <!-- Main Mode Switcher: Simulasi vs History -->
@@ -12,8 +12,8 @@
           <button
             type="button"
             @click="mainMode = 'simulasi'"
-            class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer flex items-center gap-2"
-            :class="mainMode === 'simulasi' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+            class="px-4 py-2 rounded-xl text-xs md:text-sm font-normal transition-all cursor-pointer flex items-center gap-2"
+            :class="mainMode === 'simulasi' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'"
           >
             <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
             Simulasi Calculator
@@ -21,22 +21,13 @@
           <button
             type="button"
             @click="switchToHistoryMode"
-            class="px-4 py-2 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer flex items-center gap-2"
-            :class="mainMode === 'history' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'"
+            class="px-4 py-2 rounded-xl text-xs md:text-sm font-normal transition-all cursor-pointer flex items-center gap-2"
+            :class="mainMode === 'history' ? 'bg-white text-slate-900 shadow-sm font-semibold' : 'text-slate-600 hover:text-slate-900'"
           >
             <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             History Taksiran
           </button>
         </div>
-
-        <button
-          v-if="mainMode === 'simulasi'"
-          type="button"
-          @click="resetAll"
-          class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs md:text-sm font-semibold rounded-xl transition-all border border-slate-200"
-        >
-          Reset
-        </button>
       </div>
     </div>
 
@@ -47,8 +38,8 @@
         <button
           type="button"
           @click="activeTab = 'elektronik'"
-          class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-2"
-          :class="activeTab === 'elektronik' ? 'bg-white text-amber-700 shadow-sm border border-slate-200/60 font-bold' : 'text-slate-600 hover:text-slate-900'"
+          class="flex-1 py-2.5 px-2 rounded-xl text-sm font-normal transition-all cursor-pointer flex items-center justify-center gap-2"
+          :class="activeTab === 'elektronik' ? 'bg-white text-amber-700 shadow-sm border border-slate-200/60 font-semibold' : 'text-slate-600 hover:text-slate-900'"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           Elektronik
@@ -56,8 +47,8 @@
         <button
           type="button"
           @click="activeTab = 'emas'"
-          class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all cursor-pointer flex items-center justify-center gap-2"
-          :class="activeTab === 'emas' ? 'bg-white text-amber-700 shadow-sm border border-slate-200/60 font-bold' : 'text-slate-600 hover:text-slate-900'"
+          class="flex-1 py-2.5 px-2 rounded-xl text-sm font-normal transition-all cursor-pointer flex items-center justify-center gap-2"
+          :class="activeTab === 'emas' ? 'bg-white text-amber-700 shadow-sm border border-slate-200/60 font-semibold' : 'text-slate-600 hover:text-slate-900'"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           Emas
@@ -658,6 +649,7 @@
             @keyup.enter="searchElekItems"
             placeholder="Cari nama barang..."
             class="flex-1 px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-amber-500"
+            autofocus
           />
           <button @click="searchElekItems" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl text-sm cursor-pointer">
             Cari
@@ -665,10 +657,11 @@
         </div>
 
         <div class="flex-1 overflow-y-auto space-y-2 pr-1">
+          {{  elekSearchResult[0] }} test {{ searchDisabled }} 
           <div v-if="isSearchingElek" class="py-8 text-center text-slate-400 text-sm">
             Mencari data barang...
           </div>
-          <div v-else-if="elekSearchResult.length === 0" class="py-8 text-center text-slate-400 text-sm">
+          <div v-else-if="elekSearchResult.length === 0 && searchDisabled === true" class="py-8 text-center text-slate-400 text-sm">
             Tidak ada barang ditemukan. Silakan cari dengan kata kunci lain.
           </div>
           <div
@@ -701,6 +694,7 @@ const activeTab = ref<'elektronik' | 'emas'>('elektronik')
 // ==========================================
 const elekCategories = ref<any[]>([])
 const elekJenisBarang = ref('')
+const searchDisabled = ref(true)
 const elekDetailId = ref<number | string>('')
 const elekCollateralItemId = ref<number | string>('')
 const elekDetailName = ref('')
@@ -726,6 +720,8 @@ const elekResult = ref({
 })
 
 const onElekJenisChange = () => {
+  elekSearchResult.value = []
+  searchDisabled.value = true
   elekDetailId.value = ''
   elekCollateralItemId.value = ''
   elekDetailName.value = ''
@@ -752,6 +748,7 @@ const searchElekItems = async () => {
       }
     })
     elekSearchResult.value = Array.isArray(data) ? data : []
+    // searchDisabled.value = false
   } catch (e) {
     console.error('Failed to search electronic items:', e)
     elekSearchResult.value = []

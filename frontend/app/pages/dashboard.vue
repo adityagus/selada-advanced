@@ -3,24 +3,21 @@
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-800 tracking-tight">
-          Dashboard Ringkasan
+        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
+          Dashboard
         </h1>
-        <p class="text-slate-500 text-sm">
-          Selamat datang kembali, pantau performa Anda hari ini.
+        <p v-if="isReview && selectedSalesUser" class="text-amber-600 font-bold text-xs uppercase tracking-wider mt-1 flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+          Meninjau Dashboard Sales: <span class="underline">{{ activeSalesName }}</span>
         </p>
+        <!-- <p v-else class="text-slate-500 text-sm">
+          Selamat datang kembali, pantau performa Anda hari ini.
+        </p> -->
       </div>
+
       <div class="flex items-center gap-3">
-        <div v-if="isReview && salesList.length > 0" class="flex items-center gap-2">
-          <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:inline">Review
-            Sales:</label>
-          <select v-model="selectedSalesUser" @change="fetchDashboardMetrics"
-            class="px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all font-medium">
-            <option v-for="s in salesList" :key="s.username" :value="s.username">
-              {{ s.nama }} ({{ s.nm_jabatan || "Sales" }})
-            </option>
-          </select>
-        </div>
         <NuxtLink to="/inquiry"
           class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-amber-200">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -31,11 +28,40 @@
       </div>
     </div>
 
+    <!-- Review Sales Controls Card (matching screenshot style) -->
+    <div v-if="isReview && salesList.length > 0" class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+      <div class="flex items-center gap-2.5 font-bold text-xs text-amber-600 uppercase tracking-wider">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        <span>PILIH SALES PERSON:</span>
+      </div>
+      <div class="flex items-center gap-3 flex-wrap">
+        <select v-model="selectedSalesUser"
+          class="px-4 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all min-w-[240px]">
+          <option v-for="s in salesList" :key="s.username" :value="s.username">
+            {{ s.nama }} - {{ s.nm_jabatan || "SALES" }}
+          </option>
+        </select>
+        <button @click="handleReviewSales" :disabled="isFetching"
+          class="inline-flex items-center gap-2 px-5 py-2 bg-[#d97706] hover:bg-[#b45309] active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-amber-200 transition-all cursor-pointer disabled:opacity-50">
+          <svg class="w-4 h-4" :class="{ 'animate-spin': isFetching }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <span>Ganti Sales</span>
+        </button>
+        <button v-if="selectedSalesUser" @click="resetReview" class="text-xs text-slate-500 hover:text-slate-800 font-semibold underline cursor-pointer ml-1">
+          Reset
+        </button>
+      </div>
+    </div>
+
     <!-- HERO & LEADERBOARD ROW -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Hero Card (2 cols) -->
       <div
-        class="lg:col-span-2 bg-[#1e293b] text-white rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden flex flex-col justify-between min-h-[220px]">
+        class="lg:col-span-2 bg-[#1e293b] text-white rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden flex flex-col min-h-[220px] justify-center">
         <!-- Background Decorative Glow -->
         <div class="absolute -top-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none">
         </div>
@@ -59,20 +85,9 @@
                 : 'bg-white/10 text-slate-300 border-white/20 hover:bg-white/20'
                 " class="p-1.5 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer"
                 :title="isPrivate ? 'Tampilkan Nilai' : 'Sembunyikan Nilai'">
-                <!-- Eye off icon when private -->
-                <svg v-if="isPrivate" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                  data-lucide="eye-off" aria-hidden="true" id="eyeIcon" class="lucide lucide-eye-off w-5 h-5">
-                  <path
-                    d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49">
-                  </path>
-                  <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"></path>
-                  <path
-                    d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143">
-                  </path>
-                  <path d="m2 2 20 20"></path>
+                <svg v-if="isPrivate" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M3 3l18 18"/>
                 </svg>
-                <!-- Eye icon when visible -->
                 <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -85,7 +100,7 @@
             <!-- Incentive Display -->
             <div class="flex items-baseline gap-2">
               <span v-if="!isPrivate" class="text-2xl text-slate-400 font-light">Rp</span>
-              <h2 class="text-4xl md:text-5xl font-normal tracking-tight text-white select-none">
+              <h2 class="text-4xl md:text-5xl font-bold tracking-tight text-white select-none">
                 <template v-if="isPrivate">******</template>
                 <template v-else>{{ formatNum(estIncentive) }}</template>
               </h2>
@@ -94,20 +109,20 @@
             <!-- Qualification Status Badge -->
             <div class="pt-1">
               <span v-if="isPrivate" class="text-sm font-normal text-slate-400">*****</span>
-              <div v-else class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-normal" :class="isQualified
+              <div v-else class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium" :class="isQualified
                 ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-                : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                : 'bg-slate-800/80 border border-slate-700 text-slate-300'
                 ">
-                <svg v-if="isQualified" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-if="isQualified" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-else class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                <span>Status: {{ isQualified ? "Qualified" : "Dalam Proses" }} |
-                  Grade: {{ userGrade }} (Rate: {{ appliedRate }}%)</span>
+                <span>Status: {{ isQualified ? "Qualified" : "Potensi Terkunci" }} |
+                  Grade: {{ userGrade }} (Rate: {{ isQualified ? appliedRate : (appliedRate || 25) }}%)</span>
               </div>
             </div>
           </div>
@@ -125,9 +140,7 @@
             </div>
             <div class="flex justify-between items-center">
               <span class="text-xs text-emerald-400 font-semibold">{{ targetProgressPct }}%</span>
-              <span class="text-[11px] text-slate-400">{{
-                targetDescription
-              }}</span>
+              <span class="text-[11px] text-slate-400">{{ targetDescription }}</span>
             </div>
             <div class="pt-1 border-t border-white/5 flex items-center gap-2 text-xs text-slate-300">
               <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,7 +154,7 @@
 
       <!-- Leaderboard / Ranking Card (1 col) -->
       <div
-        class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center relative group overflow-hidden">
+        class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col items-center justify-between text-center relative group overflow-hidden">
         <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-500">
           <svg class="w-24 h-24 text-slate-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -149,187 +162,182 @@
           </svg>
         </div>
 
-        <div
-          class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mb-3 shadow-inner border border-amber-100">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        <div>
+          <div
+            class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-3 shadow-inner border border-amber-100">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+          </div>
+          <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+            Posisi Leaderboard
+          </h3>
+          <div class="text-3xl font-bold text-slate-800 tracking-tight mb-2">
+            #{{ leaderboard.rank }}
+            <span class="text-sm font-normal text-slate-500">dari {{ leaderboard.total_participants }} Sales</span>
+          </div>
+          <p class="text-xs text-slate-500 max-w-[240px] leading-relaxed mx-auto">
+            <template v-if="leaderboard.rank === 1">
+              <strong class="text-emerald-600 font-semibold">Luar biasa!</strong>
+              Anda memimpin peringkat #1!
+            </template>
+            <template v-else>
+              Butuh
+              <strong class="text-emerald-600 font-semibold">Rp {{ formatNum(leaderboard.gap_to_next) }}</strong>
+              omzet lagi untuk menyalip ke peringkat #{{ leaderboard.rank - 1 }}.
+            </template>
+          </p>
+        </div>
+
+        <button @click="showLeaderboardModal = true"
+          class="mt-4 px-4 py-2 text-xs font-semibold bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 w-full cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
           </svg>
-        </div>
-        <h3 class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
-          Posisi Leaderboard
-        </h3>
-        <div class="text-3xl font-bold text-slate-800 tracking-tight mb-2">
-          #{{ leaderboard.rank }}
-          <span class="text-sm font-normal text-slate-500">dari {{ leaderboard.total_participants }} Sales</span>
-        </div>
-        <p class="text-xs text-slate-500 max-w-[240px] leading-relaxed">
-          <template v-if="leaderboard.rank === 1">
-            <strong class="text-emerald-600 font-semibold">Luar biasa!</strong>
-            Anda memimpin peringkat #1!
-          </template>
-          <template v-else>
-            Butuh
-            <strong class="text-emerald-600 font-semibold">Rp {{ formatNum(leaderboard.gap_to_next) }}</strong>
-            omzet lagi untuk menyalip ke peringkat #{{ leaderboard.rank - 1 }}.
-          </template>
-        </p>
+          <span>Lihat Leaderboard Lengkap</span>
+        </button>
       </div>
     </div>
 
-    <!-- METRICS ROW -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <!-- Card 1: Emas -->
-      <div
-        class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all border-l-4 border-l-amber-500 flex flex-col justify-between">
+    <!-- METRICS ROW (Matching Shopeers Stat Cards style) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <!-- Card 1: Gadai Emas -->
+      <div class="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
         <div>
-          <div class="flex justify-between items-start mb-3">
-            <div class="p-2.5 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shadow-inner">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="font-bold text-slate-800 text-sm md:text-base tracking-tight">
+              Emas
+            </h4>
+            <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <span
-              class="text-[10px] font-semibold text-amber-700 bg-amber-100/80 px-2.5 py-1 rounded-full uppercase tracking-wider">EMAS</span>
           </div>
-          <h4 class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
-            Pencairan Gadai Emas
-          </h4>
-          <div class="text-2xl font-bold text-slate-800 mb-1 tracking-tight">
-            Rp {{ formatNum(stats.emas) }}
-          </div>
-          <div class="text-xs text-slate-500 font-medium mb-3">
-            Total Gramasi:
-            <strong class="text-amber-600 font-semibold">{{ gramasiEmas }}g</strong>
-            / {{ emasCard.target_emas_g }}g
+
+          <div class="flex items-baseline justify-between gap-2 mb-2 flex-wrap">
+            <span class="text-xl lg:text-2xl font-semibold text-slate-900 tracking-tight">
+              Rp {{ formatNum(stats.emas) }}
+            </span>
+            <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200/60 font-normal text-xs px-2.5 py-1 rounded-full">
+              <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+              </svg>
+              {{ gramasiEmas }}g
+            </span>
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 space-y-2">
-          <div class="flex items-center justify-between text-[11px]">
-            <span class="font-medium flex items-center gap-1" :class="emasCard.is_emas_bonus_done
-              ? 'text-emerald-600'
-              : 'text-amber-600'
-              ">
-              {{ emasCard.bonus_emas_title }}
-            </span>
-            <span class="font-semibold text-slate-600">{{ emasCard.pct_emas }}%</span>
+        <div class="pt-3 border-t border-slate-100 space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-medium text-slate-500">Target {{ emasCard.target_emas_g }}g</span>
+            <span class="font-bold text-amber-600">{{ emasCard.pct_emas }}%</span>
           </div>
           <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-            <div class="h-full rounded-full transition-all duration-1000" :class="emasCard.is_emas_bonus_done
-              ? 'bg-emerald-500'
-              : 'bg-gradient-to-r from-amber-400 to-amber-500'
-              " :style="{ width: `${emasCard.pct_emas}%` }"></div>
+            <div class="h-full rounded-full transition-all duration-1000" :class="emasCard.is_emas_bonus_done ? 'bg-emerald-500' : 'bg-amber-500'" :style="{ width: `${emasCard.pct_emas}%` }"></div>
           </div>
-          <p class="text-[11px] text-slate-400 font-medium" v-html="emasCard.sub_emas_text"></p>
+          <p class="text-[11px] text-slate-400 font-medium truncate">{{ emasCard.bonus_emas_title }}</p>
         </div>
       </div>
 
-      <!-- Card 2: Non Emas / Elektronik -->
-      <div
-        class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all border-l-4 border-l-emerald-500 flex flex-col justify-between">
+      <!-- Card 2: Gadai Non Emas / Elektronik -->
+      <div class="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
         <div>
-          <div class="flex justify-between items-start mb-3">
-            <div class="p-2.5 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center shadow-inner">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="font-bold text-slate-800 text-sm md:text-base tracking-tight">
+              Elektronik
+            </h4>
+            <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <span
-              class="text-[10px] font-semibold text-sky-700 bg-sky-100/80 px-2.5 py-1 rounded-full uppercase tracking-wider">NON
-              EMAS</span>
           </div>
-          <h4 class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
-            Pencairan Gadai Non Emas
-          </h4>
-          <div class="text-2xl font-bold text-slate-800 mb-1 tracking-tight">
-            Rp {{ formatNum(stats.nonemas) }}
-          </div>
-          <div class="text-xs text-slate-500 font-medium mb-3">
-            Target UP:
-            <strong class="text-sky-600 font-semibold">50 Jt</strong> (Bonus 500
-            Rb)
+
+          <div class="flex items-baseline justify-between gap-2 mb-2 flex-wrap">
+            <span class="text-xl lg:text-2xl font-bold text-slate-900 tracking-tight">
+              Rp {{ formatNum(stats.nonemas) }}
+            </span>
+            <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200/60 font-medium text-xs px-2.5 py-1 rounded-full">
+              Target 50M
+            </span>
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-100 space-y-2">
-          <div class="flex items-center justify-between text-[11px]">
-            <span class="font-medium flex items-center gap-1" :class="nonEmasCard.is_nonemas_bonus_done
-              ? 'text-emerald-600'
-              : 'text-sky-600'
-              ">
-              {{ nonEmasCard.bonus_title }}
-            </span>
-            <span class="font-semibold text-slate-600">{{ nonEmasCard.pct_nonemas }}%</span>
+        <div class="pt-3 border-t border-slate-100 space-y-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-medium text-slate-500">Pencapaian UP</span>
+            <span class="font-bold text-amber-600">{{ nonEmasCard.pct_nonemas }}%</span>
           </div>
           <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-            <div class="h-full rounded-full transition-all duration-1000" :class="nonEmasCard.is_nonemas_bonus_done
-              ? 'bg-emerald-500'
-              : 'bg-gradient-to-r from-sky-400 to-sky-500'
-              " :style="{ width: `${nonEmasCard.pct_nonemas}%` }"></div>
+            <div class="h-full rounded-full transition-all duration-1000" :class="nonEmasCard.is_nonemas_bonus_done ? 'bg-emerald-500' : 'bg-amber-500'" :style="{ width: `${nonEmasCard.pct_nonemas}%` }"></div>
           </div>
-          <p class="text-[11px] text-slate-400 font-medium" v-html="nonEmasCard.sub_text"></p>
+          <p class="text-[11px] text-slate-400 font-medium truncate">{{ nonEmasCard.bonus_title }}</p>
         </div>
       </div>
 
-      <!-- Card 3: Nasabah Baru (New CIF) -->
-      <div
-        class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all border-l-4 border-l-blue-500 flex flex-col justify-between">
+      <!-- Card 3: New CIF (Nasabah Baru) - Gold & Black Style -->
+      <div class="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
         <div>
-          <div class="flex justify-between items-start mb-4">
-            <div class="p-2.5 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shadow-inner">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="font-bold text-slate-800 text-sm md:text-base tracking-tight">
+              New CIF (Nasabah Baru)
+            </h4>
+            <div class="w-10 h-10 rounded-2xl bg-slate-900 text-amber-400 border border-slate-800 flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
             </div>
-            <span
-              class="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wider">Nasabah</span>
           </div>
-          <h4 class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
-            New CIF (Nasabah Baru)
-          </h4>
-          <div class="text-2xl font-bold text-slate-800 mb-1 tracking-tight">
-            {{ stats.newcif }}
+
+          <div class="flex items-baseline justify-between gap-2 mb-2">
+            <span class="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+              {{ formatNum(stats.newcif) }}
+            </span>
+            <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200/60 font-bold text-xs px-2.5 py-1 rounded-full">
+              <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+              </svg>
+              Active
+            </span>
           </div>
         </div>
-        <div class="pt-3 border-t border-slate-100 text-[11px] font-medium text-blue-600 flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-          CIF Bulan Lalu: {{ lastMonthCif }}
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-medium">
+          <span>vs. <span class="font-semibold text-slate-500"> {{ formatNum(lastMonthCif) }} Bulan Lalu</span></span>
         </div>
       </div>
 
       <!-- Card 4: New Leads -->
-      <div
-        class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-all border-l-4 border-l-rose-500 flex flex-col justify-between">
+      <div class="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
         <div>
-          <div class="flex justify-between items-start mb-4">
-            <div class="p-2.5 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center shadow-inner">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="font-bold text-slate-800 text-sm md:text-base tracking-tight">
+              New Leads
+            </h4>
+            <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200/60 flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <span
-              class="text-[10px] font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full uppercase tracking-wider">Leads</span>
           </div>
-          <h4 class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
-            New Leads
-          </h4>
-          <div class="text-2xl font-bold text-slate-800 mb-1 tracking-tight">
-            {{ monthlyFunnel.leads }}
+
+          <div class="flex items-baseline justify-between gap-2 mb-2">
+            <span class="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+              {{ formatNum(monthlyFunnel.leads) }}
+            </span>
+            <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200/60 font-bold text-xs px-2.5 py-1 rounded-full">
+              <svg class="w-3 h-3 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+              </svg>
+              Leads
+            </span>
           </div>
         </div>
-        <div class="pt-3 border-t border-slate-100 text-[11px] font-medium text-rose-600 flex items-center gap-1.5">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          Leads Bulan Lalu: {{ lastMonthLeads }}
+
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400 font-medium">
+          <span>vs. <span class="font-semibold text-slate-500"> {{ formatNum(lastMonthLeads) }} Bulan Lalu</span></span>
         </div>
       </div>
     </div>
@@ -347,7 +355,7 @@
           <h3 class="font-semibold text-slate-800 text-lg">Sales Funnel</h3>
         </div>
         <button @click="refetch()" :disabled="isFetching"
-          class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all disabled:opacity-50">
+          class="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all disabled:opacity-50 cursor-pointer">
           <svg class="w-3.5 h-3.5" :class="{ 'animate-spin': isFetching }" fill="none" stroke="currentColor"
             viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -519,7 +527,7 @@
                 </div>
               </div>
             </div>
-            <div class="sales-percent flex flex-col justify-around mt-0!">
+            <div class="sales-percent flex flex-col justify-around">
               <div
                 class="w-16 text-right font-semibold text-xs text-red-500 flex items-center justify-end gap-0.5 whitespace-nowrap">
                 {{ calcDrop(monthlyFunnel.prospect, monthlyFunnel.leads) }}
@@ -548,7 +556,7 @@
             <h3 class="font-semibold text-slate-800 text-lg">
               Grafik Pacing Harian (Booking Selada vs Sopiga Pro)
             </h3>
-            <p class="text-xs tdext-slate-500">
+            <p class="text-xs text-slate-500">
               Monitoring realisasi omzet harian bulan ini
             </p>
           </div>
@@ -589,8 +597,7 @@
               </div>
               <div class="flex items-center gap-1.5 text-sky-400 font-medium">
                 <span class="w-2 h-2 rounded-full bg-sky-400"></span>
-                <span>Sopiga Pro: Rp
-                  {{ formatNum(getPacingVal(d, "sopiga")) }}</span>
+                <span>Sopiga Pro: Rp {{ formatNum(getPacingVal(d, "sopiga")) }}</span>
               </div>
             </div>
 
@@ -639,27 +646,38 @@
 
         <div class="flex-1 space-y-3 overflow-y-auto max-h-[350px] pr-1">
           <div v-for="(feed, idx) in liveFeeds" :key="idx"
-            class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between group hover:bg-white hover:shadow-md transition-all">
+            class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between group hover:bg-white hover:shadow-md transition-all">
             <div class="flex items-center gap-3">
-              <div
-                class="w-9 h-9 rounded-full flex items-center justify-center shadow-sm border text-[10px] font-semibold uppercase tracking-wider"
-                :class="feed.isBonus
-                  ? 'bg-amber-50 text-amber-600 border-amber-200'
-                  : 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                  ">
-                <span>{{ feed.iconText }}</span>
+              <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-xs border transition-all"
+                :class="getFeedBadgeClass(feed)">
+                <!-- Gold / Emas SVG Icon -->
+                <svg v-if="getFeedCategory(feed) === 'emas'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <!-- Non-Emas / Laptop SVG Icon -->
+                <svg v-else-if="getFeedCategory(feed) === 'nonemas'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <!-- CIF / User SVG Icon -->
+                <svg v-else-if="getFeedCategory(feed) === 'cif'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                <!-- Bonus / Star SVG Icon -->
+                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                </svg>
               </div>
               <div>
                 <p class="text-xs font-semibold text-slate-800">
                   {{ feed.type }}
                 </p>
-                <p class="text-[10px] text-slate-500 uppercase tracking-tight">
+                <p class="text-[10px] text-slate-500 uppercase tracking-tight font-medium">
                   {{ feed.code }} • {{ feed.customer }}
                 </p>
               </div>
             </div>
             <div class="text-right">
-              <p class="text-xs font-semibold text-emerald-600">
+              <p class="text-xs font-bold text-emerald-600">
                 +Rp {{ formatNum(feed.amount) }}
               </p>
               <p class="text-[9px] text-amber-600 font-medium">
@@ -670,15 +688,92 @@
         </div>
       </div>
     </div>
+
+    <!-- FULL LEADERBOARD MODAL -->
+    <div v-if="showLeaderboardModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in duration-200">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-lg shadow-inner border border-amber-200">
+              <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="font-bold text-slate-800 text-lg">Top Sales Leaderboard</h3>
+              <p class="text-xs text-slate-500">Peringkat performa pencairan omzet sales bulan ini</p>
+            </div>
+          </div>
+          <button @click="showLeaderboardModal = false" class="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-all cursor-pointer">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="overflow-x-auto max-h-[400px]">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider sticky top-0">
+              <tr>
+                <th class="py-3 px-4 rounded-l-xl">Rank</th>
+                <th class="py-3 px-4">Nama Sales</th>
+                <th class="py-3 px-4 text-right">Gadai Emas</th>
+                <th class="py-3 px-4 text-right">Non Emas</th>
+                <th class="py-3 px-4 text-right">Total Omzet</th>
+                <th class="py-3 px-4 text-right rounded-r-xl">Poin</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 font-medium">
+              <tr v-for="p in leaderboard.top_performers" :key="p.rank"
+                :class="p.name === salesName || (selectedSalesUser && p.name.includes(selectedSalesUser)) ? 'bg-amber-50/70 text-amber-900 font-bold' : 'hover:bg-slate-50'">
+                <td class="py-3 px-4">
+                  <span v-if="p.rank === 1" class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 rounded-lg font-bold text-xs">
+                    <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                    </svg>
+                    #1
+                  </span>
+                  <span v-else-if="p.rank === 2" class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-slate-200 text-slate-800 border border-slate-300 rounded-lg font-bold text-xs">
+                    #2
+                  </span>
+                  <span v-else-if="p.rank === 3" class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-orange-100 text-orange-800 border border-orange-200 rounded-lg font-bold text-xs">
+                    #3
+                  </span>
+                  <span v-else class="text-slate-600 font-semibold px-2">#{{ p.rank }}</span>
+                </td>
+                <td class="py-3 px-4 text-slate-800 font-semibold">{{ p.name }}</td>
+                <td class="py-3 px-4 text-right text-slate-600">Rp {{ formatNum(p.total_emas) }}</td>
+                <td class="py-3 px-4 text-right text-slate-600">Rp {{ formatNum(p.total_non_emas) }}</td>
+                <td class="py-3 px-4 text-right font-bold text-slate-900">Rp {{ formatNum(p.total_omzet) }}</td>
+                <td class="py-3 px-4 text-right text-amber-600 font-bold">{{ p.points }} Poin</td>
+              </tr>
+              <tr v-if="!leaderboard.top_performers || leaderboard.top_performers.length === 0">
+                <td colspan="6" class="py-8 text-center text-slate-400 font-normal">Belum ada data leaderboard bulan ini</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-end">
+          <button @click="showLeaderboardModal = false" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer">
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from "vue";
-import { useApi } from "~/composables/useApi";
+import { ref, reactive, computed, watch } from "vue";
+import { useDashboardMetricsQuery } from "~/composables/useDashboardQueries";
+import type { LeaderboardInfo } from "~/types/dashboard";
 
 // Privacy toggle state (default censored)
 const isPrivate = ref(true);
+
+// Modal state
+const showLeaderboardModal = ref(false);
 
 // Stats from backend API
 const stats = ref({
@@ -707,7 +802,7 @@ const monthlyFunnel = reactive({
   sbg: 0,
 });
 
-// Extended state matching v_dashboard.php
+// Extended state matching legacy Selada Incentive Calculator
 const estIncentive = ref(0);
 const isQualified = ref(false);
 const userGrade = ref("JUNIOR");
@@ -719,10 +814,11 @@ const targetDescription = ref("Mengejar Qualified 1 (Target: 25 Poin)");
 const motivationText = ref("Semangat! Kejar Poin untuk Bonus Insentif!");
 
 const salesName = ref("Sales");
-const leaderboard = ref({
+const leaderboard = ref<LeaderboardInfo>({
   rank: 1,
   total_participants: 1,
   gap_to_next: 0,
+  top_performers: [],
 });
 
 const gramasiEmas = ref(0);
@@ -786,7 +882,7 @@ const getPacingHeight = (day: number, type: "selada" | "sopiga") => {
 };
 
 // Live feed events
-const liveFeeds = ref([
+const liveFeeds = ref<any[]>([
   {
     type: "Gadai Emas",
     code: "TRX-8412",
@@ -831,20 +927,14 @@ const formatNum = (val: number) => {
   return new Intl.NumberFormat("id-ID").format(val);
 };
 
-const calcDrop  = (curr: number, prev: number) => {
+const calcDrop = (curr: number, prev: number) => {
   if (!prev || prev <= 0) return "0 %";
   if (curr >= prev) return "0 %";
   const drop = Math.round(100 - (((prev - curr) / prev) * 100));
   return `${drop} %`;
 };
 
-const calcConv = (curr: number, prev: number) => {
-  if (!prev || prev <= 0) return 0;
-  return Math.min(100, Math.round((curr / prev) * 100));
-};
-
 const getFunnelWidth = (stage: number, count?: number, base?: number) => {
-  // Guaranteed visual tapering bands per stage (1: 100%, 2: 75-85%, 3: 55-65%, 4: 35-45%)
   const stageBases: Record<
     number,
     { min: number; default: number; max: number }
@@ -865,25 +955,54 @@ const getFunnelWidth = (stage: number, count?: number, base?: number) => {
   return `${Math.round(calculatedWidth)}%`;
 };
 
-const getWidth = (count: number, base: number) => {
-  if (!base || count > base) return "100%";
-  return `${Math.max(25, (count / base) * 100)}%`;
-};
-
-const rounded = (before: number, after: number) => {
-  if (!after) return "0";
-  if (after > before) return "rounded-b-md";
-  if (before === after) return "";
-  // return `${Math.max(25, (before / after) * 100)}%`
-};
-
 // TanStack Query integration
 const {
   data: metricsData,
-  isPending,
   isFetching,
   refetch,
 } = useDashboardMetricsQuery(selectedSalesUser);
+
+const handleReviewSales = () => {
+  refetch();
+};
+
+const resetReview = () => {
+  selectedSalesUser.value = "";
+  refetch();
+};
+
+const activeSalesName = computed(() => {
+  if (!selectedSalesUser.value) return salesName.value;
+  const targetUser = selectedSalesUser.value.toLowerCase().trim();
+  const s = salesList.value.find(
+    (item) => item.username && item.username.toLowerCase().trim() === targetUser
+  );
+  if (!s) return selectedSalesUser.value.toUpperCase();
+  return s.nm_jabatan ? `${s.nama} (${s.nm_jabatan})` : s.nama;
+});
+
+const getFeedCategory = (feed: any) => {
+  if (feed.isBonus || feed.is_bonus || (feed.type && feed.type.toLowerCase().includes('bonus'))) {
+    return 'bonus';
+  }
+  const typeStr = (feed.type || '').toLowerCase();
+  const iconStr = (feed.iconText || '').toLowerCase();
+  if (typeStr.includes('cif') || typeStr.includes('nasabah') || iconStr === 'cif') {
+    return 'cif';
+  }
+  if (typeStr.includes('elektronik') || typeStr.includes('laptop') || typeStr.includes('hp') || iconStr === 'el' || typeStr.includes('non emas')) {
+    return 'nonemas';
+  }
+  return 'emas';
+};
+
+const getFeedBadgeClass = (feed: any) => {
+  const cat = getFeedCategory(feed);
+  if (cat === 'bonus') return 'bg-amber-50 text-amber-600 border-amber-200/80';
+  if (cat === 'cif') return 'bg-blue-50 text-blue-600 border-blue-200/80';
+  if (cat === 'nonemas') return 'bg-sky-50 text-sky-600 border-sky-200/80';
+  return 'bg-emerald-50 text-emerald-600 border-emerald-200/80';
+};
 
 // Watch and synchronize TanStack Query data into reactive refs
 watch(
@@ -970,8 +1089,21 @@ watch(
 );
 </script>
 
-<style>
+<style scoped>
 * {
   font-family: "Poppins", sans-serif;
+}
+
+.sales-funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sales-percent {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding-left: 0.5rem;
 }
 </style>

@@ -1,39 +1,38 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+@import '@fontsource/poppins/700.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ========================================
-   SELADA V2 - Light Orange Theme
-   Design System & Global Styles
-   ======================================== */
-
-/* --- Design Tokens & Variables --- */
 :root {
-  --font-body: 'Poppins', sans-serif;
+  --font-body: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* Selada Orange Brand Palette */
-  --selada-50: #fef3c7;
-  --selada-100: #fde68a;
-  --selada-200: #fcd34d;
-  --selada-300: #fbbf24;
-  --selada-400: #f59e0b;
-  --selada-500: #d97706;
-  --selada-600: #b45309;
-  --selada-700: #92400e;
-  --selada-800: #78350f;
-  --selada-900: #451a03;
+  /* Gold & Black Luxury Brand Palette */
+  --gold-50: #fffbeb;
+  --gold-100: #fef3c7;
+  --gold-200: #fde68a;
+  --gold-300: #fcd34d;
+  --gold-400: #fbbf24;
+  --gold-500: #f59e0b;
+  --gold-600: #d97706;
+  --gold-700: #b45309;
+  --gold-800: #92400e;
+  --gold-900: #78350f;
 
-  /* Light Theme Colors */
+  /* Light Gold Theme Colors */
   --bg-primary: #f3f4f6;
   --bg-card: #ffffff;
-  --bg-sidebar: linear-gradient(180deg, #f59e0b, #d97706);
+  --bg-sidebar: #ffffff;
+  --bg-header: rgba(255, 255, 255, 0.9);
 
-  --text-main: #1f2937;
-  --text-muted: #6b7280;
-  --text-light: #9ca3af;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
 
-  --border-color: #e5e7eb;
+  --border-color: #e2e8f0;
   --border-focus: #f59e0b;
 
   --color-success: #10b981;
@@ -44,14 +43,36 @@
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-orange: 0 4px 14px -3px rgba(245, 158, 11, 0.35);
+  --shadow-gold: 0 4px 20px -2px rgba(217, 119, 6, 0.25);
+
+  /* Selada Brand Colors & Shadows */
+  --selada-400: #fbbf24;
+  --selada-500: #f59e0b;
+  --selada-600: #d97706;
+  --shadow-orange: 0 4px 20px -2px rgba(245, 158, 11, 0.35);
 
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Sidebar dimensions */
   --sidebar-expanded: 256px;
   --sidebar-collapsed: 80px;
 }
+
+.dark {
+  --bg-primary: #090d16;
+  --bg-card: #111827;
+  --bg-sidebar: #0f172a;
+  --bg-header: rgba(15, 23, 42, 0.9);
+
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-light: #64748b;
+
+  --border-color: #1e293b;
+  --border-focus: #fbbf24;
+
+  --shadow-gold: 0 4px 25px -2px rgba(251, 191, 36, 0.3);
+}
+
 
 /* --- Base Rules --- */
 * {

@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: false },
 
   devServer: {
     host: '0.0.0.0',
@@ -19,7 +19,7 @@ export default defineNuxtConfig({
   // Public runtime configuration variables (API endpoints)
   runtimeConfig: {
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://10.10.10.8:3000/api'
+      apiBase: process.env.NUXT_PUBLIC_API_BASE
     }
   },
 
@@ -32,12 +32,20 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'Aplikasi Manajemen Target, Katalog Motor, dan Estimasi Taksiran Gadai Selada V2.' }
       ],
-      link: [
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: 'anonymous' },
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap' }
-      ]
+      link: []
     }
+  },
+
+  vite: {
+    build: {
+      cssMinify: true,
+      minify: 'esbuild',
+      chunkSizeWarningLimit: 1000
+    }
+  },
+
+  nitro: {
+    compressPublicAssets: true
   },
 
   modules: ['@nuxt/image', '@nuxtjs/tailwindcss']
