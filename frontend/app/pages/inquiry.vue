@@ -8,7 +8,7 @@
       </div>
       <div class="flex items-center gap-3">
         <button @click="openModal = true" class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-amber-200 cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <AppIcon name="plus" class="w-4 h-4" />
           Add Leads Baru
         </button>
       </div>
@@ -46,7 +46,7 @@
             placeholder="Ketik nama atau nomor handphone..."
             class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all"
           />
-          <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <AppIcon name="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
         </div>
       </div>
 
@@ -87,7 +87,7 @@
           <tbody class="divide-y divide-slate-100 text-slate-700">
             <tr v-if="isLoadingTable">
               <td colspan="7" class="text-center py-8">
-                <div class="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <AppIcon name="loader" class="w-6 h-6  text-amber-500   animate-spin mx-auto" />
               </td>
             </tr>
             <tr v-else-if="inquiries.length === 0">
@@ -96,7 +96,7 @@
               </td>
             </tr>
             <!-- <pre>{{ inquiries }}</pre> -->
-            <tr v-for="item in inquiries" :key="item.id_rencana" class="hover:bg-amber-50/30 transition-all">
+            <tr v-for="item in inquiries" :key="item.id_rencana" v-show="!isLoadingTable" class="hover:bg-amber-50/30 transition-all">
               <td class="px-5 py-3.5 whitespace-nowrap text-slate-500">{{ formatDate(item.tgl_rencana) }}</td>
               <td class="px-5 py-3.5 font-semibold text-slate-800">
                 {{ item.nama }}
@@ -107,8 +107,8 @@
                   {{ item.source }}
                 </span>
               </td>
-              <td class="px-5 py-3.5 flex justify-center">
-                <span class="inline-flex items-center px-5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide" :class="getStatusBadgeClass(item.status)">
+              <td class="px-5 py-3.5 text-center">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider" :class="getStatusBadgeClass(item.status)">
                   {{ item.status }}
                 </span>
               </td>
@@ -119,24 +119,22 @@
               </td>
               <td class="px-5 py-3.5">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide">
-                  {{ item.keterangan_barang }}
+                  {{ item.keterangan_barang || '-' }}
                 </span>
               </td>
               <td class="px-5 py-3.5 text-center">
                 <div class="inline-flex items-center gap-1.5" >
                   <NuxtLink :to="`/input-sbg?id=${item.id_rencana || item.id_customer}`" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-all" title="Submit SBG" v-if="item.id_hslaktiv == 3">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-</svg>
+                    <AppIcon name="check-circle" class="w-4 h-4" />
                   </NuxtLink>
                   <NuxtLink :to="`/input-rencana?id=${item.id_rencana || item.id_customer}`" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg border border-amber-200 transition-all" title="Buka Halaman Progress & Form SBG" v-if="item.id_hslaktiv != 3">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <AppIcon name="edit" class="w-4 h-4" />
                   </NuxtLink>
                   <button @click="showDetail(item)" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 transition-all" title="Detail">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <AppIcon name="eye" class="w-4 h-4" />
                   </button>
                   <button @click="handleDelete(item.id_rencana)" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 transition-all" title="Hapus">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    <AppIcon name="trash" class="w-4 h-4" />
                   </button>
                 </div>
               </td>
@@ -147,115 +145,301 @@
     </div>
 
     <!-- MODAL: BUAT RENCANA LEADS BARU -->
-    <div v-if="openModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="font-semibold text-slate-800 text-base">Buat Rencana Leads Baru</h3>
-          <button @click="closeFormModal" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
+    <ClientOnly>
+      <Teleport to="body">
+        <div v-if="openModal" class="fixed inset-0 w-screen h-screen min-h-screen top-0 left-0 right-0 bottom-0 z-[9999] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 !mt-0 overflow-y-auto">
+          <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto my-auto">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 class="font-semibold text-slate-800 text-base">Buat Rencana Leads Baru</h3>
+              <button @click="closeFormModal" class="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><AppIcon name="close" class="w-4 h-4" /></button>
+            </div>
+
+            <form @submit.prevent="handleSubmitRencana" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tipe Customer</label>
+                <div class="grid grid-cols-2 gap-3">
+                  <label class="flex items-center gap-2 p-3 border rounded-xl cursor-pointer transition-all" :class="form.cust === 'Baru' ? 'border-amber-500 bg-amber-50/50 text-amber-900 font-semibold' : 'border-slate-200 text-slate-600'">
+                    <input type="radio" v-model="form.cust" value="Baru" class="text-amber-500 focus:ring-amber-400" />
+                    <span class="text-xs">Customer Baru</span>
+                  </label>
+                  <label class="flex items-center gap-2 p-3 border rounded-xl cursor-pointer transition-all" :class="form.cust === 'Lama' ? 'border-amber-500 bg-amber-50/50 text-amber-900 font-semibold' : 'border-slate-200 text-slate-600'">
+                    <input type="radio" v-model="form.cust" value="Lama" class="text-amber-500 focus:ring-amber-400" />
+                    <span class="text-xs">Pelanggan Lama</span>
+                  </label>
+                </div>
+              </div>
+
+              <template v-if="form.cust === 'Baru'">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nama Lengkap</label>
+                  <input v-model="form.nm" type="text" placeholder="Masukkan nama lengkap customer" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" required />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">No. Handphone / WA</label>
+                  <input v-model="form.hp" type="text" placeholder="08xxxxxxxxxx" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" required />
+                </div>
+              </template>
+
+              <template v-else>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pilih Customer Existing</label>
+                  <select v-model="form.custlama" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" required>
+                    <option value="">- Pilih Customer -</option>
+                    <option v-for="c in existingCustomers" :key="c.id_customer" :value="c.id_customer">
+                      {{ c.nama }} ({{ c.hp }})
+                    </option>
+                  </select>
+                </div>
+              </template>
+              <!-- 3 Inputan Vertical: SOA, Aktifitas, Jenis Aplikasi -->
+              <div class="space-y-4 pt-1">
+                <!-- Input 1: SOA -->
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    SOA <span class="text-rose-500">*</span>
+                  </label>
+                  <select v-model="form.soa" @change="onSoaChange" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all" required>
+                    <option value="">- Pilih SOA -</option>
+                    <option v-for="soaOpt in soaList" :key="soaOpt" :value="soaOpt">{{ soaOpt }}</option>
+                  </select>
+                </div>
+
+                <!-- Input 2: Aktifitas -->
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    Aktifitas <span class="text-rose-500">*</span>
+                  </label>
+                  <select v-model="form.aktifitas" :disabled="!form.soa" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all disabled:bg-slate-100 disabled:cursor-not-allowed" required>
+                    <option value="">- Pilih Aktifitas -</option>
+                    <option v-for="aktOpt in availableAktifitasOptions" :key="aktOpt" :value="aktOpt">{{ aktOpt }}</option>
+                  </select>
+                </div>
+
+                <!-- Input 3: Jenis Aplikasi -->
+                <div>
+                  <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                    Jenis Aplikasi <span class="text-rose-500">*</span>
+                  </label>
+                  <select v-model="form.jenisAplikasi" :disabled="!form.soa" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all disabled:bg-slate-100 disabled:cursor-not-allowed" required>
+                    <option value="">- Pilih Jenis Aplikasi -</option>
+                    <option v-for="jenisOpt in availableJenisAplikasiOptions" :key="jenisOpt" :value="jenisOpt">{{ jenisOpt }}</option>
+                  </select>
+                </div>
+              </div>
+
+
+              <div v-if="modalError" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-600">
+                {{ modalError }}
+              </div>
+
+              <div class="flex justify-end gap-3 pt-2">
+                <button type="button" @click="closeFormModal" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-xl text-sm font-medium cursor-pointer">Batal</button>
+                <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium shadow-sm cursor-pointer" :disabled="isSubmitting">
+                  <span v-if="isSubmitting">Menyimpan...</span>
+                  <span v-else>Simpan Rencana</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-
-        <form @submit.prevent="handleSubmitRencana" class="space-y-4">
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tipe Customer</label>
-            <div class="grid grid-cols-2 gap-3">
-              <label class="flex items-center justify-center gap-2 p-2.5 border rounded-xl cursor-pointer text-sm font-medium" :class="form.cust === 'Baru' ? 'bg-amber-50 border-amber-400 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-600'">
-                <input type="radio" v-model="form.cust" value="Baru" class="hidden" /> Customer Baru
-              </label>
-              <label class="flex items-center justify-center gap-2 p-2.5 border rounded-xl cursor-pointer text-sm font-medium" :class="form.cust === 'Lama' ? 'bg-amber-50 border-amber-400 text-amber-700' : 'bg-slate-50 border-slate-200 text-slate-600'">
-                <input type="radio" v-model="form.cust" value="Lama" class="hidden" /> Pelanggan Lama
-              </label>
-            </div>
-          </div>
-
-          <template v-if="form.cust === 'Baru'">
-            <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nama Lengkap</label>
-              <input v-model="form.nm" type="text" placeholder="Masukkan nama lengkap customer" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" required />
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">No. Handphone / WA</label>
-              <input v-model="form.hp" type="text" placeholder="08xxxxxxxxxx" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" required />
-            </div>
-          </template>
-
-          <template v-else>
-            <div>
-              <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pilih Customer Existing</label>
-              <select v-model="form.custlama" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm" required>
-                <option value="">- Pilih Customer -</option>
-                <option v-for="c in existingCustomers" :key="c.id_customer" :value="c.id_customer">
-                  {{ c.nama }} ({{ c.hp }})
-                </option>
-              </select>
-            </div>
-          </template>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Sumber Leads</label>
-            <select v-model="form.sumbercust" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm">
-              <option v-for="s in sourcesList" :key="s" :value="s">{{ s }}</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Catatan Rencana Aktivitas</label>
-            <textarea v-model="form.ket" rows="3" placeholder="Contoh: Berminat gadai laptop Asus, janji ketemuan tgl 5..." class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm"></textarea>
-          </div>
-
-          <div v-if="modalError" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-600">
-            {{ modalError }}
-          </div>
-
-          <div class="flex justify-end gap-3 pt-2">
-            <button type="button" @click="closeFormModal" class="px-4 py-2 border border-slate-300 text-slate-600 rounded-xl text-sm font-medium">Batal</button>
-            <button type="submit" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium shadow-sm" :disabled="isSubmitting">
-              <span v-if="isSubmitting">Menyimpan...</span>
-              <span v-else>Simpan Rencana</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </Teleport>
+    </ClientOnly>
 
     <!-- MODAL: DETAIL INQUIRY -->
-    <div v-if="selectedItem" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="font-semibold text-slate-800 text-base">Detail Aktivitas</h3>
-          <button @click="selectedItem = null" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
-        </div>
-        <div class="text-sm grid grid-cols-2 gap-4">
-          <div class="flex justify-between border-b border-slate-100"><span class="text-slate-500 font-medium">Nama:</span> <span class="font-semibold text-slate-800">{{ selectedItem.nama }}</span></div>
-          <div class="flex justify-between border-b border-slate-100"><span class="text-slate-500 font-medium">Sumber:</span> <span class="text-slate-700">{{ selectedItem.source || 'Walk In' }}</span></div>
-          <div class="flex justify-between border-b border-slate-100"><span class="text-slate-500 font-medium">Status:</span> <span class="font-semibold" :class="getStatusBadgeClass(selectedItem.status)">{{ selectedItem.status }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Tanggal Rencana:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Alamat:</span> <span class="text-slate-700">{{ selectedItem }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">RT:</span> <span class="text-slate-700">{{ selectedItem.rt }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">RW:</span> <span class="text-slate-700">{{ selectedItem.rw }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Kelurahan:</span> <span class="text-slate-700">{{ selectedItem.kelurahan }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Kecamatan:</span> <span class="text-slate-700">{{ selectedItem.kecamatan }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Kota:</span> <span class="text-slate-700">{{ selectedItem.kota }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Tipe Transaksi:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">SOA:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Status Customer:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Keterangan Aktivitas:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
-          <div class="flex justify-between border-b border-slate-100 w-md"><span class="text-slate-500 font-medium">Keterangan:</span> <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span></div>
-          <div class="py-1">
-            <span class="text-slate-500 font-medium block mb-1">Catatan Keterangan:</span>
-            <p class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-xs leading-relaxed whitespace-pre-wrap">{{ selectedItem.keterangan || '-' }}</p>
+    <ClientOnly>
+      <Teleport to="body">
+        <div
+          v-if="selectedItem"
+          class="fixed inset-0 w-screen h-screen min-h-screen top-0 left-0 right-0 bottom-0 z-[9999] bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 !mt-0 overflow-y-auto"
+          @click.self="closeDetailModal"
+        >
+          <div
+            class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 flex flex-col max-h-[90vh] overflow-hidden my-auto"
+            @click.stop
+          >
+            <!-- MODAL HEADER -->
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h3 class="font-semibold text-slate-800 text-base">Detail Aktivitas</h3>
+                <span class="text-xs text-slate-400">ID Rencana: #{{ selectedItem.id_rencana || selectedItem.id_customer }}</span>
+              </div>
+              <button
+                type="button"
+                @click="closeDetailModal"
+                class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-all cursor-pointer"
+                title="Tutup (ESC)"
+              >
+                <AppIcon name="close" class="w-4 h-4" />
+              </button>
+            </div>
+
+            <!-- MODAL BODY -->
+            <div class="p-6 overflow-y-auto space-y-5 text-xs sm:text-sm">
+              <!-- INFORMASI UTAMA & STATUS -->
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 border-b border-slate-100 pb-5">
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">Nama Customer</span>
+                  <span class="font-semibold text-slate-800">{{ selectedItem.nama }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">No. Handphone</span>
+                  <span class="font-medium text-slate-700">{{ selectedItem.hp || '-' }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">Status</span>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold" :class="getStatusBadgeClass(selectedItem.status)">
+                    {{ selectedItem.status }}
+                  </span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">Sumber Lead</span>
+                  <span class="text-slate-700">{{ selectedItem.source || 'Walk In' }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">Tanggal Rencana</span>
+                  <span class="text-slate-700">{{ formatDate(selectedItem.tgl_rencana) }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">Jam Rencana</span>
+                  <span class="text-slate-700">{{ selectedItem.jam_rencana ? selectedItem.jam_rencana + ' WIB' : '-' }}</span>
+                </div>
+              </div>
+
+              <!-- SOA, AKTIVITAS & DOMISILI -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-slate-100 pb-5">
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">SOA</span>
+                  <span class="font-medium text-slate-800">{{ selectedItem.soa || selectedItem.SOA || '-' }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">Aktifitas</span>
+                  <span class="font-medium text-slate-800">{{ selectedItem.aktifitas || selectedItem.ket_aktivitas || '-' }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">Jenis Aplikasi</span>
+                  <span class="font-medium text-slate-800">{{ selectedItem.jenis_aplikasi || selectedItem.jenisAplikasi || '-' }}</span>
+                </div>
+                <div class="sm:col-span-2">
+                  <span class="text-xs text-slate-400 block mb-0.5">Alamat</span>
+                  <span class="text-slate-700">{{ selectedItem.alamat || '-' }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">RT / RW</span>
+                  <span class="text-slate-700">{{ selectedItem.rt || '-' }} / {{ selectedItem.rw || '-' }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">Kelurahan</span>
+                  <span class="text-slate-700">{{ selectedItem.kelurahan || '-' }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">Kecamatan</span>
+                  <span class="text-slate-700">{{ selectedItem.kecamatan || '-' }}</span>
+                </div>
+                <div>
+                  <span class="text-xs text-slate-400 block mb-0.5">Kota</span>
+                  <span class="text-slate-700">{{ selectedItem.kota || '-' }}</span>
+                </div>
+              </div>
+
+              <!-- KETERANGAN BARANG & CATATAN -->
+              <div class="space-y-4 border-b border-slate-100 pb-5">
+                <div>
+                  <span class="text-xs text-slate-400 block mb-1">Keterangan Barang Jaminan</span>
+                  <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs">
+                    {{ selectedItem.keterangan_barang || '-' }}
+                  </div>
+                </div>
+
+                <div>
+                  <span class="text-xs text-slate-400 block mb-1">Catatan Keterangan Progres</span>
+                  <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-xs leading-relaxed whitespace-pre-wrap">
+                    {{ selectedItem.keterangan || selectedItem.ket || '-' }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- FOTO BARANG JAMINAN -->
+              <div>
+                <span class="text-xs text-slate-400 block mb-1.5">Foto Barang Jaminan</span>
+                <div v-if="detailFotoUrl" class="inline-block">
+                  <img
+                    :src="detailFotoUrl"
+                    alt="Foto Barang Jaminan"
+                    @click="openLightbox"
+                    class="max-h-56 rounded-xl border border-slate-200 object-contain cursor-pointer hover:opacity-90 transition-opacity bg-slate-50 p-1"
+                    title="Klik untuk memperbesar foto"
+                  />
+                  <span class="block text-[11px] text-slate-400 mt-1 cursor-pointer" @click="openLightbox">
+                    Klik foto untuk melihat ukuran penuh
+                  </span>
+                </div>
+                <div v-else class="text-xs text-slate-400 italic">
+                  Tidak ada foto terlampir.
+                </div>
+              </div>
+            </div>
+
+            <!-- MODAL FOOTER -->
+            <div class="px-6 py-3.5 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+              <button
+                type="button"
+                @click="closeDetailModal"
+                class="px-5 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
-        <div class="flex justify-end pt-2">
-          <button @click="selectedItem = null" class="px-5 py-2 border border-slate-300 text-slate-600 rounded-xl text-sm font-medium">Tutup</button>
+      </Teleport>
+    </ClientOnly>
+
+    <!-- FULLSCREEN IMAGE PREVIEW -->
+    <ClientOnly>
+      <Teleport to="body">
+        <div
+          v-if="showLightbox && detailFotoUrl"
+          class="fixed inset-0 w-screen h-screen min-h-screen top-0 left-0 right-0 bottom-0 z-[10000] bg-slate-950/85 backdrop-blur-xs flex flex-col justify-between p-4 sm:p-6 select-none"
+          @click.self="closeLightbox"
+        >
+          <div class="flex items-center justify-between text-white max-w-4xl mx-auto w-full">
+            <span class="text-sm font-medium text-slate-200 truncate">
+              Foto Barang: {{ selectedItem?.nama }}
+            </span>
+            <button
+              type="button"
+              @click="closeLightbox"
+              class="p-1.5 text-slate-300 hover:text-white rounded-lg hover:bg-white/10 transition-all cursor-pointer"
+              title="Tutup (ESC)"
+            >
+              <AppIcon name="close" class="w-5 h-5" />
+            </button>
+          </div>
+
+          <div class="flex-1 flex items-center justify-center p-2" @click="closeLightbox">
+            <img
+              :src="detailFotoUrl"
+              alt="Foto Barang Jaminan"
+              class="max-w-[90vw] max-h-[82vh] object-contain rounded-xl shadow-2xl"
+              @click.stop
+            />
+          </div>
+
+          <div class="text-center text-xs text-slate-400">
+            Klik di luar gambar atau tekan ESC untuk menutup
+          </div>
         </div>
-      </div>
-    </div>
+      </Teleport>
+    </ClientOnly>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useApi } from '~/composables/useApi'
+import { getRencanaDetails } from '~/utils/rencanaDetails'
+import { SOA_LIST, getAktifitasOptions, getJenisAplikasiOptions } from '~/utils/soa'
+import { getFotoBarang } from '~/utils/imageStorage'
 
 const inquiries = ref<any[]>([])
 const searchQuery = ref('')
@@ -267,6 +451,10 @@ const isSubmitting = ref(false)
 const modalError = ref('')
 const existingCustomers = ref<any[]>([])
 const selectedItem = ref<any>(null)
+
+// Detail Modal & Photo State
+const detailFotoUrl = ref<string | null>(null)
+const showLightbox = ref(false)
 
 const summaryCounts = reactive({
   leads: 0,
@@ -280,12 +468,25 @@ const form = reactive({
   custlama: '',
   nm: '',
   hp: '',
-  sumbercust: 'Walk In',
+  sumbercust: '',
   hslaktiv: 1,
   katcust: '1',
   ket: '',
-  aktiv: 1
+  aktiv: 1,
+  soa: '',
+  aktifitas: '',
+  jenisAplikasi: ''
 })
+
+const soaList = SOA_LIST
+
+const availableAktifitasOptions = computed(() => getAktifitasOptions(form.soa))
+const availableJenisAplikasiOptions = computed(() => getJenisAplikasiOptions(form.soa))
+
+const onSoaChange = () => {
+  form.aktifitas = ''
+  form.jenisAplikasi = ''
+}
 
 const sourcesList = ref<string[]>(['Walk In', 'Media Sosial', 'Event', 'Referensi'])
 
@@ -294,6 +495,15 @@ onMounted(() => {
   fetchInquiries()
   fetchExistingCustomers()
   fetchSources()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', handleKeydown)
+  }
+})
+
+onUnmounted(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('keydown', handleKeydown)
+  }
 })
 
 const fetchSummaryCounts = async () => {
@@ -328,7 +538,7 @@ const fetchInquiries = async () => {
     const appSource = await useApi('/sumbercust')
     const sourcesData = Array.isArray(appSource?.data) ? appSource.data : []
 
-    const { data } = await useApi('/inquiry/filter', {
+    const { data, error, unauthorized } = await useApi('/inquiry/filter', {
       params: {
         status: statusParam,
         status_filter: statusParam,
@@ -337,6 +547,13 @@ const fetchInquiries = async () => {
         length: 300
       }
     })
+
+    // Session expired: useApi already redirects to /login, so keep the current list as-is
+    if (unauthorized) return
+    if (error) {
+      console.error('Failed to fetch inquiries:', error)
+      return
+    }
 
     const rawList = Array.isArray(data) ? data : (data?.data || [])
 
@@ -352,8 +569,10 @@ const fetchInquiries = async () => {
           hp: i.hp || i.phone || i.no_hp || '-',
           status: statusName,
           source: source,
+          foto: i.url_img || i.foto || i.gambar || '',
           aktivitas: i.ket_aktivitas || '-',
-          keterangan_barang: i.ket_rencana || i.keterangan || '-'
+          ...getRencanaDetails(i),
+          keterangan: getRencanaDetails(i).keterangan_aktivitas
         }
       })
 
@@ -384,7 +603,6 @@ const fetchInquiries = async () => {
     }
   } catch (err) {
     console.error('Failed to fetch inquiries:', err)
-    inquiries.value = []
   } finally {
     isLoadingTable.value = false
   }
@@ -424,6 +642,12 @@ const handleSubmitRencana = async () => {
   isSubmitting.value = true
   modalError.value = ''
 
+  if (!form.soa || !form.aktifitas || !form.jenisAplikasi) {
+    modalError.value = 'Silakan lengkapi pilihan SOA, Aktifitas, dan Jenis Aplikasi terlebih dahulu.'
+    isSubmitting.value = false
+    return
+  }
+
   if (form.cust === 'Lama' && form.custlama) {
     const custId = Number(form.custlama)
     const existingCount = inquiries.value.filter(
@@ -438,11 +662,14 @@ const handleSubmitRencana = async () => {
 
   const payload: any = {
     cust: form.cust,
-    sumbercust: form.sumbercust,
+    sumbercust: form.soa,
     hslaktiv: 1, // Default status Leads
     katcust: '1',
     ket: form.ket,
-    aktiv: form.aktiv
+    aktiv: form.aktiv,
+    soa: form.soa,
+    aktifitas: form.aktifitas,
+    jenis_aplikasi: form.jenisAplikasi
   }
 
   console.log('payload', payload);
@@ -483,6 +710,40 @@ const handleDelete = async (id: number) => {
 
 const showDetail = (item: any) => {
   selectedItem.value = item
+
+  // Load photo from database (tb_img url_img), item object, or client storage
+  const photo =
+    item.url_img ||
+    item.foto ||
+    item.gambar ||
+    getFotoBarang(item.id_rencana) ||
+    getFotoBarang(item.id_customer) ||
+    null
+
+  detailFotoUrl.value = photo
+}
+
+const closeDetailModal = () => {
+  selectedItem.value = null
+  showLightbox.value = false
+}
+
+const openLightbox = () => {
+  showLightbox.value = true
+}
+
+const closeLightbox = () => {
+  showLightbox.value = false
+}
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (showLightbox.value) {
+      closeLightbox()
+    } else if (selectedItem.value) {
+      closeDetailModal()
+    }
+  }
 }
 
 const closeFormModal = () => {
@@ -493,16 +754,19 @@ const closeFormModal = () => {
   form.nm = ''
   form.hp = ''
   form.ket = ''
+  form.soa = ''
+  form.aktifitas = ''
+  form.jenisAplikasi = ''
 }
 
 const getStatusBadgeClass = (status: string) => {
   switch (status) {
     case 'Leads': return 'bg-amber-100 text-amber-800 border border-amber-200'
     case 'Prospect': return 'bg-blue-100 text-blue-800 border border-blue-200'
-    case 'Hot Prospect': return 'bg-rose-100 text-rose-800 border border-rose-200 text-center'
+    case 'Hot Prospect': return 'bg-rose-100 text-rose-800 border border-rose-200'
     case 'SBG': return 'bg-emerald-100 text-emerald-800 border border-emerald-200'
     case 'Batal': return 'bg-slate-100 text-slate-600 border border-slate-200'
-    default: return 'bg-slate-100 text-slate-600'
+    default: return 'bg-slate-100 text-slate-600 border border-slate-200'
   }
 }
 
@@ -510,5 +774,17 @@ const formatDate = (dateStr: string) => {
   if (!dateStr) return '-'
   const d = new Date(dateStr)
   return d.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+const formatFullDate = (dateStr: string) => {
+  if (!dateStr) return '-'
+  const d = new Date(dateStr)
+  if (isNaN(d.getTime())) return dateStr
+  return d.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
 }
 </script>

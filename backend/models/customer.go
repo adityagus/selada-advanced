@@ -1,17 +1,23 @@
 package models
 
-// Customer represents the tb_customer table in MySQL default db
+// Customer represents the tb_customer table in PostgreSQL Selada
 type Customer struct {
 	IDCustomer      int     `gorm:"column:id_customer;primaryKey;autoIncrement" json:"id_customer"`
 	Nama            string  `gorm:"column:nama" json:"nama"`
 	Hp              string  `gorm:"column:hp" json:"hp"`
 	Alamat          string  `gorm:"column:alamat" json:"alamat"`
+	Rt              string  `gorm:"column:rt" json:"rt,omitempty"`
+	Rw              string  `gorm:"column:rw" json:"rw,omitempty"`
+	Kelurahan       string  `gorm:"column:kelurahan" json:"kelurahan,omitempty"`
+	Kecamatan       string  `gorm:"column:kecamatan" json:"kecamatan,omitempty"`
 	IDLogin         string  `gorm:"column:id_login" json:"id_login"`
 	Nickname        string  `gorm:"column:nickname" json:"nickname"`
 	TmpLahir        string  `gorm:"column:tmp_lahir" json:"tmp_lahir"`
 	Identitas       string  `gorm:"column:identitas" json:"identitas"`
 	JenisKelamin    string  `gorm:"column:jenis_kelamin" json:"jenis_kelamin,omitempty"`
 	Kota            string  `gorm:"column:kota" json:"kota,omitempty"`
+	Aktivitas       string  `gorm:"column:aktivitas" json:"aktivitas,omitempty"`
+	Jenis           string  `gorm:"column:jenis" json:"jenis,omitempty"`
 	KodePos         string  `gorm:"column:kode_pos" json:"kode_pos,omitempty"`
 	Telepon1        string  `gorm:"column:telepon_1" json:"telepon_1,omitempty"`
 	Telepon2        string  `gorm:"column:telepon_2" json:"telepon_2,omitempty"`

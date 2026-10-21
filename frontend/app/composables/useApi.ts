@@ -1,4 +1,4 @@
-import { clearAuthCookies, isTokenExpired } from '~/utils/auth'
+import { clearAuthCookies, isTokenExpired, refreshSessionActivity } from '~/utils/auth'
 
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
@@ -18,6 +18,24 @@ const getCookieClient = (name: string): string | null => {
     if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length)
   }
   return null
+}
+
+// Clears the session and hard-redirects to /login. A full page load is used on the client
+// because navigateTo() called after an await can silently fail, leaving the page empty.
+const redirectToLogin = (reason = 'timeout') => {
+  clearAuthCookies()
+  const target = reason ? `/login?reason=${reason}` : '/login'
+  if (typeof window !== 'undefined') {
+    if (window.location.pathname !== '/login') {
+      window.location.replace(target)
+    }
+    return
+  }
+  try {
+    navigateTo(target)
+  } catch (e) {
+    // no-op
+  }
 }
 
 export const useApi = async <T = any>(endpoint: string, options: FetchOptions = {}) => {
@@ -44,7 +62,7 @@ export const useApi = async <T = any>(endpoint: string, options: FetchOptions = 
   }
 
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint
-  const url = `${apiBase}${cleanEndpoint}`
+  const url = `${apiBase.replace(/\/+$/, '')}${cleanEndpoint}`
   const isLoginEndpoint = cleanEndpoint === '/login'
 
   // Retrieve token safely
@@ -62,18 +80,17 @@ export const useApi = async <T = any>(endpoint: string, options: FetchOptions = 
 
   // Pre-flight check: if not a login endpoint and token is missing or expired, auto-redirect to login
   if (!isLoginEndpoint && isTokenExpired(tokenVal, tokenExpiryVal)) {
-    clearAuthCookies()
-    try {
-      navigateTo('/login')
-    } catch (e) {
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login'
-      }
-    }
+    redirectToLogin('timeout')
     return {
       data: null,
+      unauthorized: true,
       error: 'Token tidak ada atau sudah kedaluwarsa. Silakan login kembali.'
     }
+  }
+
+  // Active API call on protected route touches/refreshes the session activity
+  if (!isLoginEndpoint && tokenVal) {
+    refreshSessionActivity()
   }
 
   // Standardize request headers
@@ -81,7 +98,7 @@ export const useApi = async <T = any>(endpoint: string, options: FetchOptions = 
     ...options.headers,
   }
 
-  if (tokenVal) {
+  if (tokenVal && !isLoginEndpoint) {
     headers['Authorization'] = `Bearer ${tokenVal}`
   }
 
@@ -89,28 +106,23 @@ export const useApi = async <T = any>(endpoint: string, options: FetchOptions = 
     const data = await $fetch<T>(url, {
       ...options,
       headers,
+      timeout: 15000,
     })
-    return { data, error: null }
+    return { data, unauthorized: false, error: null }
   } catch (err: any) {
     const status = err.status || err.statusCode || err.response?.status
     // Auto-logout in case of 401 Unauthorized or 403 Forbidden responses
-    if (status === 401 || status === 403) {
-      clearAuthCookies()
-
-      // Redirect safely
-      try {
-        navigateTo('/login')
-      } catch (e) {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login'
-        }
-      }
+    const unauthorized = !isLoginEndpoint && (status === 401 || status === 403)
+    if (unauthorized) {
+      redirectToLogin('timeout')
     }
     
     return {
       data: null,
-      error: err.data?.error || err.data?.message || err.message || 'Terjadi kesalahan sistem'
+      unauthorized,
+      error: err.data?.error || err.data?.message || (!status
+        ? 'Tidak dapat terhubung ke server. Periksa koneksi Anda dan coba lagi.'
+        : 'Terjadi kesalahan sistem. Silakan coba lagi.')
     }
   }
 }
-

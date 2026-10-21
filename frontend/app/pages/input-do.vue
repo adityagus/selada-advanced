@@ -1,6 +1,6 @@
 <template>
   <div class="p-12 text-center space-y-3 font-sans">
-    <div class="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+    <AppIcon name="loader" class="w-8 h-8  text-emerald-500   animate-spin mx-auto" />
     <p class="text-slate-500 text-sm font-medium">Mengarahkan ke Halaman Input SBG (Deal)...</p>
   </div>
 </template>

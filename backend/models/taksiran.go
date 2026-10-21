@@ -77,7 +77,7 @@ func (ProdukDetailBiayaAdmin) TableName() string {
 	return "tblproduk_detail_biaya_admin"
 }
 
-// TaksiranHistory represents history of estimation simulations in MySQL
+// TaksiranHistory represents history of estimation simulations in PostgreSQL Selada
 type TaksiranHistory struct {
 	ID            uint      `json:"id" gorm:"column:id;primaryKey;autoIncrement"`
 	CreatedBy     string    `json:"created_by" gorm:"column:created_by;index"`

@@ -94,6 +94,7 @@ export interface DashboardMetricsResponse {
     id_jabatan: number
     nm_jabatan: string
     fkuser: string
+    total_omzet?: number
   }>
   selected_sales_user?: string
   label_point?: { icon: string; text: string }

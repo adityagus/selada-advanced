@@ -345,3 +345,11 @@ body {
   border-top-color: #ffffff;
   animation: spin 0.8s linear infinite;
 }
+
+.wizard:first{
+  margin-left: 25px;
+}
+
+.wizard:last{
+  margin-right: 25px;
+}

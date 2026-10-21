@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"go-api/models"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -17,7 +19,7 @@ import (
 // GetJenisBarangHandler fetches electronics category list from product.collateral_items (product_id = 2)
 func GetJenisBarangHandler(c *gin.Context) {
 	if config.DBPostgres == nil {
-		c.JSON(http.StatusOK, []gin.H{})
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database barang taksiran belum terhubung. Hubungi administrator."})
 		return
 	}
 
@@ -280,7 +282,7 @@ func calculateBiayaAdmin(totalPinjaman float64, kdProduk string) float64 {
 			Where("offering_code = ?", kdProduk).
 			First(&offering).Error
 
-	if err == nil && offering.OfferingID > 0 {
+		if err == nil && offering.OfferingID > 0 {
 			var adminTier struct {
 				AdminFee float64 `gorm:"column:admin_fee"`
 			}
@@ -321,6 +323,7 @@ func GetWilayahHandler(c *gin.Context) {
 
 	var results []RegionResult
 
+	log.Println("id", id)
 	if id != "" && id != "undefined" {
 		parentId, _ := strconv.Atoi(id)
 		if itemType == "emas" {
@@ -364,6 +367,7 @@ func GetWilayahHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, results)
+	fmt.Println("DEBUG wilayah:", id, "->", results)
 }
 
 // GetNilaiTaksiranHandler gets estimated price for electronics matching M_taksiran.php
@@ -559,11 +563,18 @@ func SimpanTransaksiHandler(c *gin.Context) {
 		CreatedAt:     time.Now(),
 	}
 
-	if config.DBMysql != nil {
-		_ = config.DBMysql.AutoMigrate(&models.TaksiranHistory{})
-		if err := config.DBMysql.Create(&history).Error; err != nil {
-			log.Printf("Gagal simpan taksiran history: %v\n", err)
-		}
+	if config.DBSelada == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Database riwayat taksiran belum terhubung"})
+		return
+	}
+	if err := config.DBSelada.AutoMigrate(&models.TaksiranHistory{}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyiapkan riwayat taksiran"})
+		return
+	}
+	if err := config.DBSelada.Create(&history).Error; err != nil {
+		log.Printf("Gagal simpan taksiran history: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan riwayat taksiran"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Transaksi taksiran berhasil disimpan"})
@@ -571,12 +582,12 @@ func SimpanTransaksiHandler(c *gin.Context) {
 
 // GetTaksiranHistoryHandler fetches estimation history records filtered by creator/user
 func GetTaksiranHistoryHandler(c *gin.Context) {
-	if config.DBMysql == nil {
+	if config.DBSelada == nil {
 		c.JSON(http.StatusOK, gin.H{"data": []gin.H{}})
 		return
 	}
 
-	_ = config.DBMysql.AutoMigrate(&models.TaksiranHistory{})
+	_ = config.DBSelada.AutoMigrate(&models.TaksiranHistory{})
 
 	userId, exists := c.Get("username")
 	if !exists {
@@ -592,7 +603,7 @@ func GetTaksiranHistoryHandler(c *gin.Context) {
 	}
 
 	var histories []models.TaksiranHistory
-	query := config.DBMysql.Table("tb_taksiran_history").Order("id DESC")
+	query := config.DBSelada.Table("tb_taksiran_history").Order("id DESC")
 
 	if targetUser != "all" && targetUser != "*" && targetUser != "" {
 		query = query.Where("created_by = ?", targetUser)
@@ -627,17 +638,7 @@ func GetElectronicScoringHandler(c *gin.Context) {
 
 	collID, _ := strconv.Atoi(collateralIDStr)
 
-	// Check if input ID is collateral_item_detail_id, resolve parent collateral_item_id
-	var qDetail struct {
-		CollateralItemID int `gorm:"column:collateral_item_id"`
-	}
-	_ = config.DBPostgres.Table("product.collateral_item_details").
-		Select("collateral_item_id").
-		Where("collateral_item_detail_id = ?", collID).
-		Scan(&qDetail).Error
-	if qDetail.CollateralItemID > 0 {
-		collID = qDetail.CollateralItemID
-	}
+	// collateral_id is the parent collateral_item_id returned by barang-umum.
 
 	// 1. Fetch collateral_scoring_sections
 	type SectionRow struct {
@@ -719,6 +720,7 @@ func GetElectronicScoringHandler(c *gin.Context) {
 						"option_name":   sc.OptionName,
 						"display_order": sc.DisplayOrder,
 						"selected":      nil,
+						"is_reject":     sc.IsReject,
 					}
 				}
 
@@ -772,6 +774,13 @@ func GetElectronicScoringHandler(c *gin.Context) {
 			}
 		}
 
+		sort.Slice(finalOptions, func(i, j int) bool {
+			left, right := finalOptions[i], finalOptions[j]
+			if left["display_order"].(int) == right["display_order"].(int) {
+				return left["option_id"].(int) < right["option_id"].(int)
+			}
+			return left["display_order"].(int) < right["display_order"].(int)
+		})
 		resultSections = append(resultSections, gin.H{
 			"section_id":   sec.SectionID,
 			"section_name": sec.SectionName,

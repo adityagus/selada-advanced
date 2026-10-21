@@ -20,6 +20,8 @@ type CustomerListItem struct {
 	Hp             string `json:"hp" gorm:"column:hp"`
 	Alamat         string `json:"alamat" gorm:"column:alamat"`
 	Kota           string `json:"kota" gorm:"column:kota"`
+	Aktivitas      string `json:"aktivitas" gorm:"column:aktivitas"`
+	Jenis          string `json:"jenis" gorm:"column:jenis"`
 	IDLogin        string `json:"id_login" gorm:"column:id_login"`
 	IDSumbercust   string `json:"id_sumbercust" gorm:"column:id_sumbercust"`
 	LatestStatusID int    `json:"latest_status_id" gorm:"column:latest_status_id"`
@@ -49,7 +51,7 @@ func GetCustomerListHandler(c *gin.Context) {
 		return
 	}
 
-	if config.DBMysql == nil {
+	if config.DBSelada == nil {
 		c.JSON(http.StatusOK, gin.H{
 			"data":            []CustomerListItem{},
 			"recordsTotal":    0,
@@ -79,7 +81,7 @@ func GetCustomerListHandler(c *gin.Context) {
 		targetUser = userParam
 	}
 
-	baseQuery := config.DBMysql.Table("tb_customer c").
+	baseQuery := config.DBSelada.Table("tb_customer c").
 		Select(`
 			c.id_customer,
 			COALESCE(c.identitas, '') as identitas,
@@ -87,11 +89,13 @@ func GetCustomerListHandler(c *gin.Context) {
 			COALESCE(c.hp, '') as hp,
 			COALESCE(c.alamat, '') as alamat,
 			COALESCE(c.kota, '') as kota,
+			COALESCE(c.aktivitas, '') as aktivitas,
+			COALESCE(c.jenis, '') as jenis,
 			COALESCE(c.id_login, '') as id_login,
 			COALESCE(r.id_sumbercust, '') as id_sumbercust,
 			COALESCE(rd.id_hslaktiv, 1) as latest_status_id,
 			COALESCE(ha.nama_hslaktiv, '') as latest_status,
-			COALESCE(rd.tgl_rencana, '') as latest_tgl,
+			COALESCE(CAST(rd.tgl_rencana AS TEXT), '') as latest_tgl,
 			COALESCE(inq_cnt.cnt, 0) as total_inquiries
 		`).
 		Joins(`LEFT JOIN (
@@ -120,7 +124,7 @@ func GetCustomerListHandler(c *gin.Context) {
 
 	if search != "" {
 		likeTerm := "%" + search + "%"
-		baseQuery = baseQuery.Where("(c.nama LIKE ? OR c.hp LIKE ? OR c.identitas LIKE ? OR c.alamat LIKE ? OR c.kota LIKE ?)", likeTerm, likeTerm, likeTerm, likeTerm, likeTerm)
+		baseQuery = baseQuery.Where("(c.nama ILIKE ? OR c.hp ILIKE ? OR c.identitas ILIKE ? OR c.alamat ILIKE ? OR c.kota ILIKE ?)", likeTerm, likeTerm, likeTerm, likeTerm, likeTerm)
 	}
 
 	var totalRecords int64
@@ -181,23 +185,23 @@ func GetCustomerInquiriesHandler(c *gin.Context) {
 		return
 	}
 
-	if config.DBMysql == nil {
+	if config.DBSelada == nil {
 		c.JSON(http.StatusOK, []CustomerInquiryHistory{})
 		return
 	}
 
 	var history []CustomerInquiryHistory
-	err = config.DBMysql.Table("tb_rencana r").
+	err = config.DBSelada.Table("tb_rencana r").
 		Select(`
 			r.id_rencana,
 			rd.id_rencana_det,
-			COALESCE(rd.tgl_rencana, '') as tgl_rencana,
+			COALESCE(CAST(rd.tgl_rencana AS TEXT), '') as tgl_rencana,
 			COALESCE(rd.id_hslaktiv, 1) as id_hslaktiv,
 			COALESCE(ha.nama_hslaktiv, '') as nama_hslaktiv,
 			COALESCE(rd.ket_rencana, '') as ket_rencana,
 			COALESCE(rd.ket_aktivitas, '') as ket_aktivitas,
 			COALESCE(r.id_sumbercust, '') as id_sumbercust,
-			COALESCE(r.no_sbg, '') as no_sbg
+			COALESCE(rd.no_do, '') as no_sbg
 		`).
 		Joins("JOIN tb_rencana_det rd ON rd.id_rencana = r.id_rencana").
 		Joins("LEFT JOIN tb_hslaktivitas ha ON ha.id_hslaktiv = rd.id_hslaktiv").

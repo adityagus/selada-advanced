@@ -74,7 +74,7 @@ Kami telah menerapkan standar keamanan tinggi berdasarkan panduan SonarQube:
 ## 🛢️ Perutean Multi-Database & Konfigurasi Lingkungan
 
 API backend ini terhubung ke tiga koneksi database sekaligus:
-1. **MySQL Default DB (`selada`)** -> Menyimpan informasi customer, rencana aktivitas sales, dan poin performa.
+1. **PostgreSQL Selada (`DB_PG2_*`)** -> Menyimpan informasi customer, rencana aktivitas sales, dan poin performa.
 2. **PostgreSQL DB (`sam_live`)** -> Menyimpan data jenis barang, jenis produk gadai, dan tarif biaya admin.
 3. **MySQL POS DB (`sam_pos`)** -> Menyimpan data kredensial user/sales dan katalog sepeda motor.
 
@@ -85,10 +85,12 @@ Sesuaikan variabel ini pada lingkungan lokal Anda atau file `docker-compose.yml`
 | :--- | :--- | :--- |
 | `PORT` | Port aplikasi Go | `3000` |
 | `JWT_SECRET` | Kunci rahasia untuk enkripsi token sesi | `super-secret-key-selada-v2-123456789` |
-| `DB_MYSQL_HOST` | Host database MySQL default | `host.docker.internal` (Laragon Host) |
-| `DB_MYSQL_USER` | Username database MySQL default | `root` |
-| `DB_MYSQL_PASS` | Password database MySQL default | `aditya@123` |
-| `DB_MYSQL_NAME` | Nama database MySQL default | `selada` |
+| `DB_PG2_HOST` | Host PostgreSQL Selada | Wajib diisi |
+| `DB_PG2_PORT` | Port PostgreSQL Selada | Wajib diisi |
+| `DB_PG2_USER` | Username PostgreSQL Selada | Wajib diisi |
+| `DB_PG2_PASS` | Password PostgreSQL Selada | Sesuai server |
+| `DB_PG2_NAME` | Nama database Selada | Wajib diisi |
+| `DB_PG2_SSLMODE` | Mode SSL Selada | `disable` |
 | `DB_PG_HOST` | Host database PostgreSQL | `host.docker.internal` (Laragon Host) |
 | `DB_PG_PORT` | Port database PostgreSQL | `5432` |
 | `DB_PG_USER` | Username database PostgreSQL | `postgres` |
@@ -176,3 +178,5 @@ go mod tidy
 go run main.go
 ```
 Aplikasi akan aktif dan mendengarkan permintaan di `http://localhost:3000`.
+
+Panduan migrasi MySQL Selada ke PostgreSQL dan hasil validasi: [MIGRATION_POSTGRES.md](MIGRATION_POSTGRES.md).

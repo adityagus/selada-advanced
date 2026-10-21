@@ -222,8 +222,8 @@ func GetSbgListHandler(c *gin.Context) {
 
 	// 1. Get already used SBG numbers (no_do in tb_rencana_det)
 	var usedSbg []string
-	if config.DBMysql != nil {
-		_ = config.DBMysql.Table("tb_rencana_det").
+	if config.DBSelada != nil {
+		_ = config.DBSelada.Table("tb_rencana_det").
 			Where("no_do IS NOT NULL AND no_do != ''").
 			Pluck("DISTINCT no_do", &usedSbg).Error
 	}
@@ -394,8 +394,8 @@ type InputDORequest struct {
 // InputDOHandler handles POST /api/sopiga/inputdo
 // Exactly matches C_sistem/inputdo in legacy programming/selada
 func InputDOHandler(c *gin.Context) {
-	if config.DBMysql == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Database MySQL tidak terhubung"})
+	if config.DBSelada == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"status": "error", "message": "Database Selada tidak terhubung"})
 		return
 	}
 
@@ -423,7 +423,7 @@ func InputDOHandler(c *gin.Context) {
 	}
 
 	var found CustCheck
-	err := config.DBMysql.Table("tb_rencana_det rd").
+	err := config.DBSelada.Table("tb_rencana_det rd").
 		Select("rd.id_rencana, rd.id_rencana_det, c.nama, COALESCE(rd.ro, 0) as ro").
 		Joins("JOIN tb_rencana r ON rd.id_rencana = r.id_rencana").
 		Joins("JOIN tb_customer c ON r.id_customer = c.id_customer").
@@ -470,7 +470,7 @@ func InputDOHandler(c *gin.Context) {
 		"selisih_hari":  req.SelisihHari,
 	}
 
-	if err := config.DBMysql.Table("tb_rencana_det").Create(&insertMap).Error; err != nil {
+	if err := config.DBSelada.Table("tb_rencana_det").Create(&insertMap).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
 			"message": "Gagal menyimpan data DO ke database: " + err.Error(),
@@ -488,7 +488,7 @@ func InputDOHandler(c *gin.Context) {
 // Returns current inquiry info for pre-populating pageinputdo
 func GetInquiryContextHandler(c *gin.Context) {
 	idVal := strings.TrimSpace(c.Query("id"))
-	if idVal == "" || config.DBMysql == nil {
+	if idVal == "" || config.DBSelada == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "ID required"})
 		return
 	}
@@ -506,7 +506,7 @@ func GetInquiryContextHandler(c *gin.Context) {
 	}
 
 	var ctx InqCtx
-	err := config.DBMysql.Table("tb_rencana_det rd").
+	err := config.DBSelada.Table("tb_rencana_det rd").
 		Select("rd.id_rencana, rd.id_rencana_det, c.nama, c.hp, rd.ket_rencana, rd.ket_aktivitas, rd.id_hslaktiv, ha.nama_hslaktiv").
 		Joins("JOIN tb_rencana r ON rd.id_rencana = r.id_rencana").
 		Joins("JOIN tb_customer c ON r.id_customer = c.id_customer").

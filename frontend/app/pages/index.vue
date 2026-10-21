@@ -21,8 +21,9 @@ onMounted(async () => {
   if (!isTokenExpired(token.value, tokenExpiry.value)) {
     await navigateTo('/dashboard')
   } else {
+    const wasExpired = !!token.value
     clearAuthCookies()
-    await navigateTo('/login')
+    await navigateTo(wasExpired ? '/login?reason=timeout' : '/login')
   }
 })
 </script>

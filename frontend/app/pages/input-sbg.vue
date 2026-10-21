@@ -12,9 +12,7 @@
             to="/inquiry"
             class="inline-flex items-center gap-2 bg-slate-600 hover:bg-slate-700 active:scale-95 text-white font-medium px-4 py-2 rounded-xl text-sm transition-all shadow-xs"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
+            <AppIcon name="arrow-left" class="w-4 h-4" />
             Kembali
           </NuxtLink>
         </div>
@@ -25,7 +23,7 @@
     <div v-if="inqContext.nama" class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm">
       <div class="flex items-center gap-3">
         <div class="w-9 h-9 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
-          👤
+          <AppIcon name="user" class="w-5 h-5" />
         </div>
         <div>
           <div class="text-xs text-blue-600 font-semibold uppercase tracking-wider">Customer Inquiry</div>
@@ -39,14 +37,12 @@
     </div>
 
     <!-- Main Card (Matches col-md-6 Card in v_inputdo.php) -->
-    <div class="max-w-2xl">
+    <div class="grid grid-cols-1 gi">
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <!-- Card Header (bg-primary / text-white) -->
         <div class="bg-blue-600 text-white px-6 py-4 flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <h2 class="font-bold text-base">Data SBG</h2>
+          <AppIcon name="document" class="w-5 h-5" />
+          <h2 class="font-bold text-base text-white">Data SBG</h2>
         </div>
 
         <!-- Card Body -->
@@ -81,11 +77,9 @@
                     class="text-slate-400 hover:text-slate-600 p-0.5 rounded"
                     title="Clear"
                   >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    <AppIcon name="close" class="w-4 h-4" />
                   </button>
-                  <svg class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': isDropdownOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                  </svg>
+                  <AppIcon name="chevron-down" class="w-4 h-4 text-slate-400 transition-transform" :class="{ 'rotate-180': isDropdownOpen }" />
                 </div>
               </div>
 
@@ -105,14 +99,14 @@
                       placeholder="Ketik No SBG atau Nama Customer..."
                       class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200"
                     />
-                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <AppIcon name="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
                   </div>
                 </div>
 
                 <!-- Dropdown items list -->
                 <div class="max-h-60 overflow-y-auto divide-y divide-slate-50 text-xs">
                   <div v-if="isLoadingSbg" class="py-4 text-center text-slate-400">
-                    <div class="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-1"></div>
+                    <AppIcon name="loader" class="w-4 h-4  text-blue-500   animate-spin mx-auto mb-1" />
                     Memuat data SBG...
                   </div>
                   <div v-else-if="sbgList.length === 0" class="py-4 px-3 text-center text-slate-400">
@@ -144,7 +138,7 @@
             </div>
 
             <small class="text-slate-400 text-xs flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <AppIcon name="info" class="w-3.5 h-3.5" />
               SBG yang sudah terdaftar tidak akan muncul kembali.
             </small>
           </div>
@@ -199,7 +193,7 @@
             }"
           >
             <span>{{ alertState.message }}</span>
-            <button @click="alertState.show = false" type="button" class="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+            <button @click="alertState.show = false" type="button" class="text-slate-400 hover:text-slate-600 font-bold"><AppIcon name="close" class="w-4 h-4" /></button>
           </div>
         </div>
 
@@ -212,10 +206,8 @@
             class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold rounded-xl text-sm transition-all shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             :disabled="!isReady || isSubmitting"
           >
-            <span v-if="isSubmitting" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-            <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-            </svg>
+            <AppIcon name="loader" v-if="isSubmitting" class="w-4 h-4     animate-spin" />
+            <AppIcon name="download" v-else class="w-4 h-4" />
             <span>Simpan</span>
           </button>
         </div>
@@ -231,13 +223,11 @@
         <!-- Modal Header (bg-warning text-white) -->
         <div class="bg-amber-500 text-white px-6 py-4 flex items-center justify-between">
           <h3 class="font-bold text-base flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+            <AppIcon name="warning" class="w-5 h-5" />
             Konfirmasi Tanggal
           </h3>
           <button @click="showConfirmDateModal = false" type="button" class="text-white hover:text-amber-100">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            <AppIcon name="close" class="w-5 h-5" />
           </button>
         </div>
 

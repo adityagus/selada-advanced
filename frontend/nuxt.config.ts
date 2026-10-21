@@ -18,8 +18,9 @@ export default defineNuxtConfig({
 
   // Public runtime configuration variables (API endpoints)
   runtimeConfig: {
+    apiProxyTarget: 'http://127.0.0.1:3000',
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api'
     }
   },
 
@@ -46,6 +47,18 @@ export default defineNuxtConfig({
 
   nitro: {
     compressPublicAssets: true
+  },
+
+  // Feature-based components and composables auto-import
+  components: [
+    { path: '~/features', pattern: '**/*.vue', pathPrefix: false },
+    '~/components'
+  ],
+  imports: {
+    dirs: [
+      'composables',
+      'features/**/composables'
+    ]
   },
 
   modules: ['@nuxt/image', '@nuxtjs/tailwindcss']

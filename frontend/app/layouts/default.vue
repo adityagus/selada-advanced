@@ -4,7 +4,8 @@
     <Sidebar
       :is-expanded="isExpanded"
       :user-name="userName"
-      :user-branch="userBranch"
+      :user-branch="displayBranch"
+      :user-branch-name="displayBranch"
       @toggle-sidebar="toggleSidebar"
       @logout="handleLogout"
     />
@@ -19,7 +20,7 @@
         :is-expanded="isExpanded"
         :is-dark="isDark"
         :user-name="userName"
-        :user-branch="userBranch"
+        :user-branch="displayBranch"
         @toggle-sidebar="toggleSidebar"
         @toggle-theme="toggleTheme"
         @logout="handleLogout"
@@ -37,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCookie, navigateTo } from '#app'
 import { useApi } from '~/composables/useApi'
 import { isTokenExpired, clearAuthCookies } from '~/utils/auth'
@@ -48,6 +49,15 @@ const token = useCookie('auth_token')
 const tokenExpiry = useCookie('token_expiry')
 const userName = useCookie('user_name')
 const userBranch = useCookie('user_branch')
+const userBranchName = useCookie('user_branch_name')
+
+const displayBranch = computed(() => {
+  const bName = (userBranchName.value || '').trim()
+  if (bName && !/^\d+$/.test(bName)) {
+    return bName
+  }
+  return bName || userBranch.value || ''
+})
 
 const isExpanded = ref(true)
 const isDark = ref(false)
@@ -69,10 +79,10 @@ const toggleTheme = () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   if (isTokenExpired(token.value, tokenExpiry.value)) {
     clearAuthCookies()
-    navigateTo('/login')
+    navigateTo('/login?reason=timeout')
   }
 
   // Check saved theme
@@ -85,6 +95,17 @@ onMounted(() => {
       isDark.value = false
       document.documentElement.classList.remove('dark')
     }
+  }
+
+  // If user_branch_name is missing or currently just a numeric ID (e.g. "001"), fetch the branch name from API
+  const currentBranchName = (userBranchName.value || '').trim()
+  if (!currentBranchName || /^\d+$/.test(currentBranchName)) {
+    try {
+      const res = await useApi<any>('/branch/current')
+      if (res && res.branch_name) {
+        userBranchName.value = res.branch_name
+      }
+    } catch {}
   }
 })
 

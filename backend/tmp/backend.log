@@ -1,0 +1,116 @@
+Backend recompiled successfully!
+file :  &{0x2f5137eb20c0}
+Koneksi Postgres (sam_live) Berhasil!
+Koneksi MySQL (selada) Berhasil!
+Koneksi MySQL (sam_pos) Berhasil!
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] POST   /api/login                --> go-api/handlers.LoginHandler (5 handlers)
+[GIN-debug] POST   /api/logout               --> go-api/handlers.LogoutHandler (5 handlers)
+[GIN-debug] GET    /api/dashboard/metrics    --> go-api/handlers.DashboardMetricsHandler (6 handlers)
+[GIN-debug] GET    /api/inquiry/counts       --> go-api/handlers.InquiryCountsHandler (6 handlers)
+[GIN-debug] GET    /api/inquiry/filter       --> go-api/handlers.InquiryListHandler (6 handlers)
+[GIN-debug] POST   /api/rencana/input        --> go-api/handlers.InputRencanaHandler (6 handlers)
+[GIN-debug] DELETE /api/rencana/:id          --> go-api/handlers.DeleteRencanaHandler (6 handlers)
+[GIN-debug] GET    /api/sopiga/transactions  --> go-api/handlers.SearchSopigaTransactionsHandler (6 handlers)
+[GIN-debug] GET    /api/sopiga/getsbglist    --> go-api/handlers.GetSbgListHandler (6 handlers)
+[GIN-debug] GET    /api/sopiga/getproduk     --> go-api/handlers.GetSbgProdukHandler (6 handlers)
+[GIN-debug] POST   /api/sopiga/getproduk     --> go-api/handlers.GetSbgProdukHandler (6 handlers)
+[GIN-debug] POST   /api/sopiga/inputdo       --> go-api/handlers.InputDOHandler (6 handlers)
+[GIN-debug] GET    /api/sopiga/inquiry-context --> go-api/handlers.GetInquiryContextHandler (6 handlers)
+[GIN-debug] GET    /api/katalog/point        --> go-api/handlers.GetKatalogPointHandler (6 handlers)
+[GIN-debug] GET    /api/katalog/list/:category --> go-api/handlers.GetKatalogListHandler (6 handlers)
+[GIN-debug] GET    /api/katalog/spec/:id     --> go-api/handlers.GetKatalogSpecHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/jenis-barang --> go-api/handlers.GetJenisBarangHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/grade       --> go-api/handlers.GetGradeHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/barang-umum --> go-api/handlers.GetBarangUmumHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/barang-emas --> go-api/handlers.GetBarangEmasHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/products    --> go-api/handlers.GetTaksiranProductHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/biaya-admin --> go-api/handlers.GetBiayaAdminHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/biaya-admin-emas --> go-api/handlers.GetBiayaAdminEmasHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/wilayah     --> go-api/handlers.GetWilayahHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/nilai-taksir --> go-api/handlers.GetNilaiTaksiranHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/gold-stle   --> go-api/handlers.GetGoldStleHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/barang-by-kode --> go-api/handlers.GetBarangByKodeHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/electronic-scoring --> go-api/handlers.GetElectronicScoringHandler (6 handlers)
+[GIN-debug] POST   /api/taksiran/simpan      --> go-api/handlers.SimpanTransaksiHandler (6 handlers)
+[GIN-debug] GET    /api/taksiran/history     --> go-api/handlers.GetTaksiranHistoryHandler (6 handlers)
+[GIN-debug] GET    /api/customer/list        --> go-api/handlers.GetCustomerListHandler (6 handlers)
+[GIN-debug] GET    /api/customer/:id/inquiries --> go-api/handlers.GetCustomerInquiriesHandler (6 handlers)
+[GIN-debug] GET    /api/customer/select      --> go-api/handlers.GetCustomerSelectHandler (6 handlers)
+[GIN-debug] GET    /api/sumbercust           --> go-api/handlers.GetSumberCustHandler (6 handlers)
+[GIN-debug] GET    /api/sales/list           --> go-api/handlers.GetSalesListHandler (6 handlers)
+[GIN-debug] GET    /api/kelurahan            --> go-api/handlers.GetKelurahanHandler (6 handlers)
+[GIN-debug] GET    /api/master/sumber_source --> go-api/handlers.SumberSourceList (6 handlers)
+[GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
+Please check https://github.com/gin-gonic/gin/blob/master/docs/doc.md#dont-trust-all-proxies for details.
+[GIN-debug] Listening and serving HTTP on :3000
+
+2026/10/14 17:22:59 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[112.181ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'health-check' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:22:59 | 401 |    130.6268ms |             ::1 | POST     "/api/login"
+[GIN] 2026/10/14 - 17:24:07 | 204 |            0s |             ::1 | OPTIONS  "/api/login"
+
+2026/10/14 17:24:07 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[162.764ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:24:07 | 401 |    163.3216ms |             ::1 | POST     "/api/login"
+[GIN] 2026/10/14 - 17:24:15 | 204 |            0s |             ::1 | OPTIONS  "/api/login"
+
+2026/10/14 17:24:15 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[151.665ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:24:15 | 401 |    152.2223ms |             ::1 | POST     "/api/login"
+
+2026/10/14 17:24:19 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[566.770ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:24:19 | 401 |    567.2748ms |             ::1 | POST     "/api/login"
+[GIN] 2026/10/14 - 17:24:22 | 204 |            0s |             ::1 | OPTIONS  "/api/login"
+
+2026/10/14 17:24:22 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[235.142ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:24:22 | 401 |    235.1416ms |             ::1 | POST     "/api/login"
+
+2026/10/14 17:24:26 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[219.056ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:24:26 | 401 |    219.5631ms |             ::1 | POST     "/api/login"
+[GIN] 2026/10/14 - 17:24:36 | 204 |            0s |             ::1 | OPTIONS  "/api/login"
+
+2026/10/14 17:24:36 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[158.327ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:24:36 | 401 |     158.934ms |             ::1 | POST     "/api/login"
+[GIN] 2026/10/14 - 17:24:44 | 204 |            0s |             ::1 | OPTIONS  "/api/login"
+
+2026/10/14 17:24:44 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[156.649ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:24:44 | 401 |    157.1546ms |             ::1 | POST     "/api/login"
+[GIN] 2026/10/14 - 17:25:23 | 204 |            0s |             ::1 | OPTIONS  "/api/login"
+
+2026/10/14 17:25:23 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[136.805ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:25:23 | 401 |    137.3195ms |             ::1 | POST     "/api/login"
+
+2026/10/14 17:25:24 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[132.850ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:25:24 | 401 |    133.6375ms |             ::1 | POST     "/api/login"
+[GIN] 2026/10/14 - 17:25:37 | 204 |            0s |             ::1 | OPTIONS  "/api/login"
+
+2026/10/14 17:25:37 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[196.135ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:25:37 | 401 |     197.318ms |             ::1 | POST     "/api/login"
+
+2026/10/14 17:25:39 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[231.570ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:25:39 | 401 |    232.0873ms |             ::1 | POST     "/api/login"
+[GIN] 2026/10/14 - 17:25:44 | 204 |            0s |             ::1 | OPTIONS  "/api/login"
+
+2026/10/14 17:25:44 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[165.889ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:25:44 | 401 |     165.889ms |             ::1 | POST     "/api/login"
+[GIN] 2026/10/14 - 17:32:55 | 204 |            0s |             ::1 | OPTIONS  "/api/login"
+
+2026/10/14 17:32:56 [31;1mC:/Users/adity/Documents/Programming/selada-advanced/backend/handlers/auth.go:52 [35;1mrecord not found
+[0m[33m[549.320ms] [34;1m[rows:0][0m SELECT u.*, j.nm_jabatan FROM tbl_user u LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan WHERE u.username = 'aditya.gustian' AND u.void = 0 ORDER BY `u`.`username` LIMIT 1
+[GIN] 2026/10/14 - 17:32:56 | 401 |    550.0029ms |             ::1 | POST     "/api/login"

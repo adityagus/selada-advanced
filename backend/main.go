@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"log"
 	"os"
-	"strings"
 
 	"fmt"
 	"go-api/config"
@@ -12,26 +10,8 @@ import (
 )
 
 func loadDotEnv() {
-	file, err := os.Open(".env")
-	fmt.Println("file : ", file)
-	if err != nil {
-		return // .env tidak ditemukan, biarkan membaca env sistem/docker
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) == 2 {
-			key := strings.TrimSpace(parts[0])
-			val := strings.TrimSpace(parts[1])
-			val = strings.Trim(val, `"'`)
-			os.Setenv(key, val)
-		}
+	if err := config.LoadEnv(".env"); err != nil {
+		log.Fatalf("Gagal membaca .env: %v", err)
 	}
 }
 

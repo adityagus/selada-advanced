@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -10,7 +11,7 @@ import (
 )
 
 var DBPostgres *gorm.DB
-var DBMysql *gorm.DB
+var DBSelada *gorm.DB
 var DBMysqlPos *gorm.DB
 
 func getEnv(key, fallback string) string {
@@ -18,6 +19,31 @@ func getEnv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+// tunePool recycles idle connections before firewalls / DB servers silently drop them,
+// which otherwise makes the first requests after a long idle period fail.
+func tunePool(db *gorm.DB) {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return
+	}
+	sqlDB.SetMaxOpenConns(20)
+	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
+	sqlDB.SetConnMaxLifetime(10 * time.Minute)
+}
+
+// ensureCustomerColumns adds the aktivitas / jenis columns to tb_customer when missing.
+func ensureCustomerColumns(db *gorm.DB) {
+	for _, stmt := range []string{
+		"ALTER TABLE tb_customer ADD COLUMN IF NOT EXISTS aktivitas VARCHAR(255) NOT NULL DEFAULT ''",
+		"ALTER TABLE tb_customer ADD COLUMN IF NOT EXISTS jenis VARCHAR(255) NOT NULL DEFAULT ''",
+	} {
+		if err := db.Exec(stmt).Error; err != nil {
+			fmt.Printf("Gagal menambah kolom tb_customer: %v\n", err)
+		}
+	}
 }
 
 func ConnectDatabases() {
@@ -36,23 +62,25 @@ func ConnectDatabases() {
 		fmt.Printf("Gagal koneksi ke Postgres (sam_live): %v\n", err)
 		DBPostgres = nil
 	} else {
+		tunePool(DBPostgres)
 		fmt.Println("Koneksi Postgres (sam_live) Berhasil!")
 	}
 
-	// 2. MySQL Default Connection (selada)
-	myHost := getEnv("DB_MYSQL_HOST", "10.10.10.8")
-	myPort := getEnv("DB_MYSQL_PORT", "3307")
-	myUser := getEnv("DB_MYSQL_USER", "root")
-	myPass := getEnv("DB_MYSQL_PASS", "stagingdev@6177")
-	myName := getEnv("DB_MYSQL_NAME", "selada_dev")
-	dsnMS := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&sql_mode=''", myUser, myPass, myHost, myPort, myName)
-
-	DBMysql, err = gorm.Open(mysql.Open(dsnMS), &gorm.Config{})
-	if err != nil {
-		fmt.Printf("Gagal koneksi ke MySQL (selada): %v\n", err)
-		DBMysql = nil
+	// 2. PostgreSQL Selada connection; DB_MYSQL_* is only used by migration.
+	dsnSelada, dsnErr := PostgresDSN("DB_PG2", "")
+	if dsnErr != nil {
+		fmt.Printf("Konfigurasi PostgreSQL (selada) tidak valid: %v\n", dsnErr)
+		DBSelada = nil
 	} else {
-		fmt.Println("Koneksi MySQL (selada) Berhasil!")
+		DBSelada, err = gorm.Open(postgres.Open(dsnSelada), &gorm.Config{})
+		if err != nil {
+			fmt.Printf("Gagal koneksi ke PostgreSQL (selada): %v\n", err)
+			DBSelada = nil
+		} else {
+			tunePool(DBSelada)
+			ensureCustomerColumns(DBSelada)
+			fmt.Println("Koneksi PostgreSQL (selada) Berhasil!")
+		}
 	}
 
 	// 3. MySQL POS Connection (sam_pos)
@@ -60,7 +88,7 @@ func ConnectDatabases() {
 	myPosPort := getEnv("DB_MYSQL_POS_PORT", "3307")
 	myPosUser := getEnv("DB_MYSQL_POS_USER", "root")
 	myPosPass := getEnv("DB_MYSQL_POS_PASS", "stagingdev@6177")
-	myPosName := getEnv("DB_MYSQL_POS_NAME", "sam_pos_dev")
+	myPosName := getEnv("DB_MYSQL_POS_NAME", "sam_pos")
 	dsnMSPos := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", myPosUser, myPosPass, myPosHost, myPosPort, myPosName)
 
 	DBMysqlPos, err = gorm.Open(mysql.Open(dsnMSPos), &gorm.Config{})
@@ -68,6 +96,7 @@ func ConnectDatabases() {
 		fmt.Printf("Gagal koneksi ke MySQL (sam_pos): %v\n", err)
 		DBMysqlPos = nil
 	} else {
+		tunePool(DBMysqlPos)
 		fmt.Println("Koneksi MySQL (sam_pos) Berhasil!")
 	}
 }

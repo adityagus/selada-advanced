@@ -34,7 +34,10 @@ export default <Partial<Config>>{
           card: '#161f30',
           border: '#1e293b',
           sidebar: '#0d131f'
-        }
+        },
+        primary: '#0C163D',
+        secondary: '#E26B00',
+        third: '#F4C500',
       }
     },
   },

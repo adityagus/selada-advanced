@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-// Rencana represents the tb_rencana table in MySQL default db
+// Rencana represents the tb_rencana table in PostgreSQL Selada
 type Rencana struct {
 	IDRencana    int    `gorm:"column:id_rencana;primaryKey;autoIncrement"`
 	IDCustomer   int    `gorm:"column:id_customer"`
@@ -15,8 +15,9 @@ func (Rencana) TableName() string {
 	return "tb_rencana"
 }
 
-// RencanaDet represents the tb_rencana_det table in MySQL default db
+// RencanaDet represents the tb_rencana_det table in PostgreSQL Selada
 type RencanaDet struct {
+	KetAktivitas string    `gorm:"column:ket_aktivitas"`
 	IDRencanaDet int       `gorm:"column:id_rencana_det;primaryKey;autoIncrement"`
 	IDRencana    int       `gorm:"column:id_rencana"`
 	TglRencana   time.Time `gorm:"column:tgl_rencana"`
@@ -35,7 +36,7 @@ func (RencanaDet) TableName() string {
 	return "tb_rencana_det"
 }
 
-// HslAktivitas represents the tb_hslaktivitas table in MySQL default db
+// HslAktivitas represents the tb_hslaktivitas table in PostgreSQL Selada
 type HslAktivitas struct {
 	IDHslaktiv   int    `gorm:"column:id_hslaktiv;primaryKey"`
 	NamaHslaktiv string `gorm:"column:nama_hslaktiv"`
@@ -46,7 +47,7 @@ func (HslAktivitas) TableName() string {
 	return "tb_hslaktivitas"
 }
 
-// CronDetPointFn represents the tb_crondetpointfn table in MySQL default db
+// CronDetPointFn represents the tb_crondetpointfn table in PostgreSQL Selada
 type CronDetPointFn struct {
 	ID        int    `gorm:"column:id;primaryKey;autoIncrement"`
 	Bln       int    `gorm:"column:bln"`

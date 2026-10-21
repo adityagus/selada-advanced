@@ -21,9 +21,7 @@
         :title="isExpanded ? 'Collapse Sidebar' : 'Expand Sidebar'"
         v-show="isExpanded"
       >
-        <svg class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': !isExpanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-        </svg>
+        <AppIcon name="chevrons-left" class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': !isExpanded }" />
       </button>
     </div>
 
@@ -36,9 +34,7 @@
         :class="{ 'active': route.path === '/dashboard' }"
       >
         <div class="flex items-center gap-3 min-w-0">
-          <svg class="w-5 h-5 flex-shrink-0" :class="route.path === '/dashboard' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-          </svg>
+          <AppIcon name="dashboard" class="w-5 h-5 flex-shrink-0" :class="route.path === '/dashboard' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'" />
           <span v-show="isExpanded" class="font-medium text-sm truncate">Dashboard</span>
         </div>
       </NuxtLink>
@@ -50,9 +46,7 @@
         :class="{ 'active': route.path === '/inquiry' }"
       >
         <div class="flex items-center gap-3 min-w-0">
-          <svg class="w-5 h-5 flex-shrink-0" :class="route.path === '/inquiry' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-          </svg>
+          <AppIcon name="inquiry" class="w-5 h-5 flex-shrink-0" :class="route.path === '/inquiry' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'" />
           <span v-show="isExpanded" class="font-medium text-sm truncate">Inquiry & Rencana</span>
         </div>
       </NuxtLink>
@@ -65,9 +59,7 @@
         :class="{ 'active': route.path === '/data-customer' }"
       >
         <div class="flex items-center gap-3 min-w-0">
-          <svg class="w-5 h-5 flex-shrink-0" :class="route.path === '/data-customer' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-          </svg>
+          <AppIcon name="users" class="w-5 h-5 flex-shrink-0" :class="route.path === '/data-customer' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'" />
           <span v-show="isExpanded" class="font-medium text-sm truncate">Data Customer</span>
         </div>
       </NuxtLink>
@@ -79,9 +71,7 @@
         :class="{ 'active': route.path === '/cek-taksiran' }"
       >
         <div class="flex items-center gap-3 min-w-0">
-          <svg class="w-5 h-5 flex-shrink-0" :class="route.path === '/cek-taksiran' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-          </svg>
+          <AppIcon name="calculator" class="w-5 h-5 flex-shrink-0" :class="route.path === '/cek-taksiran' ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'" />
           <span v-show="isExpanded" class="font-medium text-sm truncate">CeTar</span>
         </div>
       </NuxtLink>
@@ -89,24 +79,18 @@
       <!-- Collapsible Sub-menu: Report -->
       <div class="pt-2 border-t border-slate-100 dark:border-slate-800/80 my-2">
         <button
-          @click="isReportGroupOpen = !isReportGroupOpen"
+          @click="!isExpanded ? navigateTo('/report') : (isReportGroupOpen = !isReportGroupOpen)"
           class="w-full sidebar-nav-item justify-between group cursor-pointer"
           :class="{ 'text-slate-900 dark:text-white font-semibold': isReportGroupOpen || route.path.startsWith('/report') }"
+          :title="isExpanded ? '' : 'Performance Sales'"
         >
           <div class="flex items-center gap-3 min-w-0">
-            <svg class="w-5 h-5 flex-shrink-0" :class="route.path.startsWith('/report') ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
+            <AppIcon name="chart" class="w-5 h-5 flex-shrink-0" :class="route.path.startsWith('/report') ? 'text-amber-600 dark:text-amber-400' : 'text-slate-500 dark:text-slate-400'" />
             <span v-show="isExpanded" class="font-medium text-sm truncate">Report</span>
           </div>
-          <svg
-            v-show="isExpanded"
+          <AppIcon name="chevron-down" v-show="isExpanded"
             class="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-transform duration-200"
-            :class="{ 'rotate-180': isReportGroupOpen }"
-            fill="none" stroke="currentColor" viewBox="0 0 24 24"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
+            :class="{ 'rotate-180': isReportGroupOpen }" />
         </button>
 
         <!-- Indented Sub-items with vertical line -->
@@ -114,21 +98,7 @@
           <NuxtLink
             to="/report"
             class="subnav-item"
-            :class="{ 'subnav-active': route.path === '/report' && (!route.query.tab || route.query.tab === 'Laporan Inquiry & Rencana') }"
-          >
-            Laporan Inquiry
-          </NuxtLink>
-          <NuxtLink
-            to="/report?tab=Laporan Pencairan SBG"
-            class="subnav-item"
-            :class="{ 'subnav-active': route.path === '/report' && route.query.tab === 'Laporan Pencairan SBG' }"
-          >
-            Pencairan SBG
-          </NuxtLink>
-          <NuxtLink
-            to="/report?tab=Laporan Sales Performance"
-            class="subnav-item"
-            :class="{ 'subnav-active': route.path === '/report' && route.query.tab === 'Laporan Sales Performance' }"
+            :class="{ 'subnav-active': route.path === '/report' }"
           >
             Performance Sales
           </NuxtLink>
@@ -146,7 +116,7 @@
         />
         <div v-show="isExpanded" class="flex flex-col min-w-0">
           <span class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{{ userName || 'User' }}</span>
-          <span class="text-[11px] text-slate-400 dark:text-slate-500 truncate">Cabang {{ userBranch || '-' }}</span>
+          <span class="text-[11px] text-slate-400 dark:text-slate-500 truncate">{{ displayBranchText }}</span>
         </div>
       </div>
       <button
@@ -154,23 +124,28 @@
         class="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800/60 hover:bg-red-50 dark:hover:bg-red-950/40 text-slate-400 hover:text-red-600 dark:hover:text-red-400 border border-slate-200 dark:border-slate-700 hover:border-red-200 dark:hover:border-red-800 flex items-center justify-center transition-all flex-shrink-0 cursor-pointer"
         :title="isExpanded ? '' : 'Logout'"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-        </svg>
+        <AppIcon name="logout" class="w-4 h-4" />
       </button>
     </div>
   </aside>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from '#app'
 
-defineProps<{
+const props = defineProps<{
   isExpanded: boolean
   userName?: string
   userBranch?: string
+  userBranchName?: string
 }>()
+
+const displayBranchText = computed(() => {
+  const b = (props.userBranchName || props.userBranch || '').trim()
+  if (!b) return '-'
+  return b; 
+})
 
 defineEmits<{
   (e: 'toggle-sidebar'): void

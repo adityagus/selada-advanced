@@ -3,9 +3,11 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -19,8 +21,8 @@ import (
 
 // InquiryCountsHandler returns the counts for badge indicators
 func InquiryCountsHandler(c *gin.Context) {
-	if config.DBMysql == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database MySQL tidak terhubung"})
+	if config.DBSelada == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Selada tidak terhubung"})
 		return
 	}
 
@@ -43,7 +45,7 @@ func InquiryCountsHandler(c *gin.Context) {
 	}
 
 	var results []ScanResult
-	query := config.DBMysql.Table("tb_rencana_det rd_sub").
+	query := config.DBSelada.Table("tb_rencana_det rd_sub").
 		Select("rd_sub.id_hslaktiv, COUNT(*) as total").
 		Joins("JOIN (SELECT id_rencana, MAX(id_rencana_det) as max_id FROM tb_rencana_det GROUP BY id_rencana) latest ON rd_sub.id_rencana_det = latest.max_id").
 		Joins("JOIN tb_rencana a ON rd_sub.id_rencana = a.id_rencana")
@@ -104,6 +106,10 @@ type InquiryItem struct {
 	Nama         string `json:"nama" gorm:"column:nama"`
 	Hp           string `json:"hp" gorm:"column:hp"`
 	Alamat       string `json:"alamat" gorm:"column:alamat"`
+	Rt           string `json:"rt" gorm:"column:rt"`
+	Rw           string `json:"rw" gorm:"column:rw"`
+	Kelurahan    string `json:"kelurahan" gorm:"column:kelurahan"`
+	Kecamatan    string `json:"kecamatan" gorm:"column:kecamatan"`
 	Kota         string `json:"kota" gorm:"column:kota"`
 	TglRencana   string `json:"tgl_rencana" gorm:"column:tgl_rencana"`
 	NamaHslaktiv string `json:"nama_hslaktiv" gorm:"column:nama_hslaktiv"`
@@ -112,6 +118,8 @@ type InquiryItem struct {
 	IDRencanaDet int    `json:"id_rencana_det" gorm:"column:id_rencana_det"`
 	KetAktivitas string `json:"ket_aktivitas" gorm:"column:ket_aktivitas"`
 	IDSumbercust string `json:"id_sumbercust" gorm:"column:id_sumbercust"`
+	UrlImg       string `json:"url_img" gorm:"column:url_img"`
+	NameImg      string `json:"name_img" gorm:"column:name_img"`
 }
 
 // InquiryListRequest represents Datatables query parameters
@@ -126,8 +134,8 @@ type InquiryListRequest struct {
 
 // InquiryListHandler handles GET /api/inquiry/filter
 func InquiryListHandler(c *gin.Context) {
-	if config.DBMysql == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database MySQL tidak terhubung"})
+	if config.DBSelada == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Selada tidak terhubung"})
 		return
 	}
 
@@ -156,11 +164,12 @@ func InquiryListHandler(c *gin.Context) {
 		targetUser = userParam
 	}
 
-	baseQuery := config.DBMysql.Table("tb_rencana a").
+	baseQuery := config.DBSelada.Table("tb_rencana a").
 		Joins("JOIN tb_customer b ON b.id_customer = a.id_customer").
 		Joins("JOIN tb_rencana_det rd ON rd.id_rencana = a.id_rencana").
 		Joins("JOIN (SELECT id_rencana, MAX(id_rencana_det) as max_id FROM tb_rencana_det GROUP BY id_rencana) latest ON rd.id_rencana_det = latest.max_id").
 		Joins("LEFT JOIN tb_hslaktivitas ha ON ha.id_hslaktiv = rd.id_hslaktiv").
+		Joins("LEFT JOIN tb_img img ON img.detren_img = rd.id_rencana_det").
 		Where("rd.id_hslaktiv NOT IN ?", []int{6})
 
 	uLower := strings.ToLower(targetUser)
@@ -175,19 +184,19 @@ func InquiryListHandler(c *gin.Context) {
 
 	switch strings.ToLower(filterStatus) {
 	case "leads":
-		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 1 OR ha.nama_hslaktiv LIKE ?)", "%lead%")
+		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 1 OR ha.nama_hslaktiv ILIKE ?)", "%lead%")
 	case "prospect":
-		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 2 OR ha.nama_hslaktiv LIKE ? OR ha.nama_hslaktiv LIKE ?)", "%prospect%", "%prospek%")
+		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 2 OR ha.nama_hslaktiv ILIKE ? OR ha.nama_hslaktiv ILIKE ?)", "%prospect%", "%prospek%")
 	case "hot prospect", "hotprospect", "hot_prospect":
-		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 3 OR ha.nama_hslaktiv LIKE ?)", "%hot%")
+		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 3 OR ha.nama_hslaktiv ILIKE ?)", "%hot%")
 	case "sbg", "deal", "do":
-		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 7 OR ha.nama_hslaktiv LIKE ? OR ha.nama_hslaktiv LIKE ?)", "%sbg%", "%deal%")
+		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 7 OR ha.nama_hslaktiv ILIKE ? OR ha.nama_hslaktiv ILIKE ?)", "%sbg%", "%deal%")
 	case "batal":
-		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 6 OR ha.nama_hslaktiv LIKE ?)", "%batal%")
+		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 6 OR ha.nama_hslaktiv ILIKE ?)", "%batal%")
 	case "all", "":
 		baseQuery = baseQuery.Where("rd.id_hslaktiv != ?", 6)
 	default:
-		baseQuery = baseQuery.Where("(ha.nama_hslaktiv LIKE ? OR CAST(rd.id_hslaktiv AS CHAR) = ?)", "%"+filterStatus+"%", filterStatus)
+		baseQuery = baseQuery.Where("(ha.nama_hslaktiv ILIKE ? OR CAST(rd.id_hslaktiv AS TEXT) = ?)", "%"+filterStatus+"%", filterStatus)
 	}
 
 	searchVal := req.Search
@@ -197,7 +206,7 @@ func InquiryListHandler(c *gin.Context) {
 
 	if searchVal != "" {
 		likeSearch := "%" + searchVal + "%"
-		baseQuery = baseQuery.Where("(b.nama LIKE ? OR b.hp LIKE ? OR ha.nama_hslaktiv LIKE ?)", likeSearch, likeSearch, likeSearch)
+		baseQuery = baseQuery.Where("(b.nama ILIKE ? OR b.hp ILIKE ? OR ha.nama_hslaktiv ILIKE ?)", likeSearch, likeSearch, likeSearch)
 	}
 
 	var totalRecords int64
@@ -207,7 +216,7 @@ func InquiryListHandler(c *gin.Context) {
 	}
 
 	err := baseQuery.
-		Select("a.id_rencana, a.id_customer, b.nama, b.hp, b.alamat, b.kota, rd.tgl_rencana, ha.nama_hslaktiv, rd.id_hslaktiv, rd.ket_rencana, rd.id_rencana_det, rd.ket_aktivitas, a.id_sumbercust, b.nama as nama_cust").
+		Select("a.id_rencana, a.id_customer, b.nama, b.hp, b.alamat, b.rt, b.rw, b.kelurahan, b.kecamatan, b.kota, rd.tgl_rencana, ha.nama_hslaktiv, rd.id_hslaktiv, rd.ket_rencana, rd.id_rencana_det, rd.ket_aktivitas, a.id_sumbercust, b.nama as nama_cust, COALESCE(img.url_img, '') as url_img, COALESCE(img.name_img, '') as name_img").
 		Order("rd.id_rencana_det DESC").
 		Offset(req.Start).
 		Limit(req.Length).
@@ -227,30 +236,37 @@ func InquiryListHandler(c *gin.Context) {
 
 // InputRencanaRequest represents the payload for inputting plans
 type InputRencanaRequest struct {
-	IDRencana  int    `json:"id_rencana"`
-	Cust       string `json:"cust"` // "Lama" or "Baru"
-	CustLama   int    `json:"custlama"`
-	Nama       string `json:"nm"`
-	Hp         string `json:"hp"`
-	SumberCust string `json:"sumbercust"`
-	HslAktiv   int    `json:"hslaktiv"`
-	KatCust    string `json:"katcust"`
-	Ket        string `json:"ket"`
-	Aktiv      int    `json:"aktiv"`
-	Alamat     string `json:"alamat"`
-	Rt         string `json:"rt"`
-	Rw         string `json:"rw"`
-	Kelurahan  string `json:"kelurahan"`
-	Kecamatan  string `json:"kecamatan"`
-	Kota       string `json:"kota"`
-	TglRencana string `json:"tgl_rencana"`
-	NoSbg      string `json:"no_sbg"`
+	KeteranganBarang *string `json:"keterangan_barang"`
+	IDRencana        int     `json:"id_rencana"`
+	Cust             string  `json:"cust"` // "Lama" or "Baru"
+	CustLama         int     `json:"custlama"`
+	Nama             string  `json:"nm"`
+	Hp               string  `json:"hp"`
+	SumberCust       string  `json:"sumbercust"`
+	HslAktiv         int     `json:"hslaktiv"`
+	KatCust          string  `json:"katcust"`
+	Ket              string  `json:"ket"`
+	Aktiv            int     `json:"aktiv"`
+	Alamat           string  `json:"alamat"`
+	Rt               string  `json:"rt"`
+	Rw               string  `json:"rw"`
+	Kelurahan        string  `json:"kelurahan"`
+	Kecamatan        string  `json:"kecamatan"`
+	Kota             string  `json:"kota"`
+	KdKota           string  `json:"kd_kota"`
+	TglRencana       string  `json:"tgl_rencana"`
+	NoSbg            string  `json:"no_sbg"`
+	SOA              string  `json:"soa"`
+	Aktifitas        string  `json:"aktifitas"`
+	JenisAplikasi    string  `json:"jenis_aplikasi"`
+	UrlImg           string  `json:"url_img"`
+	NameImg          string  `json:"name_img"`
 }
 
 // InputRencanaHandler handles POST /api/rencana/input
 func InputRencanaHandler(c *gin.Context) {
-	if config.DBMysql == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database MySQL tidak terhubung"})
+	if config.DBSelada == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Selada tidak terhubung"})
 		return
 	}
 
@@ -284,8 +300,7 @@ func InputRencanaHandler(c *gin.Context) {
 	var ro string = "N"
 	var targetIDRencana int = req.IDRencana
 
-	tx := config.DBMysql.Begin()
-	tx.Exec("SET SESSION sql_mode = ''")
+	tx := config.DBSelada.Begin()
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -360,12 +375,34 @@ func InputRencanaHandler(c *gin.Context) {
 			return
 		}
 
+		kotaCode := strings.TrimSpace(req.KdKota)
+		if kotaCode == "" {
+			kotaCode = strings.TrimSpace(req.Kota)
+		}
+		if kotaCode != "" && !regexp.MustCompile(`^\d+$`).MatchString(kotaCode) && config.DBPostgres != nil {
+			var cityID int
+			err := config.DBPostgres.Table("master.city").
+				Select("city_id").
+				Where("UPPER(city_name) LIKE ?", "%"+strings.ToUpper(kotaCode)+"%").
+				Limit(1).
+				Scan(&cityID).Error
+			if err == nil && cityID > 0 {
+				kotaCode = strconv.Itoa(cityID)
+			}
+		}
+
 		newCust := models.Customer{
-			Nama:    strings.TrimSpace(req.Nama),
-			Hp:      telp,
-			Alamat:  strings.TrimSpace(req.Alamat),
-			Kota:    strings.TrimSpace(req.Kota),
-			IDLogin: userId.(string),
+			Nama:      strings.TrimSpace(req.Nama),
+			Hp:        telp,
+			Alamat:    strings.TrimSpace(req.Alamat),
+			Rt:        strings.TrimSpace(req.Rt),
+			Rw:        strings.TrimSpace(req.Rw),
+			Kelurahan: strings.TrimSpace(req.Kelurahan),
+			Kecamatan: strings.TrimSpace(req.Kecamatan),
+			Kota:      kotaCode,
+			IDLogin:   userId.(string),
+			Aktivitas: strings.TrimSpace(req.Aktifitas),
+			Jenis:     strings.TrimSpace(req.JenisAplikasi),
 		}
 		if err := tx.Create(&newCust).Error; err != nil {
 			tx.Rollback()
@@ -375,26 +412,52 @@ func InputRencanaHandler(c *gin.Context) {
 		idCustomer = newCust.IDCustomer
 	}
 
-	fullAddr := strings.TrimSpace(req.Alamat)
-	if req.Rt != "" || req.Rw != "" {
-		fullAddr += fmt.Sprintf(" RT %s RW %s", req.Rt, req.Rw)
-	}
-	if req.Kelurahan != "" {
-		fullAddr += fmt.Sprintf(", Kel. %s", req.Kelurahan)
-	}
-	if req.Kecamatan != "" {
-		fullAddr += fmt.Sprintf(", Kec. %s", req.Kecamatan)
-	}
+	cleanAlamat := strings.TrimSpace(req.Alamat)
+	if idCustomer > 0 {
+		kotaCode := strings.TrimSpace(req.KdKota)
+		if kotaCode == "" {
+			kotaCode = strings.TrimSpace(req.Kota)
+		}
+		if kotaCode != "" && !regexp.MustCompile(`^\d+$`).MatchString(kotaCode) && config.DBPostgres != nil {
+			var cityID int
+			err := config.DBPostgres.Table("master.city").
+				Select("city_id").
+				Where("UPPER(city_name) LIKE ?", "%"+strings.ToUpper(kotaCode)+"%").
+				Limit(1).
+				Scan(&cityID).Error
+			if err == nil && cityID > 0 {
+				kotaCode = strconv.Itoa(cityID)
+			}
+		}
 
-	if idCustomer > 0 && fullAddr != "" {
 		updateMap := make(map[string]interface{})
-		if fullAddr != "" {
-			updateMap["alamat"] = fullAddr
+		if cleanAlamat != "" {
+			updateMap["alamat"] = cleanAlamat
 		}
-		if req.Kota != "" {
-			updateMap["kota"] = req.Kota
+		if req.Rt != "" {
+			updateMap["rt"] = strings.TrimSpace(req.Rt)
 		}
-		_ = tx.Model(&models.Customer{}).Where("id_customer = ?", idCustomer).Updates(updateMap).Error
+		if req.Rw != "" {
+			updateMap["rw"] = strings.TrimSpace(req.Rw)
+		}
+		if req.Kelurahan != "" {
+			updateMap["kelurahan"] = strings.TrimSpace(req.Kelurahan)
+		}
+		if req.Kecamatan != "" {
+			updateMap["kecamatan"] = strings.TrimSpace(req.Kecamatan)
+		}
+		if kotaCode != "" {
+			updateMap["kota"] = kotaCode
+		}
+		if req.Aktifitas != "" {
+			updateMap["aktivitas"] = strings.TrimSpace(req.Aktifitas)
+		}
+		if req.JenisAplikasi != "" {
+			updateMap["jenis"] = strings.TrimSpace(req.JenisAplikasi)
+		}
+		if len(updateMap) > 0 {
+			_ = tx.Model(&models.Customer{}).Where("id_customer = ?", idCustomer).Updates(updateMap).Error
+		}
 	}
 
 	if req.Cust == "Lama" && hslAktiv == 1 && idCustomer > 0 {
@@ -423,12 +486,61 @@ func InputRencanaHandler(c *gin.Context) {
 		targetIDRencana = newRencana.IDRencana
 	}
 
+	// Item descriptions are stored separately from activity notes and SOA.
+	barangDescription := ""
+	if req.KeteranganBarang != nil {
+		barangDescription = strings.TrimSpace(*req.KeteranganBarang)
+	} else if targetIDRencana > 0 {
+		var prevKet string
+		err := tx.Table("tb_rencana_det").
+			Select("ket_rencana").
+			Where("id_rencana = ?", targetIDRencana).
+			Order("id_rencana_det DESC").
+			Limit(1).
+			Scan(&prevKet).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			log.Printf("Gagal membaca keterangan barang: %v", err)
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membaca keterangan barang: " + err.Error()})
+			return
+		}
+		barangDescription = prevKet
+	}
+	if req.SOA != "" {
+		if err := tx.Model(&models.Rencana{}).Where("id_rencana = ?", targetIDRencana).Update("id_sumbercust", req.SOA).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan SOA"})
+			return
+		}
+	}
+
+	finalKet := req.Ket
+	var metaParts []string
+	if req.SOA != "" {
+		metaParts = append(metaParts, "SOA: "+req.SOA)
+	}
+	if req.Aktifitas != "" {
+		metaParts = append(metaParts, "Aktifitas: "+req.Aktifitas)
+	}
+	if req.JenisAplikasi != "" {
+		metaParts = append(metaParts, "Jenis: "+req.JenisAplikasi)
+	}
+	if len(metaParts) > 0 {
+		metaHeader := "[" + strings.Join(metaParts, " | ") + "]"
+		if finalKet != "" && !strings.Contains(finalKet, metaHeader) {
+			finalKet = metaHeader + " " + finalKet
+		} else if finalKet == "" {
+			finalKet = metaHeader
+		}
+	}
+
 	newRencanaDet := models.RencanaDet{
-		IDRencana:  targetIDRencana,
-		TglRencana: time.Now(),
-		IDHslaktiv: hslAktiv,
-		Status:     1,
-		KetRencana: req.Ket,
+		IDRencana:    targetIDRencana,
+		TglRencana:   time.Now(),
+		IDHslaktiv:   hslAktiv,
+		Status:       1,
+		KetRencana:   barangDescription,
+		KetAktivitas: finalKet,
 	}
 
 	if req.Cust == "Lama" {
@@ -440,6 +552,15 @@ func InputRencanaHandler(c *gin.Context) {
 		return
 	}
 
+	if req.UrlImg != "" {
+		imgRecord := map[string]interface{}{
+			"detren_img": newRencanaDet.IDRencanaDet,
+			"name_img":   req.NameImg,
+			"url_img":    req.UrlImg,
+		}
+		_ = tx.Table("tb_img").Create(&imgRecord).Error
+	}
+
 	if err := tx.Commit().Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan transaksi"})
 		return
@@ -448,6 +569,7 @@ func InputRencanaHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message":      "Rencana berhasil disimpan",
 		"id_rencana":   targetIDRencana,
+		"id_customer":  idCustomer,
 		"ro_status":    ro,
 		"final_status": hslAktiv,
 	})
@@ -455,8 +577,8 @@ func InputRencanaHandler(c *gin.Context) {
 
 // DeleteRencanaHandler handles DELETE /api/rencana/:id
 func DeleteRencanaHandler(c *gin.Context) {
-	if config.DBMysql == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database MySQL tidak terhubung"})
+	if config.DBSelada == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Selada tidak terhubung"})
 		return
 	}
 
@@ -474,7 +596,7 @@ func DeleteRencanaHandler(c *gin.Context) {
 	}
 
 	var renc models.Rencana
-	err = config.DBMysql.Where("id_rencana = ? AND id_login = ?", id, userId).First(&renc).Error
+	err = config.DBSelada.Where("id_rencana = ? AND id_login = ?", id, userId).First(&renc).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Rencana tidak ditemukan atau Anda tidak berwenang"})
@@ -484,7 +606,7 @@ func DeleteRencanaHandler(c *gin.Context) {
 		return
 	}
 
-	tx := config.DBMysql.Begin()
+	tx := config.DBSelada.Begin()
 	if err := tx.Model(&models.RencanaDet{}).Where("id_rencana = ?", id).Update("status", 0).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menghapus rencana detil"})
@@ -585,8 +707,8 @@ func getLeaderboardPosition(validIDs []int, tgl1Str, tgl2Str string) gin.H {
 			SUM(CASE WHEN o.product_id IN (2, 3) THEN t.requested_loan ELSE 0 END) AS total_non_emas,
 			SUM(t.requested_loan) AS total_omzet
 		`).
-		Joins("JOIN product.product_offerings o ON t.offering_id = o.offering_id").
-		Where("t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') AND t.submission_date BETWEEN ? AND ? AND t.sales_employee_id IS NOT NULL", tgl1Str, tgl2Str).
+		Joins("LEFT JOIN product.product_offerings o ON t.offering_id = o.offering_id").
+		Where("t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') AND COALESCE(t.submission_date, t.created_at) BETWEEN ? AND ? AND t.sales_employee_id IS NOT NULL", tgl1Str, tgl2Str).
 		Group("t.sales_employee_id").
 		Order("total_omzet DESC").
 		Scan(&rows).Error
@@ -637,9 +759,6 @@ func getLeaderboardPosition(validIDs []int, tgl1Str, tgl2Str string) gin.H {
 
 	var topPerformers []gin.H
 	for idx, r := range rows {
-		if idx >= 10 { // Top 10 performers
-			break
-		}
 		name := empNameMap[r.SalesEmployeeID]
 		if name == "" {
 			name = fmt.Sprintf("Sales #%d", r.SalesEmployeeID)
@@ -747,11 +866,120 @@ func getDailyPacingBooking(validIDs []int, tgl1Str, tgl2Str string, daysInMonth 
 }
 
 type SalesInfo struct {
-	Username  string `json:"username" gorm:"column:username"`
-	Nama      string `json:"nama" gorm:"column:nama"`
-	IDJabatan int    `json:"id_jabatan" gorm:"column:id_jabatan"`
-	NmJabatan string `json:"nm_jabatan" gorm:"column:nm_jabatan"`
-	FkUser    string `json:"fkuser" gorm:"column:username"`
+	Username   string  `json:"username" gorm:"column:username"`
+	Nama       string  `json:"nama" gorm:"column:nama"`
+	IDJabatan  int     `json:"id_jabatan" gorm:"column:id_jabatan"`
+	NmJabatan  string  `json:"nm_jabatan" gorm:"column:nm_jabatan"`
+	FkUser     string  `json:"fkuser" gorm:"column:username"`
+	TotalOmzet float64 `json:"total_omzet"`
+}
+
+func fetchSalesMonthlyOmzetMap() map[string]float64 {
+	userOmzetMap := make(map[string]float64)
+	if config.DBPostgres == nil {
+		return userOmzetMap
+	}
+
+	now := time.Now()
+	tgl1 := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	tgl2 := time.Date(now.Year(), now.Month()+1, 0, 23, 59, 59, 0, now.Location())
+	tgl1Str := tgl1.Format("2006-01-02 15:04:05")
+	tgl2Str := tgl2.Format("2006-01-02 15:04:05")
+
+	type TrxOmzetRow struct {
+		SalesEmployeeID int     `gorm:"column:sales_employee_id"`
+		TotalOmzet      float64 `gorm:"column:total_omzet"`
+	}
+	var rows []TrxOmzetRow
+	err := config.DBPostgres.Table("gadai.transactions t").
+		Select("t.sales_employee_id, SUM(COALESCE(t.requested_loan, 0)) AS total_omzet").
+		Where("t.application_status IN ('NEW', 'ADO', 'REO') AND t.loan_status IN ('ACTIVE', 'REDEEM', 'LUNAS', 'EXTEND') AND COALESCE(t.submission_date, t.created_at) BETWEEN ? AND ? AND t.sales_employee_id IS NOT NULL", tgl1Str, tgl2Str).
+		Group("t.sales_employee_id").
+		Scan(&rows).Error
+
+	if err != nil || len(rows) == 0 {
+		return userOmzetMap
+	}
+
+	empToUsers := make(map[int][]string)
+
+	type EmpMap struct {
+		EmployeeID   int    `gorm:"column:employee_id"`
+		Username     string `gorm:"column:username"`
+		EmployeeCode string `gorm:"column:employee_code"`
+	}
+	var empMaps []EmpMap
+	_ = config.DBPostgres.Table("master.employee e").
+		Select("e.employee_id, COALESCE(u.username, '') AS username, COALESCE(e.employee_code, '') AS employee_code").
+		Joins("LEFT JOIN auth.users u ON u.employee_id = e.employee_id").
+		Scan(&empMaps).Error
+
+	for _, em := range empMaps {
+		if em.EmployeeID > 0 {
+			if em.Username != "" {
+				empToUsers[em.EmployeeID] = append(empToUsers[em.EmployeeID], strings.ToLower(strings.TrimSpace(em.Username)))
+			}
+			if em.EmployeeCode != "" {
+				empToUsers[em.EmployeeID] = append(empToUsers[em.EmployeeID], strings.ToLower(strings.TrimSpace(em.EmployeeCode)))
+			}
+		}
+	}
+
+	var authUsers []struct {
+		EmployeeID int    `gorm:"column:employee_id"`
+		Username   string `gorm:"column:username"`
+	}
+	_ = config.DBPostgres.Table("auth.users").
+		Select("employee_id, username").
+		Where("employee_id IS NOT NULL").
+		Scan(&authUsers).Error
+
+	for _, au := range authUsers {
+		if au.EmployeeID > 0 && au.Username != "" {
+			empToUsers[au.EmployeeID] = append(empToUsers[au.EmployeeID], strings.ToLower(strings.TrimSpace(au.Username)))
+		}
+	}
+
+	if config.DBMysqlPos != nil {
+		type PosUser struct {
+			Username string `gorm:"column:username"`
+			Nama     string `gorm:"column:nama"`
+		}
+		var posUsers []PosUser
+		_ = config.DBMysqlPos.Table("tbl_user").
+			Select("username, nama").
+			Scan(&posUsers).Error
+
+		for _, pu := range posUsers {
+			uLower := strings.ToLower(strings.TrimSpace(pu.Username))
+			nLower := strings.ToLower(strings.TrimSpace(pu.Nama))
+			if nLower != "" {
+				for empID, users := range empToUsers {
+					for _, u := range users {
+						if u == uLower {
+							empToUsers[empID] = append(empToUsers[empID], nLower)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for _, r := range rows {
+		if r.SalesEmployeeID <= 0 || r.TotalOmzet <= 0 {
+			continue
+		}
+		idents := empToUsers[r.SalesEmployeeID]
+		seen := make(map[string]bool)
+		for _, ident := range idents {
+			if ident != "" && !seen[ident] {
+				seen[ident] = true
+				userOmzetMap[ident] += r.TotalOmzet
+			}
+		}
+	}
+
+	return userOmzetMap
 }
 
 func fetchActiveSalesList() []SalesInfo {
@@ -780,27 +1008,47 @@ func fetchActiveSalesList() []SalesInfo {
 		}
 	}
 
-	// 2. Fetch active users in POS (sam_pos.tbl_user) where void = 0 and sales position
+	// 2. Fetch omzet map for the current month
+	omzetMap := fetchSalesMonthlyOmzetMap()
+
+	// 3. Fetch active users in POS (sam_pos.tbl_user) where void = 0 and sales position
 	var posRows []SalesInfo
 	query := config.DBMysqlPos.Table("tbl_user u").
 		Select("u.username, u.nama, u.id_jabatan, COALESCE(j.nm_jabatan, 'Sales') AS nm_jabatan").
 		Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
-		Where("u.void = ?", 0)
+		Where("u.void = ?", 1)
 
 	// Filter for sales positions in POS (IDs 6, 17, 29, 74 or nm_jabatan matching sales keywords)
 	query = query.Where("u.id_jabatan IN (6, 17, 29, 74) OR LOWER(j.nm_jabatan) LIKE '%sales%' OR LOWER(j.nm_jabatan) LIKE '%trainee%' OR LOWER(j.nm_jabatan) LIKE '%junior%' OR LOWER(j.nm_jabatan) LIKE '%senior%'")
 
-	_ = query.Order("u.nama ASC").Scan(&posRows).Error
+	_ = query.Scan(&posRows).Error
 
 	for _, r := range posRows {
 		uLower := strings.ToLower(strings.TrimSpace(r.Username))
+		nLower := strings.ToLower(strings.TrimSpace(r.Nama))
 		// If Sopiga Pro DB is connected and active map has entries, ensure user is active in Sopiga Pro
 		if len(activeSopigaUserMap) > 0 && !activeSopigaUserMap[uLower] {
 			continue
 		}
 		r.FkUser = r.Username
+
+		// Attach omzet
+		if val, exists := omzetMap[uLower]; exists {
+			r.TotalOmzet = val
+		} else if val, exists := omzetMap[nLower]; exists {
+			r.TotalOmzet = val
+		}
+
 		salesList = append(salesList, r)
 	}
+
+	// 4. Sort sales list by highest omzet first (descending), then alphabetically by nama
+	sort.SliceStable(salesList, func(i, j int) bool {
+		if salesList[i].TotalOmzet != salesList[j].TotalOmzet {
+			return salesList[i].TotalOmzet > salesList[j].TotalOmzet
+		}
+		return strings.ToLower(salesList[i].Nama) < strings.ToLower(salesList[j].Nama)
+	})
 
 	return salesList
 }
@@ -846,11 +1094,12 @@ func DashboardMetricsHandler(c *gin.Context) {
 			activeSales := fetchActiveSalesList()
 			for _, s := range activeSales {
 				salesList = append(salesList, gin.H{
-					"username":   s.Username,
-					"nama":       s.Nama,
-					"id_jabatan": s.IDJabatan,
-					"nm_jabatan": s.NmJabatan,
-					"fkuser":     s.Username,
+					"username":    s.Username,
+					"nama":        s.Nama,
+					"id_jabatan":  s.IDJabatan,
+					"nm_jabatan":  s.NmJabatan,
+					"fkuser":      s.Username,
+					"total_omzet": s.TotalOmzet,
 				})
 			}
 
@@ -902,14 +1151,14 @@ func DashboardMetricsHandler(c *gin.Context) {
 	leadsMonthly, prospectMonthly, hotprospectMonthly, sbgMonthly := 0, 0, 0, 0
 	lastMonthLeads := 0
 
-	if config.DBMysql != nil {
+	if config.DBSelada != nil {
 		// --- Overall Accumulation (All-Time History) ---
 		type ActiveResult struct {
 			IdHslaktiv int
 			Total      int
 		}
 		var activeResults []ActiveResult
-		_ = config.DBMysql.Table("tb_rencana_det rd_sub").
+		_ = config.DBSelada.Table("tb_rencana_det rd_sub").
 			Select("rd_sub.id_hslaktiv, COUNT(*) as total").
 			Joins("JOIN (SELECT id_rencana, MAX(id_rencana_det) as max_id FROM tb_rencana_det GROUP BY id_rencana) latest ON rd_sub.id_rencana_det = latest.max_id").
 			Joins("JOIN tb_rencana a ON rd_sub.id_rencana = a.id_rencana").
@@ -946,7 +1195,7 @@ func DashboardMetricsHandler(c *gin.Context) {
 			Total      int
 		}
 		var monthlyResults []MonthlyResult
-		_ = config.DBMysql.Table("tb_rencana_det rd_sub").
+		_ = config.DBSelada.Table("tb_rencana_det rd_sub").
 			Select("rd_sub.id_hslaktiv, COUNT(DISTINCT rd_sub.id_rencana) as total").
 			Joins("JOIN (SELECT id_rencana, MAX(id_rencana_det) as max_id FROM tb_rencana_det WHERE tgl_rencana BETWEEN ? AND ? GROUP BY id_rencana) latest ON rd_sub.id_rencana_det = latest.max_id", tgl1Str, tgl2Str).
 			Joins("JOIN tb_rencana a ON rd_sub.id_rencana = a.id_rencana").
@@ -975,7 +1224,7 @@ func DashboardMetricsHandler(c *gin.Context) {
 
 		// Monthly leads created for last month
 		var lastLeadsRes struct{ Total int }
-		_ = config.DBMysql.Table("tb_rencana_det a").
+		_ = config.DBSelada.Table("tb_rencana_det a").
 			Select("COUNT(DISTINCT a.id_rencana) as total").
 			Joins("JOIN tb_rencana b ON a.id_rencana = b.id_rencana").
 			Where("b.id_login = ? AND a.tgl_rencana BETWEEN ? AND ? AND a.id_hslaktiv = 1", userStr, lastTgl1Str, lastTgl2Str).
@@ -1387,29 +1636,8 @@ func DashboardMetricsHandler(c *gin.Context) {
 		"pacing_daily": pacingDailyRes,
 		"live_feeds":   liveFeeds,
 		"username":     userStr,
+		"branch_name":  ResolveBranchName(c.GetString("cabang"), userStr),
 	})
-}
-
-func SumberSourceList(c *gin.Context) {
-	fmt.Println("testingg")
-	if config.DBPostgres == nil {
-		c.JSON(http.StatusOK, []gin.H{})
-		return
-	}
-
-	var results []models.ApplicationSource
-
-	err := config.DBPostgres.Table("master.application_sources").
-		Select("code, name").
-		Where("is_active = ?", true).
-		Order("name ASC").
-		Scan(&results).Error
-	if err != nil {
-		c.JSON(http.StatusOK, []gin.H{})
-		return
-	}
-	c.JSON(http.StatusOK, results)
-
 }
 
 // GetCustomerSelectHandler returns list of customers for select dropdown matching M_rencana getSelectCustomer
@@ -1426,16 +1654,16 @@ func GetCustomerSelectHandler(c *gin.Context) {
 		Text string `json:"text"`
 	}
 
-	if config.DBMysql == nil {
+	if config.DBSelada == nil {
 		c.JSON(http.StatusOK, []CustomerSelect{})
 		return
 	}
 
 	var customers []models.Customer
-	query := config.DBMysql.Where("id_login = ?", userId)
+	query := config.DBSelada.Where("id_login = ?", userId)
 	if search != "" {
 		likeTerm := "%" + search + "%"
-		query = query.Where("(nama LIKE ? OR hp LIKE ? OR identitas LIKE ?)", likeTerm, likeTerm, likeTerm)
+		query = query.Where("(nama ILIKE ? OR hp ILIKE ? OR identitas ILIKE ?)", likeTerm, likeTerm, likeTerm)
 	}
 
 	err := query.Order("nama ASC").Limit(10).Find(&customers).Error
@@ -1450,76 +1678,6 @@ func GetCustomerSelectHandler(c *gin.Context) {
 			ID:   cust.IDCustomer,
 			Text: fmt.Sprintf("%s | %s", cust.Nama, cust.Hp),
 		})
-	}
-
-	c.JSON(http.StatusOK, results)
-}
-
-// GetSumberCustHandler fetches reference sources from master.reference_sources (DB2 Postgres)
-func GetSumberCustHandler(c *gin.Context) {
-	if config.DBPostgres == nil {
-		c.JSON(http.StatusOK, []gin.H{})
-		return
-	}
-
-	var results []struct {
-		KdRefCust string `json:"kd_ref_cust" gorm:"column:kd_ref_cust"`
-		NmRefCust string `json:"nm_ref_cust" gorm:"column:nm_ref_cust"`
-	}
-
-	err := config.DBPostgres.Table("master.reference_sources").
-		Select("code AS kd_ref_cust, name AS nm_ref_cust").
-		Where("is_active = ?", true).
-		Order("name ASC").
-		Scan(&results).Error
-
-	if err != nil {
-		c.JSON(http.StatusOK, []gin.H{})
-		return
-	}
-
-	c.JSON(http.StatusOK, results)
-}
-
-// GetSalesListHandler returns active sales users for review mode
-func GetSalesListHandler(c *gin.Context) {
-	sales := fetchActiveSalesList()
-	c.JSON(http.StatusOK, sales)
-}
-
-// GetKelurahanHandler searches village/district/city from master.village
-func GetKelurahanHandler(c *gin.Context) {
-	if config.DBPostgres == nil {
-		c.JSON(http.StatusOK, []gin.H{})
-		return
-	}
-
-	q := c.Query("q")
-	type KelurahanResult struct {
-		KdKelurahan int    `json:"kd_kelurahan" gorm:"column:kd_kelurahan"`
-		NmKelurahan string `json:"nm_kelurahan" gorm:"column:nm_kelurahan"`
-		KdKecamatan int    `json:"kd_kecamatan" gorm:"column:kd_kecamatan"`
-		NmKecamatan string `json:"nm_kecamatan" gorm:"column:nm_kecamatan"`
-		KdKota      int    `json:"kd_kota" gorm:"column:kd_kota"`
-		NmKota      string `json:"nm_kota" gorm:"column:nm_kota"`
-	}
-
-	var results []KelurahanResult
-	query := config.DBPostgres.Table("master.village v").
-		Select("v.village_id AS kd_kelurahan, v.village_name AS nm_kelurahan, d.district_id AS kd_kecamatan, d.district_name AS nm_kecamatan, c.city_id AS kd_kota, c.city_name AS nm_kota").
-		Joins("LEFT JOIN master.district d ON d.district_id = v.district_id").
-		Joins("LEFT JOIN master.city c ON c.city_id = d.city_id").
-		Where("v.is_active = ?", true)
-
-	if q != "" {
-		upperQ := "%" + strings.ToUpper(q) + "%"
-		query = query.Where("UPPER(v.village_name) LIKE ?", upperQ)
-	}
-
-	err := query.Order("v.village_name ASC").Limit(20).Scan(&results).Error
-	if err != nil {
-		c.JSON(http.StatusOK, []gin.H{})
-		return
 	}
 
 	c.JSON(http.StatusOK, results)

@@ -1,0 +1,17 @@
+{
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/.nuxt/**": true,
+    "**/.output/**": true,
+    "**/dist/**": true
+  },
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+    "*_entity.go": "${capture}_dto.go, ${capture}_repository.go, ${capture}_service.go, ${capture}_handler.go",
+    "*Table.vue": "${capture}ModalForm.vue, ${capture}FilterBar.vue",
+    "*Service.ts": "${capture}.types.ts"
+  }
+}

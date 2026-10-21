@@ -3,12 +3,12 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-800 tracking-tight">Laporan Rekapitulasi & Performance</h1>
-        <p class="text-slate-500 text-sm">Monitoring realisasi aktivitas sales, tingkat konversi, dan rekapitulasi per periode bulan & tahun.</p>
+        <h1 class="text-2xl font-semibold text-slate-800 tracking-tight">Laporan Performance Sales</h1>
+        <p class="text-slate-500 text-sm">Monitoring realisasi aktivitas inquiry & rencana sales, tingkat konversi, dan rekapitulasi per periode.</p>
       </div>
       <div class="flex items-center gap-3">
         <button @click="printReport" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2.5 rounded-xl text-sm transition-all border border-slate-300 cursor-pointer">
-          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          <AppIcon name="printer" class="w-4 h-4 text-slate-600" />
           Cetak Laporan
         </button>
       </div>
@@ -85,7 +85,7 @@
         </div>
 
         <button @click="applyFilter" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl text-sm transition-all shadow-sm flex items-center gap-1.5 cursor-pointer">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <AppIcon name="search" class="w-4 h-4" />
           Apply Filter
         </button>
       </div>
@@ -107,7 +107,7 @@
             <tbody class="divide-y divide-slate-100 text-slate-700">
               <tr v-if="isLoading">
                 <td colspan="6" class="text-center py-8">
-                  <div class="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <AppIcon name="loader" class="w-6 h-6  text-amber-500   animate-spin mx-auto" />
                 </td>
               </tr>
               <tr v-else-if="filteredBookings.length === 0">
@@ -131,7 +131,7 @@
                 </td>
                 <td class="px-5 py-3.5 text-center">
                   <button @click="showDetail(row)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all inline-flex items-center gap-1 cursor-pointer">
-                    Detail <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    Detail <AppIcon name="eye" width="12" height="12" />
                   </button>
                 </td>
               </tr>
@@ -194,7 +194,7 @@
       <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 class="font-semibold text-slate-800 text-base">Detail Laporan Booking</h3>
-          <button @click="selectedItem = null" class="text-slate-400 hover:text-slate-600 p-1">✕</button>
+          <button @click="selectedItem = null" class="text-slate-400 hover:text-slate-600 p-1"><AppIcon name="close" class="w-4 h-4" /></button>
         </div>
         <div class="space-y-3 text-sm">
           <div class="flex justify-between py-1 border-b border-slate-100"><span class="text-slate-500 font-medium">Customer:</span> <span class="font-semibold text-slate-800">{{ selectedItem.nama }}</span></div>

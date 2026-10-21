@@ -18,6 +18,7 @@ export interface InputRencanaPayload {
   hslaktiv?: number
   katcust?: string
   ket?: string
+  keterangan_barang?: string
   ket_rencana?: string
   ket_aktivitas?: string
   sumbercust?: string
@@ -30,6 +31,9 @@ export interface InputRencanaPayload {
   kecamatan?: string
   kota?: string
   aktiv?: number
+  soa?: string
+  aktifitas?: string
+  jenis_aplikasi?: string
 }
 
 export interface InquiryItem {
@@ -41,8 +45,12 @@ export interface InquiryItem {
   status: string
   nama_hslaktiv?: string
   id_hslaktiv?: number
+  keterangan_barang?: string
   ket_rencana?: string
   ket_aktivitas?: string
   id_sumbercust?: number
   nm_sumbercust?: string
+  soa?: string
+  aktifitas?: string
+  jenis_aplikasi?: string
 }

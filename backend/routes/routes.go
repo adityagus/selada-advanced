@@ -1,7 +1,9 @@
 package routes
 
 import (
+	"go-api/config"
 	"go-api/handlers"
+	"go-api/internal/master"
 	"go-api/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -40,11 +42,6 @@ func SetupRouter() *gin.Engine {
 		protected.POST("/sopiga/inputdo", handlers.InputDOHandler)
 		protected.GET("/sopiga/inquiry-context", handlers.GetInquiryContextHandler)
 
-		// Catalog / Katalog
-		protected.GET("/katalog/point", handlers.GetKatalogPointHandler)
-		protected.GET("/katalog/list/:category", handlers.GetKatalogListHandler)
-		protected.GET("/katalog/spec/:id", handlers.GetKatalogSpecHandler)
-
 		// Pawn Estimation / Taksiran
 		protected.GET("/taksiran/jenis-barang", handlers.GetJenisBarangHandler)
 		protected.GET("/taksiran/grade", handlers.GetGradeHandler)
@@ -61,16 +58,14 @@ func SetupRouter() *gin.Engine {
 		protected.POST("/taksiran/simpan", handlers.SimpanTransaksiHandler)
 		protected.GET("/taksiran/history", handlers.GetTaksiranHistoryHandler)
 
-		// Reference & Lookup Endpoints (PHP Parity)
+		// Reference & Lookup Endpoints
 		protected.GET("/customer/list", handlers.GetCustomerListHandler)
 		protected.GET("/customer/:id/inquiries", handlers.GetCustomerInquiriesHandler)
 		protected.GET("/customer/select", handlers.GetCustomerSelectHandler)
-		protected.GET("/sumbercust", handlers.GetSumberCustHandler)
-		protected.GET("/sales/list", handlers.GetSalesListHandler)
-		protected.GET("/kelurahan", handlers.GetKelurahanHandler)
 
-		// master sumber source
-		protected.GET("/master/sumber_source", handlers.SumberSourceList)
+		// Modular Master Data Domain (Branch, Source, Location, Sales)
+		masterModule := master.InitMasterModule(config.DBPostgres, config.DBSelada, config.DBMysqlPos)
+		masterModule.RegisterRoutes(protected)
 	}
 
 	return r

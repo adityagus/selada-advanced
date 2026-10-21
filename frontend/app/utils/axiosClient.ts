@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { clearAuthCookies, isTokenExpired } from '~/utils/auth'
+import { clearAuthCookies, isTokenExpired, refreshSessionActivity } from '~/utils/auth'
 
 const getCookieClient = (name: string): string | null => {
   if (typeof document === 'undefined') return null
@@ -53,13 +53,16 @@ axiosClient.interceptors.request.use((config) => {
   if (!isLoginEndpoint && isTokenExpired(tokenVal, tokenExpiryVal)) {
     clearAuthCookies()
     if (typeof window !== 'undefined') {
-      window.location.href = '/login'
+      window.location.href = '/login?reason=timeout'
     }
     return Promise.reject(new Error('Token kedaluwarsa atau tidak terdeteksi. Silakan login kembali.'))
   }
 
   if (tokenVal) {
     config.headers.Authorization = `Bearer ${tokenVal}`
+    if (!isLoginEndpoint) {
+      refreshSessionActivity()
+    }
   }
 
   return config
@@ -75,7 +78,7 @@ axiosClient.interceptors.response.use(
     if (status === 401 || status === 403) {
       clearAuthCookies()
       if (typeof window !== 'undefined') {
-        window.location.href = '/login'
+        window.location.href = '/login?reason=timeout'
       }
     }
     return Promise.reject(error)
