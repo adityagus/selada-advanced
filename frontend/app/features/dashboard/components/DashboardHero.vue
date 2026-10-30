@@ -1,169 +1,164 @@
 <template>
-  <div class="space-y-6">
-    <!-- Review Sales Controls Card -->
-    <div v-if="isReview && sortedSalesList.length > 0" class="bg-white border border-slate-100 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 shadow-xs">
-      <div class="flex items-center gap-2.5 font-medium text-xs text-slate-600">
-        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-        <AppIcon name="user" class="w-4 h-4 text-amber-500" />
-        <span>Pilih Sales Person:</span>
+  <div class="space-y-4">
+    <!-- Review Sales Controls (When Active) -->
+    <div
+      v-if="isReview && sortedSalesList.length > 0"
+      class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+    >
+      <div class="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 font-medium">
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        <span>Review Performa Sales:</span>
       </div>
-      <div class="flex items-center gap-3 flex-wrap">
-        <select
-          :value="selectedSalesUser"
-          @change="$emit('update:selectedSalesUser', ($event.target as HTMLSelectElement).value)"
-          class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all min-w-[240px]"
-        >
-          <option v-for="s in sortedSalesList" :key="s.username" :value="s.username">
-            {{ s.nama }} - {{ s.nm_jabatan || "SALES" }}
-          </option>
-        </select>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <div class="relative">
+          <select
+            :value="selectedSalesUser"
+            @change="$emit('update:selectedSalesUser', ($event.target as HTMLSelectElement).value)"
+            class="pl-3 pr-8 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400 dark:focus:ring-slate-600 transition min-w-[220px] cursor-pointer appearance-none"
+          >
+            <option v-for="s in sortedSalesList" :key="s.username" :value="s.username">
+              {{ s.nama }} — {{ s.nm_jabatan || "Sales" }}
+            </option>
+          </select>
+          <AppIcon name="chevron-down" class="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
+        </div>
+
         <button
           @click="$emit('review-change')"
           :disabled="isFetching"
-          class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-medium text-xs sm:text-sm rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50"
+          class="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white text-xs font-semibold rounded-lg shadow-2xs transition disabled:opacity-50 cursor-pointer"
         >
-          <AppIcon name="refresh" class="w-4 h-4" :class="{ 'animate-spin': isFetching }" />
-          <span>Ganti Sales</span>
+          {{ isFetching ? 'Memuat...' : 'Tampilkan' }}
         </button>
+
         <button
           v-if="selectedSalesUser"
           @click="$emit('review-reset')"
-          class="text-xs text-slate-500 hover:text-slate-800 font-medium cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+          class="text-xs text-slate-500 hover:text-amber-700 dark:hover:text-amber-400 font-medium cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-950/40 transition"
         >
-          Reset
+          Reset ke Saya
         </button>
       </div>
     </div>
 
-    <!-- HERO & LEADERBOARD ROW -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Hero Card (2 cols) -->
+    <!-- Main Overview Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <!-- Left: Incentive & Performance Status (8 cols) -->
       <div
-        class="lg:col-span-2 bg-[#1e293b] text-white rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden flex flex-col min-h-[220px] justify-center"
+        class="lg:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-6"
       >
-        <!-- Background Decorative Glow -->
-        <div class="absolute -top-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
-          <div class="space-y-3 flex-1">
-            <div class="flex items-center gap-3">
-              <span class="text-base sm:text-lg font-semibold text-amber-400">
-                {{ isQualified ? "Estimasi Insentif Bulan Ini" : "Potensi Insentif Terkumpul" }}
+        <!-- Top Row: Label, Status, Privacy -->
+        <div class="flex items-start justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
+                {{ isQualified ? "Estimasi Insentif Berjalan" : "Potensi Insentif" }}
               </span>
-
-              <!-- Privacy Toggle Button -->
-              <button
-                @click="isPrivate = !isPrivate"
-                type="button"
-                :class="isPrivate ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-white/10 text-slate-300 border-white/20 hover:bg-white/20'"
-                class="p-1.5 rounded-lg border text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                :title="isPrivate ? 'Tampilkan Nilai' : 'Sembunyikan Nilai'"
+              <span
+                class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium"
+                :class="isQualified ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800' : 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800'"
               >
-                <AppIcon name="eye-off" v-if="isPrivate" class="w-4 h-4" />
-                <AppIcon name="eye" v-else class="w-4 h-4" />
-              </button>
+                <span class="w-1.5 h-1.5 rounded-full" :class="isQualified ? 'bg-emerald-500' : 'bg-amber-500'"></span>
+                {{ isQualified ? 'Qualified' : 'Belum Qualified' }}
+              </span>
             </div>
 
-            <!-- Incentive Display -->
-            <div class="flex items-baseline gap-2">
-              <span v-if="!isPrivate" class="text-2xl text-slate-400 font-light">Rp</span>
-              <h2 class="text-4xl md:text-5xl font-bold tracking-tight text-white select-none">
-                <template v-if="isPrivate">******</template>
+            <!-- Big Metric Number -->
+            <div class="flex items-baseline gap-2 pt-1">
+              <span v-if="!isPrivate" class="text-lg font-medium text-slate-400 dark:text-slate-500">Rp</span>
+              <span class="text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 font-mono">
+                <template v-if="isPrivate">••••••••</template>
                 <template v-else>{{ formatNum(estIncentive) }}</template>
-              </h2>
-            </div>
-
-            <!-- Qualification Status Badge -->
-            <div class="pt-1">
-              <span v-if="isPrivate" class="text-sm font-normal text-slate-400">*****</span>
-              <div
-                v-else
-                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium"
-                :class="isQualified ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-slate-800/80 border border-slate-700 text-slate-300'"
-              >
-                <AppIcon name="check-circle" v-if="isQualified" class="w-4 h-4 text-emerald-400" />
-                <AppIcon name="lock" v-else class="w-4 h-4 text-amber-400" />
-                <span>Status: {{ isQualified ? "Qualified" : "Potensi Terkunci" }} | Grade: {{ userGrade }} (Rate: {{ isQualified ? appliedRate : (appliedRate || 25) }}%)</span>
-              </div>
+              </span>
             </div>
           </div>
 
-          <!-- Target Progress Card (Right Side inside Hero) -->
-          <div class="w-full md:w-96 lg:w-[380px] shrink-0 bg-slate-800/50 backdrop-blur-md rounded-2xl p-5 border border-white/10 space-y-3.5">
-            <div class="flex justify-between items-center text-xs">
-              <span class="text-slate-400 font-medium">Target Progress</span>
-              <span class="font-semibold text-white tabular-nums">{{ pointTotal }} / {{ targetGoalPoints }} Poin</span>
-            </div>
+          <!-- Privacy Toggle Button -->
+          <button
+            @click="isPrivate = !isPrivate"
+            type="button"
+            class="p-2 text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-amber-50/50 dark:hover:bg-slate-800/60 transition cursor-pointer"
+            :title="isPrivate ? 'Tampilkan Nominal' : 'Sembunyikan Nominal'"
+          >
+            <AppIcon name="eye-off" v-if="isPrivate" class="w-4 h-4" />
+            <AppIcon name="eye" v-else class="w-4 h-4" />
+          </button>
+        </div>
 
-            <!-- Progress Bar -->
-            <div class="w-full bg-slate-700/60 rounded-full h-2.5 overflow-hidden p-0.5">
-              <div
-                class="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full transition-all duration-1000 ease-out"
-                :style="{ width: `${Math.min(100, Math.max(0, targetProgressPct))}%` }"
-              ></div>
+        <!-- Middle: Target Progress (Linear Style with Sidebar Amber Color) -->
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-slate-700 dark:text-slate-300">Target Poin</span>
+              <span class="text-slate-400">•</span>
+              <span class="text-slate-500 dark:text-slate-400">{{ targetDescription }}</span>
             </div>
-
-            <!-- Percentage Badge & Target Description -->
-            <div class="space-y-1.5 pt-0.5">
-              <div class="flex items-center gap-2">
-                <span class="inline-flex items-center gap-1.5 py-0.5 rounded-full text-xs font-bold text-emerald-400 tabular-nums">
-                  {{ targetProgressPct }}%
-                </span>
-              </div>
-              <p class="text-xs text-slate-200 font-medium leading-relaxed">
-                {{ targetDescription }}
-              </p>
+            <div class="font-mono text-slate-800 dark:text-slate-200 font-medium">
+              <span class="text-amber-600 dark:text-amber-400 font-bold">{{ pointTotal }}</span>
+              <span class="text-slate-400"> / {{ targetGoalPoints }} pts</span>
+              <span class="ml-2 text-slate-500">({{ targetProgressPct }}%)</span>
             </div>
+          </div>
 
-            <!-- Motivation Footer -->
-            <div class="pt-1 flex items-center gap-2 text-xs text-slate-300">
-              <AppIcon name="bolt" class="w-4 h-4 text-amber-400 shrink-0" />
-              <span class="leading-snug">{{ motivationText }}</span>
+          <!-- Clean Minimal Track in Sidebar Amber Primary -->
+          <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div
+              class="h-full rounded-full transition-all duration-500"
+              :class="targetProgressPct >= 100 ? 'bg-emerald-500' : 'bg-amber-500'"
+              :style="{ width: `${Math.min(100, Math.max(0, targetProgressPct))}%` }"
+            ></div>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+            <span>Sisa kebutuhan: {{ Math.max(0, (targetGoalPoints || 25) - (pointTotal || 0)) }} Poin</span>
+            <div class="flex items-center gap-3">
+              <span>Grade: <strong class="text-slate-700 dark:text-slate-300 font-semibold">{{ userGrade }}</strong></span>
+              <span>Rate: <strong class="text-slate-700 dark:text-slate-300 font-semibold">{{ appliedRate }}%</strong></span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Leaderboard / Ranking Card (1 col) -->
+      <!-- Right: Leaderboard Position Summary (4 cols) -->
       <div
-        class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col items-center justify-between text-center relative group overflow-hidden"
+        class="lg:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 sm:p-6 flex flex-col justify-between space-y-4"
       >
-        <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-500">
-          <AppIcon name="sparkles" class="w-24 h-24 text-slate-900" />
-        </div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Peringkat Sales</span>
+            <span class="text-[11px] text-slate-400">Nasional</span>
+          </div>
 
-        <div>
-          <div
-            class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-3 shadow-inner border border-amber-100"
-          >
-            <AppIcon name="sparkles" class="w-7 h-7" />
+          <div class="flex items-baseline gap-2">
+            <span class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 font-mono">
+              #{{ leaderboard.rank }}
+            </span>
+            <span class="text-xs text-slate-400">
+              dari {{ leaderboard.total_participants }} sales
+            </span>
           </div>
-          <h3 class="text-slate-400 text-xs font-semibold mb-1">
-            Posisi Leaderboard
-          </h3>
-          <div class="text-3xl font-bold text-slate-800 tracking-tight mb-2">
-            #{{ leaderboard.rank }}
-            <span class="text-sm font-normal text-slate-500">dari {{ leaderboard.total_participants }} Sales</span>
-          </div>
-          <p class="text-xs text-slate-500 max-w-[240px] leading-relaxed mx-auto">
+
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             <template v-if="leaderboard.rank === 1">
-              <strong class="text-emerald-600 font-semibold">Luar biasa!</strong> Anda memimpin peringkat #1!
+              Peringkat tertinggi nasional saat ini.
             </template>
             <template v-else>
-              Butuh
-              <strong class="text-emerald-600 font-semibold">Rp {{ formatNum(leaderboard.gap_to_next) }}</strong>
-              omzet lagi untuk menyalip ke peringkat #{{ leaderboard.rank - 1 }}.
+              Gap ke peringkat #{{ leaderboard.rank - 1 }}:
+              <strong class="font-mono text-slate-800 dark:text-slate-200 font-semibold">
+                Rp {{ formatNum(leaderboard.gap_to_next) }}
+              </strong>
             </template>
           </p>
         </div>
 
         <button
           @click="$emit('open-leaderboard')"
-          class="mt-4 px-4 py-2.5 text-xs font-semibold bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 w-full cursor-pointer"
+          type="button"
+          class="w-full py-2 px-3 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/40 border border-amber-200/80 dark:border-amber-800/80 rounded-lg transition flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <AppIcon name="chart" class="w-4 h-4" />
-          <span>Lihat Leaderboard Lengkap</span>
+          <AppIcon name="chart" class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+          <span>Buka Leaderboard</span>
         </button>
       </div>
     </div>
@@ -203,8 +198,8 @@ withDefaults(defineProps<Props>(), {
   pointTotal: 0,
   targetGoalPoints: 25,
   targetProgressPct: 0,
-  targetDescription: 'Mengejar Qualified 1 (Target: 25 Poin)',
-  motivationText: 'Semangat! Kejar Poin untuk Bonus Insentif!',
+  targetDescription: 'Target Poin Qualified',
+  motivationText: '',
   leaderboard: () => ({ rank: 1, total_participants: 1, gap_to_next: 0, top_performers: [] })
 })
 

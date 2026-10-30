@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps<{
-  name: 'dashboard' | 'inquiry' | 'users' | 'user' | 'user-plus' | 'calculator' | 'chart' | 'logout' | 'chevrons-left' | 'chevron-down' | 'sun' | 'moon' | 'bell' | 'clock' | 'monitor' | 'coin' | 'search' | 'plus' | 'close' | 'trash' | 'refresh' | 'eye' | 'eye-off' | 'check-circle' | 'check' | 'lock' | 'bolt' | 'sparkles' | 'arrow-up' | 'arrow-left' | 'arrow-right' | 'document' | 'star' | 'trending-up' | 'message' | 'phone' | 'external-link' | 'warning' | 'info' | 'pin' | 'flame' | 'camera' | 'download' | 'edit' | 'printer' | 'diamond' | 'card' | 'ring' | 'package' | 'loader'
+  name: 'dashboard' | 'inquiry' | 'users' | 'user' | 'user-plus' | 'calculator' | 'chart' | 'logout' | 'chevrons-left' | 'chevron-down' | 'sun' | 'moon' | 'bell' | 'clock' | 'monitor' | 'coin' | 'search' | 'plus' | 'close' | 'trash' | 'refresh' | 'eye' | 'eye-off' | 'check-circle' | 'check' | 'lock' | 'bolt' | 'sparkles' | 'arrow-up' | 'arrow-left' | 'arrow-right' | 'document' | 'star' | 'trending-up' | 'message' | 'phone' | 'external-link' | 'warning' | 'info' | 'pin' | 'flame' | 'camera' | 'download' | 'edit' | 'printer' | 'diamond' | 'card' | 'ring' | 'package' | 'loader' | 'whatsapp'
   title?: string
 }>()
 const baseURL = useRuntimeConfig().app.baseURL

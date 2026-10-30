@@ -18,6 +18,7 @@ type CustomerListItem struct {
 	Cif            string `json:"cif" gorm:"column:identitas"`
 	Nama           string `json:"nama" gorm:"column:nama"`
 	Hp             string `json:"hp" gorm:"column:hp"`
+	StatusWa       string `json:"status_wa" gorm:"column:status_wa"`
 	Alamat         string `json:"alamat" gorm:"column:alamat"`
 	Kota           string `json:"kota" gorm:"column:kota"`
 	Aktivitas      string `json:"aktivitas" gorm:"column:aktivitas"`
@@ -87,6 +88,7 @@ func GetCustomerListHandler(c *gin.Context) {
 			COALESCE(c.identitas, '') as identitas,
 			c.nama,
 			COALESCE(c.hp, '') as hp,
+			COALESCE(c.status_wa, 'belum_validasi') as status_wa,
 			COALESCE(c.alamat, '') as alamat,
 			COALESCE(c.kota, '') as kota,
 			COALESCE(c.aktivitas, '') as aktivitas,

@@ -15,9 +15,11 @@ export function getRencanaDetails(item: Record<string, any>) {
   const isLegacyNote = LEGACY_NOTE.test(description)
   return {
     keterangan_aktivitas: String(item.ket_aktivitas || '').replace(/^\[SOA: [^\]]+\]\s*/, ''),
-    soa: item.soa || metadata.SOA || (['Marketing', 'POS', 'Branch'].includes(item.id_sumbercust) ? item.id_sumbercust : ''),
-    aktifitas: item.aktifitas || metadata.Aktifitas || '',
-    jenis_aplikasi: item.jenis_aplikasi || metadata.Jenis || '',
+    soa: item.soa || (['Marketing', 'POS', 'Branch'].includes(item.id_sumbercust) ? item.id_sumbercust : ''),
+    aktifitas: item.aktifitas || '',
+    jenis_aplikasi: item.jenis_aplikasi || '',
+    rt: item.rt,
+    rw: item.rw,
     keterangan_barang: isLegacyNote ? '' : String(item.keterangan_barang ?? description),
   }
 }

@@ -511,7 +511,7 @@ func GetInquiryContextHandler(c *gin.Context) {
 		Joins("JOIN tb_rencana r ON rd.id_rencana = r.id_rencana").
 		Joins("JOIN tb_customer c ON r.id_customer = c.id_customer").
 		Joins("LEFT JOIN tb_hslaktivitas ha ON ha.id_hslaktiv = rd.id_hslaktiv").
-		Where("rd.id_rencana_det = ? OR r.id_rencana = ?", idVal, idVal).
+		Where("rd.id_rencana_det = ? OR r.id_rencana = ? OR r.id_customer = ?", idVal, idVal, idVal).
 		Order("rd.id_rencana_det DESC").
 		Limit(1).
 		Scan(&ctx).Error
@@ -519,6 +519,16 @@ func GetInquiryContextHandler(c *gin.Context) {
 	if err != nil || ctx.IDRencana == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Data inquiry tidak ditemukan"})
 		return
+	}
+
+	if ctx.NamaHslaktiv == "" {
+		if ctx.IDHslaktiv == 7 {
+			ctx.NamaHslaktiv = "Booking / SBG"
+		} else if ctx.IDHslaktiv == 2 {
+			ctx.NamaHslaktiv = "Prospect"
+		} else if ctx.IDHslaktiv == 1 {
+			ctx.NamaHslaktiv = "Leads"
+		}
 	}
 
 	c.JSON(http.StatusOK, ctx)

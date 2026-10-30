@@ -1,135 +1,152 @@
 <template>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <!-- Card 1: Gadai Emas -->
-    <div class="bg-white p-5 rounded-3xl border border-slate-100 hover:border-slate-200/80 shadow-xs hover:shadow-sm transition-all duration-300 flex flex-col justify-between group">
-      <div>
-        <div class="flex items-center justify-between mb-4">
-          <h4 class="font-bold text-slate-800 text-sm md:text-base tracking-tight">
-            Emas
-          </h4>
-          <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-            <AppIcon name="coin" class="w-5 h-5" />
+    <div
+      class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4"
+    >
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Gadai Emas
+          </span>
+          <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+            <AppIcon name="coin" class="w-4 h-4" />
           </div>
         </div>
 
-        <div class="flex items-baseline justify-between gap-2 mb-3 flex-wrap">
-          <span class="text-xl lg:text-2xl font-bold text-slate-900 tracking-tight">
+        <div>
+          <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-mono">
             Rp {{ formatNum(stats.emas) }}
-          </span>
-          <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-600 border border-emerald-200/60 font-normal text-xs px-2.5 py-1 rounded-full">
-            <AppIcon name="arrow-up" class="w-3 h-3 text-emerald-600" />
-            {{ gramasiEmas }}g
-          </span>
+          </div>
+          <div class="flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{{ gramasiEmas }} gram</span>
+            <span class="text-slate-300 dark:text-slate-700">•</span>
+            <span>Akumulasi emas</span>
+          </div>
         </div>
       </div>
 
-      <div class="pt-2 space-y-1.5">
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
         <div class="flex items-center justify-between text-xs">
-          <span class="font-medium text-slate-500">Target {{ emasCard.target_emas_g }}g</span>
-          <span class="font-bold text-amber-600">{{ emasCard.pct_emas }}%</span>
+          <span class="text-slate-500 dark:text-slate-400">Target {{ emasCard.target_emas_g }}g</span>
+          <span class="font-medium text-slate-700 dark:text-slate-300 font-mono">{{ emasCard.pct_emas }}%</span>
         </div>
-        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
           <div
-            class="h-full rounded-full transition-all duration-1000"
+            class="h-full rounded-full transition-all duration-500"
             :class="emasCard.is_emas_bonus_done ? 'bg-emerald-500' : 'bg-amber-500'"
-            :style="{ width: `${emasCard.pct_emas}%` }"
+            :style="{ width: `${Math.min(100, Math.max(0, emasCard.pct_emas || 0))}%` }"
           ></div>
         </div>
-        <p class="text-[11px] text-slate-400 font-medium truncate">{{ emasCard.bonus_emas_title }}</p>
+        <p class="text-[11px] text-slate-400 truncate" :title="emasCard.bonus_emas_title">
+          {{ emasCard.bonus_emas_title }}
+        </p>
       </div>
     </div>
 
     <!-- Card 2: Gadai Non Emas / Elektronik -->
-    <div class="bg-white p-5 rounded-3xl border border-slate-100 hover:border-slate-200/80 shadow-xs hover:shadow-sm transition-all duration-300 flex flex-col justify-between group">
-      <div>
-        <div class="flex items-center justify-between mb-4">
-          <h4 class="font-bold text-slate-800 text-sm md:text-base tracking-tight">
-            Elektronik
-          </h4>
-          <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-            <AppIcon name="monitor" class="w-5 h-5" />
+    <div
+      class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4"
+    >
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Gadai Elektronik
+          </span>
+          <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+            <AppIcon name="monitor" class="w-4 h-4" />
           </div>
         </div>
 
-        <div class="flex items-baseline justify-between gap-2 mb-3 flex-wrap">
-          <span class="text-xl lg:text-2xl font-bold text-slate-900 tracking-tight">
+        <div>
+          <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-mono">
             Rp {{ formatNum(stats.nonemas) }}
-          </span>
-          <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200/60 font-medium text-xs px-2.5 py-1 rounded-full">
-            Target 50M
-          </span>
+          </div>
+          <div class="flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span class="text-slate-700 dark:text-slate-300 font-semibold">Target UP: 50 Jt</span>
+            <span class="text-slate-300 dark:text-slate-700">•</span>
+            <span>Omzet aktif</span>
+          </div>
         </div>
       </div>
 
-      <div class="pt-2 space-y-1.5">
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
         <div class="flex items-center justify-between text-xs">
-          <span class="font-medium text-slate-500">Pencapaian UP</span>
-          <span class="font-bold text-amber-600">{{ nonEmasCard.pct_nonemas }}%</span>
+          <span class="text-slate-500 dark:text-slate-400">Pencapaian UP</span>
+          <span class="font-medium text-slate-700 dark:text-slate-300 font-mono">{{ nonEmasCard.pct_nonemas }}%</span>
         </div>
-        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
           <div
-            class="h-full rounded-full transition-all duration-1000"
-            :class="nonEmasCard.is_nonemas_bonus_done ? 'bg-emerald-500' : 'bg-amber-500'"
-            :style="{ width: `${nonEmasCard.pct_nonemas}%` }"
+            class="h-full rounded-full transition-all duration-500"
+            :class="nonEmasCard.is_nonemas_bonus_done ? 'bg-emerald-500' : 'bg-slate-700 dark:bg-slate-300'"
+            :style="{ width: `${Math.min(100, Math.max(0, nonEmasCard.pct_nonemas || 0))}%` }"
           ></div>
         </div>
-        <p class="text-[11px] text-slate-400 font-medium truncate">{{ nonEmasCard.bonus_title }}</p>
+        <p class="text-[11px] text-slate-400 truncate" :title="nonEmasCard.bonus_title">
+          {{ nonEmasCard.bonus_title }}
+        </p>
       </div>
     </div>
 
     <!-- Card 3: New CIF (Nasabah Baru) -->
-    <div class="bg-white p-5 rounded-3xl border border-slate-100 hover:border-slate-200/80 shadow-xs hover:shadow-sm transition-all duration-300 flex flex-col justify-between group">
-      <div>
-        <div class="flex items-center justify-between mb-4">
-          <h4 class="font-bold text-slate-800 text-sm md:text-base tracking-tight">
-            New CIF (Nasabah Baru)
-          </h4>
-          <div class="w-10 h-10 rounded-2xl bg-slate-900 text-amber-400 border border-slate-800 flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-            <AppIcon name="user-plus" class="w-5 h-5" />
+    <div
+      class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4"
+    >
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Nasabah Baru (New CIF)
+          </span>
+          <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+            <AppIcon name="user-plus" class="w-4 h-4" />
           </div>
         </div>
 
-        <div class="flex items-baseline justify-between gap-2 mb-3">
-          <span class="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <div>
+          <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-mono">
             {{ formatNum(stats.newcif) }}
-          </span>
-          <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200/60 font-bold text-xs px-2.5 py-1 rounded-full">
-            <AppIcon name="arrow-up" class="w-3 h-3 text-amber-600" />
-            Active
-          </span>
+            <span class="text-xs font-normal text-slate-400">CIF</span>
+          </div>
+          <div class="flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Akuisisi bulan berjalan</span>
+          </div>
         </div>
       </div>
 
-      <div class="pt-2 flex items-center justify-between text-xs text-slate-400 font-medium">
-        <span>vs. <span class="font-semibold text-slate-500"> {{ formatNum(lastMonthCif) }} Bulan Lalu</span></span>
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span>Bulan Lalu</span>
+        <span class="font-medium font-mono text-slate-700 dark:text-slate-300">{{ formatNum(lastMonthCif) }} CIF</span>
       </div>
     </div>
 
     <!-- Card 4: New Leads -->
-    <div class="bg-white p-5 rounded-3xl border border-slate-100 hover:border-slate-200/80 shadow-xs hover:shadow-sm transition-all duration-300 flex flex-col justify-between group">
-      <div>
-        <div class="flex items-center justify-between mb-4">
-          <h4 class="font-bold text-slate-800 text-sm md:text-base tracking-tight">
-            New Leads
-          </h4>
-          <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-            <AppIcon name="document" class="w-5 h-5" />
+    <div
+      class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col justify-between space-y-4"
+    >
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-slate-500 dark:text-slate-400">
+            Total Leads Masuk
+          </span>
+          <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+            <AppIcon name="document" class="w-4 h-4" />
           </div>
         </div>
 
-        <div class="flex items-baseline justify-between gap-2 mb-3">
-          <span class="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <div>
+          <div class="text-2xl font-semibold text-slate-900 dark:text-slate-100 tracking-tight font-mono">
             {{ formatNum(monthlyFunnel.leads) }}
-          </span>
-          <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200/60 font-bold text-xs px-2.5 py-1 rounded-full">
-            <AppIcon name="arrow-up" class="w-3 h-3 text-amber-600" />
-            Leads
-          </span>
+            <span class="text-xs font-normal text-slate-400">Leads</span>
+          </div>
+          <div class="flex items-center gap-1.5 mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span>Inquiry aktif tercatat</span>
+          </div>
         </div>
       </div>
 
-      <div class="pt-2 flex items-center justify-between text-xs text-slate-400 font-medium">
-        <span>vs. <span class="font-semibold text-slate-500"> {{ formatNum(lastMonthLeads) }} Bulan Lalu</span></span>
+      <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span>Bulan Lalu</span>
+        <span class="font-medium font-mono text-slate-700 dark:text-slate-300">{{ formatNum(lastMonthLeads) }} Leads</span>
       </div>
     </div>
   </div>

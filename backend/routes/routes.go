@@ -21,6 +21,18 @@ func SetupRouter() *gin.Engine {
 	r.POST("/api/login", handlers.LoginHandler)
 	r.POST("/api/logout", handlers.LogoutHandler)
 
+	// WhatsApp Webhook (Public listener for gateway events & Meta verification)
+	r.GET("/api/webhook/whatsapp", handlers.WhatsAppWebhookVerifyHandler)
+	r.POST("/api/webhook/whatsapp", handlers.WhatsAppWebhookHandler)
+
+	// Booking Webhook (Public listener for external booking success events)
+	r.GET("/api/webhook/booking", handlers.BookingWebhookVerifyHandler)
+	r.POST("/api/webhook/booking", handlers.ExternalBookingHandler)
+
+	// External Third-Party Integration Endpoints (Authenticated via API Key)
+	r.POST("/api/external/customer/update-phone", handlers.UpdateCustomerPhoneHandler)
+	r.POST("/api/external/booking", handlers.ExternalBookingHandler)
+
 	// Protected routes group
 	protected := r.Group("/api")
 	protected.Use(middleware.AuthMiddleware())

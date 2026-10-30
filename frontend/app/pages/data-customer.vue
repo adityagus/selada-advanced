@@ -106,7 +106,18 @@
                   {{ c.nama }}
                 </button>
               </td>
-              <td class="px-5 py-3.5 text-slate-600 dark:text-slate-300 font-mono text-xs">{{ c.hp || '-' }}</td>
+              <td class="px-5 py-3.5 text-slate-600 dark:text-slate-300 font-mono text-xs">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span>{{ c.hp || '-' }}</span>
+                  <span
+                    v-if="c.status_wa === 'tervalidasi'"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                    title="Nomor WhatsApp Tervalidasi"
+                  >
+                    WA Valid
+                  </span>
+                </div>
+              </td>
               <td class="px-5 py-3.5 text-xs text-slate-500 dark:text-slate-400 max-w-[180px] truncate">
                 {{ formatAddress(c.alamat, c.kota) }}
               </td>
@@ -238,7 +249,21 @@
           </div>
           <div>
             <span class="text-slate-400 font-medium">Nomor Handphone:</span>
-            <p class="text-sm font-mono font-semibold text-slate-700 dark:text-slate-200 mt-0.5">{{ historyCustomer.hp || '-' }}</p>
+            <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+              <p class="text-sm font-mono font-semibold text-slate-700 dark:text-slate-200">{{ historyCustomer.hp || '-' }}</p>
+              <span
+                v-if="historyCustomer.status_wa === 'tervalidasi'"
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+              >
+                WA Valid
+              </span>
+              <span
+                v-else
+                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
+              >
+                Belum Validasi
+              </span>
+            </div>
           </div>
           <div>
             <span class="text-slate-400 font-medium">Alamat Lengkap:</span>
@@ -514,6 +539,9 @@ const formatDate = (dateStr?: string) => {
 
 const getStatusBadgeClass = (status?: string) => {
   const s = (status || '').toLowerCase()
+  if (s.includes('booking')) {
+    return 'bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+  }
   if (s.includes('sbg') || s.includes('deal')) {
     return 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
   }

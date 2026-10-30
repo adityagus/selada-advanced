@@ -6,19 +6,18 @@
       @click.self="$emit('update:show', false)"
     >
       <div
-        class="bg-white rounded-3xl max-w-4xl xl:max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200"
+        class="bg-white rounded-2xl max-w-4xl xl:max-w-5xl w-full max-h-[90vh] flex flex-col shadow-xl border border-slate-200 overflow-hidden"
       >
         <!-- Modal Header -->
-        <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-amber-50/50 via-white to-slate-50/50">
-          <div class="flex items-center gap-3.5">
-            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20">
-              <AppIcon name="sparkles" class="w-6 h-6 text-white" />
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold">
+              <AppIcon name="chart" class="w-4 h-4 text-slate-700" />
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <h3 class="font-bold text-slate-800 text-lg md:text-xl">Leaderboard Performa Sales</h3>
-                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                  <AppIcon name="chart" class="w-3 h-3 text-amber-600" />
+                <h3 class="font-semibold text-slate-900 text-base">Leaderboard Performa Sales</h3>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600">
                   Bulan Berjalan
                 </span>
               </div>
@@ -27,44 +26,42 @@
           </div>
           <button
             @click="$emit('update:show', false)"
-            class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
             title="Tutup (Esc)"
           >
-            <AppIcon name="close" class="w-5 h-5" />
+            <AppIcon name="close" class="w-4 h-4" />
           </button>
         </div>
 
         <!-- Scrollable Modal Body -->
-        <div class="p-6 overflow-y-auto space-y-5">
-          <!-- Top 3 Podium Highlights -->
-          <div v-if="topThreePerformers.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        <div class="p-5 sm:p-6 overflow-y-auto space-y-4">
+          <!-- Top 3 Podium Minimalist Cards -->
+          <div v-if="topThreePerformers.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <!-- Rank 1: Gold -->
             <div
               v-if="topThreePerformers[0]"
-              class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-b from-amber-50 via-amber-50/40 to-white border-2 border-amber-300 shadow-xs flex flex-col justify-between"
+              class="rounded-xl p-4 bg-slate-50 border border-amber-300 flex flex-col justify-between space-y-3"
             >
-              <div class="absolute -right-3 -top-3 w-16 h-16 bg-amber-200/40 rounded-full blur-xl pointer-events-none"></div>
-              <div class="flex items-start justify-between gap-2 mb-2">
-                <div class="flex items-center gap-2">
-                  <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-md bg-amber-500 text-white font-bold text-xs flex items-center justify-center">
                     1
                   </span>
                   <div class="min-w-0">
-                    <span class="text-[10px] font-bold text-amber-700 tracking-wider uppercase">Juara 1</span>
-                    <h4 class="font-bold text-slate-900 text-sm truncate" :title="topThreePerformers[0].name">
+                    <span class="text-[10px] font-semibold text-amber-700 uppercase">Peringkat 1</span>
+                    <h4 class="font-semibold text-slate-900 text-sm truncate" :title="topThreePerformers[0].name">
                       {{ topThreePerformers[0].name }}
                     </h4>
                   </div>
                 </div>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-200 shrink-0">
-                  <AppIcon name="star" class="w-3 h-3 text-amber-600" />
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-white text-slate-800 border border-slate-200">
                   {{ topThreePerformers[0].points }} pts
                 </span>
               </div>
-              <div class="mt-2 pt-1 flex items-baseline justify-between text-xs">
-                <span class="text-slate-500 text-[11px]">Total Omzet:</span>
-                <span class="font-mono font-bold text-amber-900">
-                  <span class="text-[10px] text-amber-600 font-sans mr-0.5">Rp</span>{{ formatNum(topThreePerformers[0].total_omzet) }}
+              <div class="flex items-baseline justify-between text-xs pt-1 border-t border-slate-200/60">
+                <span class="text-slate-500">Total Omzet</span>
+                <span class="font-mono font-semibold text-slate-900">
+                  Rp {{ formatNum(topThreePerformers[0].total_omzet) }}
                 </span>
               </div>
             </div>
@@ -72,28 +69,28 @@
             <!-- Rank 2: Silver -->
             <div
               v-if="topThreePerformers[1]"
-              class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-b from-slate-50 via-slate-50/50 to-white border border-slate-200 shadow-xs flex flex-col justify-between"
+              class="rounded-xl p-4 bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3"
             >
-              <div class="flex items-start justify-between gap-2 mb-2">
-                <div class="flex items-center gap-2">
-                  <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-slate-400 to-slate-300 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-md bg-slate-600 text-white font-bold text-xs flex items-center justify-center">
                     2
                   </span>
                   <div class="min-w-0">
-                    <span class="text-[10px] font-bold text-slate-500 tracking-wider uppercase">Peringkat 2</span>
-                    <h4 class="font-bold text-slate-800 text-sm truncate" :title="topThreePerformers[1].name">
+                    <span class="text-[10px] font-semibold text-slate-500 uppercase">Peringkat 2</span>
+                    <h4 class="font-semibold text-slate-900 text-sm truncate" :title="topThreePerformers[1].name">
                       {{ topThreePerformers[1].name }}
                     </h4>
                   </div>
                 </div>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-white text-slate-800 border border-slate-200">
                   {{ topThreePerformers[1].points }} pts
                 </span>
               </div>
-              <div class="mt-2 pt-1 flex items-baseline justify-between text-xs">
-                <span class="text-slate-500 text-[11px]">Total Omzet:</span>
-                <span class="font-mono font-bold text-slate-800">
-                  <span class="text-[10px] text-slate-400 font-sans mr-0.5">Rp</span>{{ formatNum(topThreePerformers[1].total_omzet) }}
+              <div class="flex items-baseline justify-between text-xs pt-1 border-t border-slate-200/60">
+                <span class="text-slate-500">Total Omzet</span>
+                <span class="font-mono font-semibold text-slate-900">
+                  Rp {{ formatNum(topThreePerformers[1].total_omzet) }}
                 </span>
               </div>
             </div>
@@ -101,28 +98,28 @@
             <!-- Rank 3: Bronze -->
             <div
               v-if="topThreePerformers[2]"
-              class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-b from-orange-50/60 via-orange-50/20 to-white border border-orange-200 shadow-xs flex flex-col justify-between"
+              class="rounded-xl p-4 bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3"
             >
-              <div class="flex items-start justify-between gap-2 mb-2">
-                <div class="flex items-center gap-2">
-                  <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-700 to-orange-500 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                  <span class="w-7 h-7 rounded-md bg-amber-700 text-white font-bold text-xs flex items-center justify-center">
                     3
                   </span>
                   <div class="min-w-0">
-                    <span class="text-[10px] font-bold text-amber-800 tracking-wider uppercase">Peringkat 3</span>
-                    <h4 class="font-bold text-slate-800 text-sm truncate" :title="topThreePerformers[2].name">
+                    <span class="text-[10px] font-semibold text-slate-500 uppercase">Peringkat 3</span>
+                    <h4 class="font-semibold text-slate-900 text-sm truncate" :title="topThreePerformers[2].name">
                       {{ topThreePerformers[2].name }}
                     </h4>
                   </div>
                 </div>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-orange-100 text-orange-900 border border-orange-200 shrink-0">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-medium bg-white text-slate-800 border border-slate-200">
                   {{ topThreePerformers[2].points }} pts
                 </span>
               </div>
-              <div class="mt-2 pt-1 flex items-baseline justify-between text-xs">
-                <span class="text-slate-500 text-[11px]">Total Omzet:</span>
-                <span class="font-mono font-bold text-orange-950">
-                  <span class="text-[10px] text-orange-700 font-sans mr-0.5">Rp</span>{{ formatNum(topThreePerformers[2].total_omzet) }}
+              <div class="flex items-baseline justify-between text-xs pt-1 border-t border-slate-200/60">
+                <span class="text-slate-500">Total Omzet</span>
+                <span class="font-mono font-semibold text-slate-900">
+                  Rp {{ formatNum(topThreePerformers[2].total_omzet) }}
                 </span>
               </div>
             </div>

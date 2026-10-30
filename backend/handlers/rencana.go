@@ -75,19 +75,15 @@ func InquiryCountsHandler(c *gin.Context) {
 
 	leads := 0
 	prospect := 0
-	hotprospect := 0
 
 	for _, r := range results {
 		switch r.IdHslaktiv {
 		case 1:
 			counts["leads"] = r.Total
 			leads = r.Total
-		case 2:
-			counts["prospect"] = r.Total
-			prospect = r.Total
-		case 3:
-			counts["hotprospect"] = r.Total
-			hotprospect = r.Total
+		case 2, 3:
+			counts["prospect"] = counts["prospect"].(int) + r.Total
+			prospect += r.Total
 		case 7:
 			counts["sbg"] = r.Total
 		case 6:
@@ -95,7 +91,7 @@ func InquiryCountsHandler(c *gin.Context) {
 		}
 	}
 
-	counts["all"] = leads + prospect + hotprospect
+	counts["all"] = leads + prospect
 	c.JSON(http.StatusOK, counts)
 }
 
@@ -105,6 +101,7 @@ type InquiryItem struct {
 	IDCustomer   int    `json:"id_customer" gorm:"column:id_customer"`
 	Nama         string `json:"nama" gorm:"column:nama"`
 	Hp           string `json:"hp" gorm:"column:hp"`
+	StatusWa     string `json:"status_wa" gorm:"column:status_wa"`
 	Alamat       string `json:"alamat" gorm:"column:alamat"`
 	Rt           string `json:"rt" gorm:"column:rt"`
 	Rw           string `json:"rw" gorm:"column:rw"`
@@ -186,15 +183,16 @@ func InquiryListHandler(c *gin.Context) {
 	case "leads":
 		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 1 OR ha.nama_hslaktiv ILIKE ?)", "%lead%")
 	case "prospect":
-		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 2 OR ha.nama_hslaktiv ILIKE ? OR ha.nama_hslaktiv ILIKE ?)", "%prospect%", "%prospek%")
+		baseQuery = baseQuery.Where("(rd.id_hslaktiv IN (2, 3) OR ha.nama_hslaktiv ILIKE ? OR ha.nama_hslaktiv ILIKE ? OR ha.nama_hslaktiv ILIKE ?)", "%prospect%", "%prospek%", "%hot%")
 	case "hot prospect", "hotprospect", "hot_prospect":
 		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 3 OR ha.nama_hslaktiv ILIKE ?)", "%hot%")
-	case "sbg", "deal", "do":
-		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 7 OR ha.nama_hslaktiv ILIKE ? OR ha.nama_hslaktiv ILIKE ?)", "%sbg%", "%deal%")
+	case "sbg", "deal", "do", "booking":
+		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 7 OR ha.nama_hslaktiv ILIKE ? OR ha.nama_hslaktiv ILIKE ? OR ha.nama_hslaktiv ILIKE ?)", "%sbg%", "%deal%", "%booking%")
 	case "batal":
 		baseQuery = baseQuery.Where("(rd.id_hslaktiv = 6 OR ha.nama_hslaktiv ILIKE ?)", "%batal%")
 	case "all", "":
-		baseQuery = baseQuery.Where("rd.id_hslaktiv != ?", 6)
+		baseQuery = baseQuery.Where("rd.id_hslaktiv NOT IN ?", []int{6, 7}).
+			Where("(ha.nama_hslaktiv IS NULL OR (ha.nama_hslaktiv NOT ILIKE ? AND ha.nama_hslaktiv NOT ILIKE ? AND ha.nama_hslaktiv NOT ILIKE ? AND ha.nama_hslaktiv NOT ILIKE ?))", "%sbg%", "%booking%", "%deal%", "%do%")
 	default:
 		baseQuery = baseQuery.Where("(ha.nama_hslaktiv ILIKE ? OR CAST(rd.id_hslaktiv AS TEXT) = ?)", "%"+filterStatus+"%", filterStatus)
 	}
@@ -216,7 +214,7 @@ func InquiryListHandler(c *gin.Context) {
 	}
 
 	err := baseQuery.
-		Select("a.id_rencana, a.id_customer, b.nama, b.hp, b.alamat, b.rt, b.rw, b.kelurahan, b.kecamatan, b.kota, rd.tgl_rencana, ha.nama_hslaktiv, rd.id_hslaktiv, rd.ket_rencana, rd.id_rencana_det, rd.ket_aktivitas, a.id_sumbercust, b.nama as nama_cust, COALESCE(img.url_img, '') as url_img, COALESCE(img.name_img, '') as name_img").
+		Select("a.id_rencana, a.id_customer, b.nama, b.hp, COALESCE(b.status_wa, 'belum_validasi') as status_wa, b.alamat, b.rt, b.rw, b.kelurahan, b.kecamatan, b.kota, rd.tgl_rencana, COALESCE(NULLIF(ha.nama_hslaktiv, ''), CASE WHEN rd.id_hslaktiv = 7 THEN 'SBG' WHEN rd.id_hslaktiv IN (2, 3) THEN 'Prospect' WHEN rd.id_hslaktiv = 1 THEN 'Leads' ELSE 'Leads' END) as nama_hslaktiv, rd.id_hslaktiv, rd.ket_rencana, rd.id_rencana_det, rd.ket_aktivitas, a.id_sumbercust, b.nama as nama_cust, COALESCE(img.url_img, '') as url_img, COALESCE(img.name_img, '') as name_img").
 		Order("rd.id_rencana_det DESC").
 		Offset(req.Start).
 		Limit(req.Length).

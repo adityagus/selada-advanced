@@ -41,6 +41,7 @@ export interface InquiryItem {
   id_customer?: number
   nama: string
   hp: string
+  status_wa?: string
   tgl_rencana?: string
   status: string
   nama_hslaktiv?: string

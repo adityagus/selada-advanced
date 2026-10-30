@@ -14,8 +14,8 @@
       </div>
     </div>
 
-    <!-- Summary Metrics Bar -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <!-- Summary Metrics Bar (3 Cards) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div @click="selectedStatus = 'Leads'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-amber-400 transition-all cursor-pointer" :class="{ 'ring-2 ring-amber-400 bg-amber-50/20': selectedStatus === 'Leads' }">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Leads</span>
         <div class="text-2xl font-bold text-amber-600 mt-1">{{ summaryCounts.leads }}</div>
@@ -24,13 +24,9 @@
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Prospect</span>
         <div class="text-2xl font-bold text-blue-600 mt-1">{{ summaryCounts.prospect }}</div>
       </div>
-      <div @click="selectedStatus = 'Hot Prospect'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-rose-400 transition-all cursor-pointer" :class="{ 'ring-2 ring-rose-400 bg-rose-50/20': selectedStatus === 'Hot Prospect' }">
-        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Hot Prospect</span>
-        <div class="text-2xl font-bold text-rose-600 mt-1">{{ summaryCounts.hotProspect }}</div>
-      </div>
       <div @click="selectedStatus = 'all'; fetchInquiries()" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs hover:border-emerald-400 transition-all cursor-pointer" :class="{ 'ring-2 ring-emerald-400 bg-emerald-50/20': selectedStatus === 'all' }">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Semua Active</span>
-        <div class="text-2xl font-bold text-emerald-600 mt-1">{{ summaryCounts.leads + summaryCounts.prospect + summaryCounts.hotProspect }}</div>
+        <div class="text-2xl font-bold text-emerald-600 mt-1">{{ summaryCounts.leads + summaryCounts.prospect }}</div>
       </div>
     </div>
 
@@ -56,7 +52,15 @@
           <option value="all">Semua Status Aktif</option>
           <option value="Leads">Leads</option>
           <option value="Prospect">Prospect</option>
-          <option value="Hot Prospect">Hot Prospect</option>
+        </select>
+      </div>
+
+      <div class="w-full md:w-44">
+        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Status WA</label>
+        <select v-model="selectedWaStatus" @change="fetchInquiries" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all">
+          <option value="all">Semua Status WA</option>
+          <option value="valid">WA Valid</option>
+          <option value="belum">Belum Validasi</option>
         </select>
       </div>
 
@@ -77,6 +81,7 @@
             <tr class="bg-slate-50/80 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <th class="px-5 py-3.5">Tanggal</th>
               <th class="px-5 py-3.5">Nama Customer</th>
+              <th class="px-5 py-3.5 text-center">Status WA</th>
               <th class="px-5 py-3.5 text-center">Sumber</th>
               <th class="px-5 py-3.5 text-center">Status</th>
               <th class="px-5 py-3.5">Aktivitas Terakhir</th>
@@ -86,21 +91,57 @@
           </thead>
           <tbody class="divide-y divide-slate-100 text-slate-700">
             <tr v-if="isLoadingTable">
-              <td colspan="7" class="text-center py-8">
-                <AppIcon name="loader" class="w-6 h-6  text-amber-500   animate-spin mx-auto" />
+              <td colspan="8" class="text-center py-8">
+                <AppIcon name="loader" class="w-6 h-6 text-amber-500 animate-spin mx-auto" />
               </td>
             </tr>
             <tr v-else-if="inquiries.length === 0">
-              <td colspan="7" class="text-center py-8 text-slate-400 font-medium">
+              <td colspan="8" class="text-center py-8 text-slate-400 font-medium">
                 Tidak ada data inquiry ditemukan.
               </td>
             </tr>
             <!-- <pre>{{ inquiries }}</pre> -->
             <tr v-for="item in inquiries" :key="item.id_rencana" v-show="!isLoadingTable" class="hover:bg-amber-50/30 transition-all">
               <td class="px-5 py-3.5 whitespace-nowrap text-slate-500">{{ formatDate(item.tgl_rencana) }}</td>
-              <td class="px-5 py-3.5 font-semibold text-slate-800">
-                {{ item.nama }}
-                <!-- <span v-if="item.hp" class="block text-xs font-normal text-slate-400">{{ item.hp }}</span> -->
+              <td class="px-5 py-3.5">
+                <div class="flex flex-col">
+                  <span class="font-bold text-slate-800">{{ item.nama }}</span>
+                  <a
+                    v-if="item.hp && item.hp !== '-'"
+                    :href="getWhatsAppUrl(item)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-emerald-600 font-mono transition-colors mt-0.5 group w-fit"
+                    title="Buka Chat WhatsApp Customer"
+                  >
+                    <svg class="w-3.5 h-3.5 fill-current text-emerald-600 group-hover:scale-110 transition-transform flex-shrink-0" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                    </svg>
+                    <span>{{ item.hp }}</span>
+                  </a>
+                  <span v-else class="text-xs text-slate-400 font-mono mt-0.5">-</span>
+                </div>
+              </td>
+              <!-- FIELD / KOLOM STATUS WA VALID -->
+              <td class="px-5 py-3.5 text-center whitespace-nowrap">
+                <span
+                  v-if="item.status_wa === 'tervalidasi'"
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs"
+                  title="Nomor WhatsApp Tervalidasi Aktif"
+                >
+                  <svg class="w-3.5 h-3.5 fill-current text-emerald-600 flex-shrink-0" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                  </svg>
+                  <span>WA Valid</span>
+                </span>
+                <span
+                  v-else
+                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200"
+                  title="Nomor WhatsApp Belum Tervalidasi"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                  <span>Belum Valid</span>
+                </span>
               </td>
               <td class="px-5 py-3.5">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">
@@ -123,17 +164,35 @@
                 </span>
               </td>
               <td class="px-5 py-3.5 text-center">
-                <div class="inline-flex items-center gap-1.5" >
-                  <NuxtLink :to="`/input-sbg?id=${item.id_rencana || item.id_customer}`" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg border border-emerald-200 transition-all" title="Submit SBG" v-if="item.id_hslaktiv == 3">
-                    <AppIcon name="check-circle" class="w-4 h-4" />
-                  </NuxtLink>
-                  <NuxtLink :to="`/input-rencana?id=${item.id_rencana || item.id_customer}`" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg border border-amber-200 transition-all" title="Buka Halaman Progress & Form SBG" v-if="item.id_hslaktiv != 3">
+                <div class="inline-flex items-center gap-1.5">
+                  <!-- ICON BUKA WHATSAPP LANGSUNG (DIRECT LINK) -->
+
+                  <!-- Tampilkan QR Code WhatsApp -->
+                  <button
+                    v-if='item.status_wa !== "tervalidasi"'
+                    @click="openLeadQrModal(item)"
+                    type="button"
+                    class="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg border border-slate-200 hover:border-emerald-200 transition-all cursor-pointer"
+                    title="Tampilkan WhatsApp QR Code & Template"
+                  >
+                    <svg class="w-4 h-4 fill-current text-emerald-600 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                    </svg>
+                  </button>
+
+                  <!-- Edit / Progress pipeline wizard -->
+                  <NuxtLink
+                    :to="`/input-rencana?id=${item.id_rencana || item.id_customer}`"
+                    class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg border border-amber-200 transition-all"
+                    title="Buka Halaman Progress Pipeline"
+                  >
                     <AppIcon name="edit" class="w-4 h-4" />
                   </NuxtLink>
-                  <button @click="showDetail(item)" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 transition-all" title="Detail">
+
+                  <button @click="showDetail(item)" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 transition-all cursor-pointer" title="Detail">
                     <AppIcon name="eye" class="w-4 h-4" />
                   </button>
-                  <button @click="handleDelete(item.id_rencana)" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 transition-all" title="Hapus">
+                  <button @click="handleDelete(item.id_rencana)" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg border border-rose-200 transition-all cursor-pointer" title="Hapus">
                     <AppIcon name="trash" class="w-4 h-4" />
                   </button>
                 </div>
@@ -283,7 +342,25 @@
                 </div>
                 <div>
                   <span class="text-xs text-slate-400 block mb-0.5">No. Handphone</span>
-                  <span class="font-medium text-slate-700">{{ selectedItem.hp || '-' }}</span>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-medium text-slate-700 font-mono">{{ selectedItem.hp || '-' }}</span>
+                    <span
+                      v-if="selectedItem.status_wa === 'tervalidasi'"
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    >
+                      <svg class="w-3 h-3 fill-current text-emerald-600" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                      </svg>
+                      WA Valid
+                    </span>
+                    <span
+                      v-else
+                      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-500 border border-slate-200"
+                    >
+                      <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                      Belum Validasi
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <span class="text-xs text-slate-400 block mb-0.5">Status</span>
@@ -350,6 +427,17 @@
                   </div>
                 </div>
 
+                <!-- Highlight khusus jika ada data booking eksternal -->
+                <div v-if="selectedItem.aktivitas && selectedItem.aktivitas.includes('[API Hit Booking')" class="p-3.5 bg-purple-50 border border-purple-200 rounded-xl text-xs space-y-1.5">
+                  <div class="flex items-center gap-1.5 font-bold text-purple-900">
+                    <AppIcon name="check-circle" class="w-4 h-4 text-purple-700" />
+                    <span>Detail Booking Eksternal (Janji Temu / SBG)</span>
+                  </div>
+                  <p class="text-purple-800 leading-relaxed font-medium">
+                    {{ selectedItem.aktivitas }}
+                  </p>
+                </div>
+
                 <div>
                   <span class="text-xs text-slate-400 block mb-1">Catatan Keterangan Progres</span>
                   <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-xs leading-relaxed whitespace-pre-wrap">
@@ -380,7 +468,32 @@
             </div>
 
             <!-- MODAL FOOTER -->
-            <div class="px-6 py-3.5 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+            <div class="px-6 py-3.5 border-t border-slate-100 bg-slate-50/50 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <NuxtLink
+                  v-if="Number(selectedItem.id_hslaktiv) === 7 || Number(selectedItem.id_hslaktiv) === 2 || Number(selectedItem.id_hslaktiv) === 3"
+                  :to="`/input-sbg?id=${selectedItem.id_rencana || selectedItem.id_customer}`"
+                  class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+                >
+                  <AppIcon name="check-circle" class="w-4 h-4" />
+                  <span>Realisasi Pencairan SBG</span>
+                </NuxtLink>
+
+                <a
+                  v-if="selectedItem.hp && selectedItem.hp !== '-'"
+                  :href="getWhatsAppUrl(selectedItem)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  title="Buka Chat WhatsApp"
+                >
+                  <svg class="w-4 h-4 fill-current text-emerald-600" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                  </svg>
+                  <span>Chat WhatsApp</span>
+                </a>
+              </div>
+
               <button
                 type="button"
                 @click="closeDetailModal"
@@ -431,6 +544,12 @@
         </div>
       </Teleport>
     </ClientOnly>
+
+    <!-- WHATSAPP QR CODE MODAL FOR LEADS -->
+    <LeadWhatsAppQrModal
+      v-model="showQrModal"
+      :lead="selectedLeadForQr"
+    />
   </div>
 </template>
 
@@ -445,12 +564,62 @@ const inquiries = ref<any[]>([])
 const searchQuery = ref('')
 const selectedStatus = ref('all')
 const selectedSource = ref('all')
+const selectedWaStatus = ref('all')
 const isLoadingTable = ref(false)
 const openModal = ref(false)
 const isSubmitting = ref(false)
 const modalError = ref('')
 const existingCustomers = ref<any[]>([])
 const selectedItem = ref<any>(null)
+
+// Format phone number to international WhatsApp format (628xxx)
+const formatWhatsAppPhone = (phoneRaw: string | number) => {
+  if (!phoneRaw) return ''
+  let phone = String(phoneRaw).replace(/\D/g, '')
+  if (phone.startsWith('0')) {
+    phone = '62' + phone.substring(1)
+  } else if (phone.startsWith('8')) {
+    phone = '62' + phone
+  } else if (!phone.startsWith('62') && phone.length > 5) {
+    phone = '62' + phone
+  }
+  return phone
+}
+
+// Generate direct WhatsApp chat URL with customized prefilled text
+const getWhatsAppUrl = (item: any) => {
+  if (!item || !item.hp) return '#'
+  const phone = formatWhatsAppPhone(item.hp)
+  if (!phone) return '#'
+  const idTag = item.id_rencana || item.id_customer ? ` (No. Rencana #${item.id_rencana || item.id_customer})` : ''
+  const barangTag = item.keterangan_barang ? ` untuk estimasi taksiran barang ${item.keterangan_barang}` : ''
+  const message = `Halo Kak ${item.nama || 'Nasabah'}, terima kasih telah menghubungi Selada Gadai. Pengajuan Leads Anda telah kami terima${idTag}${barangTag}. Mohon konfirmasi kebutuhan taksiran / gadai Anda untuk kami proses lebih lanjut.`
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+}
+
+const openWhatsAppDirect = (item: any) => {
+  const url = getWhatsAppUrl(item)
+  if (url && url !== '#') {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+}
+
+// WhatsApp QR Modal State
+const showQrModal = ref(false)
+const selectedLeadForQr = ref<any>(null)
+
+const openLeadQrModal = (item: any) => {
+  selectedLeadForQr.value = {
+    id_rencana: item.id_rencana,
+    id_customer: item.id_customer,
+    nama: item.nama,
+    hp: item.hp,
+    soa: item.id_sumbercust || item.soa || item.nm_ref_cust,
+    ket: item.ket_rencana || item.keterangan,
+    keterangan_barang: item.keterangan_barang
+  }
+  showQrModal.value = true
+}
 
 // Detail Modal & Photo State
 const detailFotoUrl = ref<string | null>(null)
@@ -561,12 +730,17 @@ const fetchInquiries = async () => {
       let list = rawList.map((i: any) => {
         const sourceObj = sourcesData.find((value: any) => value.kd_ref_cust === i.id_sumbercust)
         const source = sourceObj?.nm_ref_cust || i.id_sumbercust || 'Walk In'
-        const statusName = i.nama_hslaktiv || (Number(i.id_hslaktiv) === 1 ? 'Leads' : Number(i.id_hslaktiv) === 2 ? 'Prospect' : Number(i.id_hslaktiv) === 3 ? 'Hot Prospect' : Number(i.id_hslaktiv) === 7 ? 'SBG' : 'Leads')
+        const statusName = i.nama_hslaktiv || (
+          Number(i.id_hslaktiv) === 1 ? 'Leads' :
+          Number(i.id_hslaktiv) === 2 || Number(i.id_hslaktiv) === 3 ? 'Prospect' :
+          Number(i.id_hslaktiv) === 7 ? 'SBG' : 'Leads'
+        )
         return {
           ...i,
           id_customer: i.id_customer || i.id_rencana,
           nama: i.nama || i.nm_customer || i.name || 'Customer',
           hp: i.hp || i.phone || i.no_hp || '-',
+          status_wa: (i.status_wa || i.statusWa || '').toLowerCase() === 'tervalidasi' ? 'tervalidasi' : 'belum_validasi',
           status: statusName,
           source: source,
           foto: i.url_img || i.foto || i.gambar || '',
@@ -576,12 +750,18 @@ const fetchInquiries = async () => {
         }
       })
 
-      // Exclude SBG / Deal status from Inquiry page list unless SBG selected
-      if (selectedStatus.value !== 'SBG') {
+      // Exclude SBG / Booking / Deal / DO / Batal status so they are not shown in inquiry list
+      list = list.filter((i: any) => {
+        const st = (i.status || i.nama_hslaktiv || '').toLowerCase()
+        const idAktiv = Number(i.id_hslaktiv)
+        return idAktiv !== 7 && idAktiv !== 6 && !st.includes('sbg') && !st.includes('deal') && !st.includes('do') && !st.includes('booking') && !st.includes('batal')
+      })
+
+      // Filter list based on selected status
+      if (selectedStatus.value !== 'all') {
         list = list.filter((i: any) => {
           const st = (i.status || i.nama_hslaktiv || '').toLowerCase()
-          const idAktiv = Number(i.id_hslaktiv)
-          return idAktiv !== 7 && !st.includes('sbg') && !st.includes('deal') && !st.includes('do')
+          return st.includes(selectedStatus.value.toLowerCase())
         })
       }
 
@@ -589,15 +769,20 @@ const fetchInquiries = async () => {
         list = list.filter((i: any) => (i.source || 'Walk In').toLowerCase().includes(selectedSource.value.toLowerCase()))
       }
 
+      // Filter list based on selected WhatsApp validation status
+      if (selectedWaStatus.value === 'valid') {
+        list = list.filter((i: any) => (i.status_wa || '').toLowerCase() === 'tervalidasi')
+      } else if (selectedWaStatus.value === 'belum') {
+        list = list.filter((i: any) => (i.status_wa || '').toLowerCase() !== 'tervalidasi')
+      }
+
       inquiries.value = list
 
-      // Recalculate summary metrics if summaryCounts are 0
-      if (summaryCounts.leads === 0 && summaryCounts.prospect === 0 && summaryCounts.hotProspect === 0) {
-        summaryCounts.leads = rawList.filter((i: any) => Number(i.id_hslaktiv) === 1 || (i.nama_hslaktiv || '').toLowerCase().includes('lead')).length
-        summaryCounts.prospect = rawList.filter((i: any) => Number(i.id_hslaktiv) === 2 || (i.nama_hslaktiv || '').toLowerCase() === 'prospect').length
-        summaryCounts.hotProspect = rawList.filter((i: any) => Number(i.id_hslaktiv) === 3 || (i.nama_hslaktiv || '').toLowerCase().includes('hot')).length
-        summaryCounts.sbg = rawList.filter((i: any) => Number(i.id_hslaktiv) === 7 || (i.nama_hslaktiv || '').toLowerCase().includes('sbg')).length
-      }
+      // Always update summary metrics
+      summaryCounts.leads = rawList.filter((i: any) => Number(i.id_hslaktiv) === 1 || (i.nama_hslaktiv || '').toLowerCase().includes('lead')).length
+      summaryCounts.prospect = rawList.filter((i: any) => Number(i.id_hslaktiv) === 2 || Number(i.id_hslaktiv) === 3 || (i.nama_hslaktiv || '').toLowerCase().includes('prospect') || (i.nama_hslaktiv || '').toLowerCase().includes('hot')).length
+      summaryCounts.hotProspect = 0
+      summaryCounts.sbg = rawList.filter((i: any) => Number(i.id_hslaktiv) === 7 || (i.nama_hslaktiv || '').toLowerCase().includes('sbg') || (i.nama_hslaktiv || '').toLowerCase().includes('booking')).length
     } else {
       inquiries.value = []
     }
@@ -693,9 +878,23 @@ const handleSubmitRencana = async () => {
     return
   }
 
+  const createdLead = {
+    id_rencana: (data as any)?.id_rencana || '',
+    id_customer: (data as any)?.id_customer || '',
+    nama: form.cust === 'Baru' ? form.nm : (existingCustomers.value.find((c: any) => c.id_customer === Number(form.custlama))?.nama || 'Nasabah'),
+    hp: form.cust === 'Baru' ? form.hp : (existingCustomers.value.find((c: any) => c.id_customer === Number(form.custlama))?.hp || ''),
+    soa: form.soa,
+    ket: form.ket,
+    keterangan_barang: ''
+  }
+
   fetchSummaryCounts()
   fetchInquiries()
   closeFormModal()
+
+  // Auto popup WhatsApp QR Modal for immediate scan & chat
+  selectedLeadForQr.value = createdLead
+  showQrModal.value = true
 }
 
 const handleDelete = async (id: number) => {
@@ -764,7 +963,9 @@ const getStatusBadgeClass = (status: string) => {
     case 'Leads': return 'bg-amber-100 text-amber-800 border border-amber-200'
     case 'Prospect': return 'bg-blue-100 text-blue-800 border border-blue-200'
     case 'Hot Prospect': return 'bg-rose-100 text-rose-800 border border-rose-200'
-    case 'SBG': return 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+    case 'Booking':
+    case 'Booking / SBG':
+    case 'SBG': return 'bg-purple-100 text-purple-800 border border-purple-200'
     case 'Batal': return 'bg-slate-100 text-slate-600 border border-slate-200'
     default: return 'bg-slate-100 text-slate-600 border border-slate-200'
   }

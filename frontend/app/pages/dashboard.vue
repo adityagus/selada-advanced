@@ -1,77 +1,100 @@
 <template>
   <div class="space-y-6 pb-12 font-sans">
-    <!-- Header Section -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <!-- Header Section with Sidebar Amber Primary Accents -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
-          Dashboard
+        <div class="flex items-center gap-2 mb-1.5 text-xs">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-2.5 py-0.5 rounded-full border border-amber-200/80 dark:border-amber-800/80">
+            Selada Gadai CRM
+          </span>
+          <span class="text-slate-400">•</span>
+          <span class="font-mono text-slate-500 dark:text-slate-400 font-medium">{{ currentDateString }}</span>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          Dashboard Performa
         </h1>
-        <p v-if="isReview && selectedSalesUser" class="text-xs text-slate-500 mt-1 flex items-center gap-2">
-          <AppIcon name="user" class="w-4 h-4 text-amber-500" />
-          <span>Meninjau Dashboard Sales:</span>
-          <span class="font-semibold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200/60">{{ activeSalesName }}</span>
+        <p v-if="isReview && selectedSalesUser" class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+          <span>Meninjau Sales:</span>
+          <span class="font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded border border-amber-200/80 dark:border-amber-800/80">{{ activeSalesName }}</span>
         </p>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          @click="refetch()"
+          :disabled="isFetching"
+          type="button"
+          class="inline-flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-400 hover:bg-amber-50/40 text-slate-700 dark:text-slate-200 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer disabled:opacity-50 shadow-2xs"
+          title="Segarkan data dashboard"
+        >
+          <AppIcon name="refresh" class="w-3.5 h-3.5 text-amber-500" :class="{ 'animate-spin': isFetching }" />
+          <span class="hidden sm:inline">{{ isFetching ? 'Memuat...' : 'Refresh' }}</span>
+        </button>
+
         <NuxtLink
           to="/inquiry"
-          class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition-all shadow-xs"
+          class="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm transition cursor-pointer shadow-xs"
         >
-          <AppIcon name="plus" class="w-4 h-4" />
-          Leads Baru
+          <AppIcon name="plus" class="w-4 h-4 text-white" />
+          <span>Buat Leads</span>
         </NuxtLink>
       </div>
     </div>
 
-    <!-- Section 1: Hero & Target & Leaderboard Summary -->
-    <DashboardHero
-      :is-review="isReview"
-      v-model:selected-sales-user="selectedSalesUser"
-      :sorted-sales-list="sortedSalesList"
-      :is-fetching="isFetching"
-      :est-incentive="estIncentive"
-      :is-qualified="isQualified"
-      :user-grade="userGrade"
-      :applied-rate="appliedRate"
-      :point-total="pointTotal"
-      :target-goal-points="targetGoalPoints"
-      :target-progress-pct="targetProgressPct"
-      :target-description="targetDescription"
-      :motivation-text="motivationText"
-      :leaderboard="leaderboard"
-      @review-change="handleReviewSales"
-      @review-reset="resetReview"
-      @open-leaderboard="showLeaderboardModal = true"
-    />
+    <!-- 2-Column Dashboard Grid Matching Reference Pattern -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+      <!-- Left Column (8 cols): Top KPIs + Trends Pacing Chart & Pipeline Card -->
+      <div class="xl:col-span-8 space-y-5">
+        <!-- Card 1: Top KPI Strip + Trends Pacing Chart (matching top-left in reference image) -->
+        <DashboardMetricsTrends
+          :stats="stats"
+          :gramasi-emas="gramasiEmas"
+          :monthly-funnel="monthlyFunnel"
+          :pacing-selada="pacingSelada"
+          :pacing-sopiga="pacingSopiga"
+        />
 
-    <!-- Section 2: 4 Metrics Cards -->
-    <DashboardMetrics
-      :stats="stats"
-      :emas-card="emasCard"
-      :non-emas-card="nonEmasCard"
-      :gramasi-emas="gramasiEmas"
-      :last-month-cif="lastMonthCif"
-      :last-month-leads="lastMonthLeads"
-      :monthly-funnel="monthlyFunnel"
-    />
+        <!-- Card 2: Tabs + Pipeline Konversi + Circular Win Rate Ring (matching bottom-left in reference image) -->
+        <DashboardPipelineCard
+          :stats="stats"
+          :monthly-funnel="monthlyFunnel"
+          :is-fetching="isFetching"
+          @refresh="refetch()"
+        />
+      </div>
 
-    <!-- Section 3: Sales Funnel -->
-    <DashboardFunnel
-      :stats="stats"
-      :monthly-funnel="monthlyFunnel"
-      :is-fetching="isFetching"
-      @refresh="refetch()"
-    />
+      <!-- Right Column (4 cols): Incentive & Leaderboard Standing -->
+      <div class="xl:col-span-4 space-y-5">
+        <!-- Card 3: Incentive & Target Poin with Donut Ring Meter (matching Instagram card in reference image) -->
+        <DashboardIncentiveCard
+          :is-review="isReview"
+          v-model:selected-sales-user="selectedSalesUser"
+          :sorted-sales-list="sortedSalesList"
+          :is-fetching="isFetching"
+          :est-incentive="estIncentive"
+          :is-qualified="isQualified"
+          :user-grade="userGrade"
+          :applied-rate="appliedRate"
+          :point-total="pointTotal"
+          :target-goal-points="targetGoalPoints"
+          :target-progress-pct="targetProgressPct"
+          :target-description="targetDescription"
+          :gramasi-emas="gramasiEmas"
+          :non-emas-card="nonEmasCard"
+          @review-change="handleReviewSales"
+          @review-reset="resetReview"
+        />
 
-    <!-- Section 4: Daily Pacing Chart & Live Feeds -->
-    <DashboardPacingChart
-      :pacing-selada="pacingSelada"
-      :pacing-sopiga="pacingSopiga"
-      :live-feeds="liveFeeds"
-    />
+        <!-- Card 4: Leaderboard Standing & Capsule Pill Bar Chart (matching X.com card in reference image) -->
+        <DashboardLeaderboardCard
+          :leaderboard="leaderboard"
+          :live-feeds="liveFeeds"
+          @open-leaderboard="showLeaderboardModal = true"
+        />
+      </div>
+    </div>
 
-    <!-- Section 5: Full Leaderboard Modal -->
+    <!-- Leaderboard Modal -->
     <DashboardLeaderboardModal
       v-model:show="showLeaderboardModal"
       :leaderboard="leaderboard"
@@ -165,6 +188,14 @@ const targetProgressPct = computed(() => {
   }
   if (!targetGoalPoints.value) return 0
   return Math.min(100, Math.max(0, Math.round((pointTotal.value / targetGoalPoints.value) * 100)))
+})
+
+const currentDateString = computed(() => {
+  return new Date().toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
 })
 
 const pacingSelada = ref<Record<number, number>>({})

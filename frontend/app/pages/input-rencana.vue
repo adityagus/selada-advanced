@@ -124,34 +124,7 @@
               >
             </button>
 
-            <!-- Step 3: Hot Prospect -->
-            <button
-              type="button"
-              @click="selectTab('Hot Prospect')"
-              class="relative z-10 flex flex-col items-center gap-1.5 cursor-pointer transition-all wizard"
-            >
-              <div
-                class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all"
-                :class="
-                  isStepActive('Hot Prospect', activeTab)
-                    ? 'bg-rose-600 text-white shadow-md shadow-rose-200 ring-4 ring-rose-100'
-                    : 'bg-slate-100 text-slate-400'
-                "
-              >
-                3
-              </div>
-              <span
-                class="text-xs font-semibold uppercase tracking-wider"
-                :class="
-                  activeTab === 'Hot Prospect'
-                    ? 'text-rose-700 font-bold'
-                    : 'text-slate-400'
-                "
-                >3. Hot Prospek</span
-              >
-            </button>
-
-            <!-- Step 4: SBG (Realisasi) -->
+            <!-- Step 3: SBG (Realisasi) -->
             <button
               type="button"
               @click="selectTab('SBG')"
@@ -165,7 +138,7 @@
                     : 'bg-slate-100 text-slate-400'
                 "
               >
-                4
+                3
               </div>
               <span
                 class="text-xs font-semibold uppercase tracking-wider"
@@ -174,7 +147,7 @@
                     ? 'text-emerald-700 font-bold'
                     : 'text-slate-400'
                 "
-                >4. SBG</span
+                >3. Realisasi SBG</span
               >
             </button>
           </div>
@@ -292,16 +265,50 @@
           </div>
 
           <div>
-            <label
-              class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
-              >No. Handphone / WhatsApp (Readonly)</label
-            >
-            <input
-              v-model="customerInfo.hp"
-              type="text"
-              class="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 cursor-not-allowed"
-              readonly
-            />
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                No. Handphone / WhatsApp (Readonly)
+              </label>
+              <div class="flex items-center gap-1.5">
+                <span
+                  v-if="(customerInfo.status_wa || '').toLowerCase() === 'tervalidasi'"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                >
+                  <svg class="w-3 h-3 fill-current text-emerald-600" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                  </svg>
+                  <span>WA Valid</span>
+                </span>
+                <span
+                  v-else
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                  <span>Belum Validasi</span>
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <input
+                v-model="customerInfo.hp"
+                type="text"
+                class="flex-1 px-3.5 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-sm font-medium text-slate-700 cursor-not-allowed font-mono"
+                readonly
+              />
+              <a
+                v-if="customerInfo.hp"
+                :href="customerWhatsAppUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="px-3 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-2xs"
+                title="Buka Chat WhatsApp"
+              >
+                <svg class="w-4 h-4 fill-current text-emerald-600" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                </svg>
+                <span>Buka WhatsApp</span>
+              </a>
+            </div>
           </div>
         </div>
 
@@ -477,7 +484,7 @@
             />
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-slate-500 mb-1"
                 >RT</label
@@ -562,9 +569,9 @@
             </div>
 
             <!-- Auto-filled Kecamatan -->
-            <div>
+            <div clas="col-span-2 md:col-span-1">
               <label
-                class="block text-xs font-medium text-slate-500 mb-1 flex items-center justify-between"
+                class="text-xs font-medium text-slate-500 mb-1 flex items-center justify-between grid-cols-1"
               >
                 <span>Kecamatan</span>
                 <span
@@ -588,14 +595,9 @@
                 class="text-xs font-medium text-slate-500 mb-1 flex items-center justify-between"
               >
                 <span>Kota / Kab</span>
-                <span
-                  v-if="customerInfo.kd_kota || customerInfo.kota"
-                  class="text-[10px] text-emerald-600 font-semibold"
-                  >Kode: {{ customerInfo.kd_kota || customerInfo.kota }}</span
-                >
               </label>
               <input
-                :value="customerInfo.nm_kota ? `${customerInfo.nm_kota} (${customerInfo.kd_kota || customerInfo.kota})` : (customerInfo.kd_kota || customerInfo.kota)"
+                :value="customerInfo.nm_kota"
                 type="text"
                 placeholder="Kota / Kab"
                 disabled
@@ -655,11 +657,11 @@
               <span>Simpan Progress</span>
             </button>
 
-            <!-- Save Prospect and transition to Hot Prospect panel -->
+            <!-- Save Prospect and transition to SBG panel -->
             <button
               @click="submitWithStatus('Prospect', true)"
               type="button"
-              class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+              class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
               :disabled="isSubmitting"
             >
               <AppIcon
@@ -667,7 +669,7 @@
                 v-if="isSubmitting"
                 class="w-3.5 h-3.5 animate-spin"
               />
-              <span v-else>Lanjut ke Hot Prospek</span>
+              <span v-else>Lanjut ke Realisasi SBG</span>
               <AppIcon
                 name="arrow-right"
                 v-if="!isSubmitting"
@@ -679,38 +681,47 @@
       </div>
 
       <!-- ========================================================================= -->
-      <!-- PANEL 3: HOT PROSPEK (Detail Transaksi, Produk & Barang Jaminan DB)      -->
+      <!-- PANEL 3: SBG (Detail Transaksi, Produk, Barang Jaminan & Realisasi SBG)  -->
       <!-- ========================================================================= -->
       <div
-        v-else-if="activeTab === 'Hot Prospect'"
-        class="bg-white rounded-2xl border border-rose-200 p-6 shadow-xs space-y-6"
+        v-else-if="activeTab === 'SBG' || activeTab === 'Hot Prospect'"
+        class="bg-white rounded-2xl border border-emerald-300 p-6 shadow-xs space-y-6"
       >
         <div
           class="flex items-center justify-between border-b border-slate-100 pb-3"
         >
           <div class="flex items-center gap-2">
             <span
-              class="w-7 h-7 rounded-full bg-rose-600 text-white font-bold text-xs flex items-center justify-center"
+              class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center"
               >3</span
             >
             <h2 class="font-bold text-slate-800 text-base">
-              PANEL STEP 3 — HOT PROSPEK (Detail Transaksi & Barang Jaminan DB)
+              PANEL STEP 3 — REALISASI TRANSAKSI SBG & BARANG JAMINAN
             </h2>
           </div>
-          <span
-            class="text-xs font-bold text-rose-800 bg-rose-50 px-3 py-1 rounded-lg border border-rose-200"
-          >
-            Status DB: {{ dbStatus }}
-          </span>
+          <div class="flex items-center gap-2">
+            <NuxtLink
+              :to="`/input-sbg?id=${idRencana || customerInfo.id_customer}`"
+              class="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1 hover:underline"
+              title="Buka Halaman Realisasi DO Resmi Sopiga"
+            >
+              <span>Form Input DO Sopiga</span>
+              <AppIcon name="external-link" class="w-3.5 h-3.5" />
+            </NuxtLink>
+            <span
+              class="text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200"
+            >
+              Status: {{ dbStatus }}
+            </span>
+          </div>
         </div>
 
         <div
-          class="p-3.5 bg-rose-50/60 border border-rose-200 rounded-xl text-xs text-rose-900 flex items-center gap-2"
+          class="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center gap-2"
         >
-          <AppIcon name="flame" class="w-4 h-4 text-rose-600 flex-shrink-0" />
+          <AppIcon name="check-circle" class="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span
-            >Langkah final sebelum realisasi SBG. Data produk & barang jaminan
-            terhubung langsung ke Master Database Selada.</span
+            >Langkah final realisasi Surat Bukti Gadai (SBG). Pastikan estimasi taksiran, barang jaminan, dan nomor SBG telah sesuai.</span
           >
         </div>
 
@@ -1060,6 +1071,66 @@
           </div>
         </div>
 
+        <!-- SECTION: DATA TRANSAKSI SBG & AKAD -->
+        <div class="pt-4 border-t border-slate-200 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <AppIcon name="document" class="w-4 h-4 text-emerald-600" />
+              <span>Data Realisasi SBG (Surat Bukti Gadai)</span>
+            </h3>
+            <span class="text-[11px] text-slate-500">Nomor SBG & Jatuh Tempo</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                Nomor SBG Transaksi <span class="text-rose-500">*</span>
+              </label>
+              <input
+                v-model="sbgData.noSbg"
+                type="text"
+                placeholder="SBG-202609-001"
+                class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-mono font-bold text-emerald-900"
+                required
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                Tanggal Pencairan SBG
+              </label>
+              <input
+                v-model="sbgData.tglPencairan"
+                type="date"
+                class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                Tanggal Jatuh Tempo
+              </label>
+              <input
+                v-model="sbgData.tglJatuhTempo"
+                type="date"
+                class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+              Catatan Realisasi SBG / Akad
+            </label>
+            <textarea
+              v-model="sbgData.catatanSbg"
+              rows="2"
+              placeholder="Catatan transaksi deal SBG..."
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm"
+            ></textarea>
+          </div>
+        </div>
+
         <div
           class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100"
         >
@@ -1083,9 +1154,9 @@
             </button>
 
             <button
-              @click="promptSubmitHotProspect"
+              @click="submitWithStatus('SBG', true)"
               type="button"
-              class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-200 flex items-center gap-2 cursor-pointer transition-all"
+              class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-200 flex items-center gap-2 cursor-pointer transition-all"
               :disabled="isSubmitting"
             >
               <AppIcon
@@ -1093,172 +1164,10 @@
                 v-if="isSubmitting"
                 class="w-3.5 h-3.5 animate-spin"
               />
-              <span v-else>Submit Hot Prospect</span>
+              <span v-else>Simpan Realisasi SBG</span>
               <AppIcon name="check" v-if="!isSubmitting" class="w-4 h-4" />
             </button>
           </div>
-        </div>
-      </div>
-
-      <!-- ========================================================================= -->
-      <!-- PANEL 4: SBG / DEAL (FORM REALISASI AKAD & TRANSAKSI) -->
-      <!-- ========================================================================= -->
-      <div
-        v-else-if="activeTab === 'SBG'"
-        class="bg-white rounded-2xl border border-emerald-300 p-6 shadow-xs space-y-5"
-      >
-        <div
-          class="flex items-center justify-between border-b border-slate-100 pb-3"
-        >
-          <div class="flex items-center gap-2">
-            <span
-              class="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center"
-              >4</span
-            >
-            <h2 class="font-bold text-slate-800 text-base">
-              PANEL STEP 4 — SBG (Realisasi Transaksi Deal SBG)
-            </h2>
-          </div>
-          <span
-            class="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-lg border border-emerald-300"
-            >Status: SBG Deal</span
-          >
-        </div>
-
-        <div
-          class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center gap-2"
-        >
-          <AppIcon
-            name="check-circle"
-            class="w-4 h-4 text-emerald-600 flex-shrink-0"
-          />
-          <span
-            >Form pencairan Surat Bukti Gadai (SBG). Pastikan nomor SBG &
-            tanggal jatuh tempo terverifikasi.</span
-          >
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label
-              class="block text-xs font-semibold text-emerald-900 uppercase tracking-wider mb-1"
-              >Nomor SBG Transaksi <span class="text-rose-500">*</span></label
-            >
-            <input
-              v-model="sbgData.noSbg"
-              type="text"
-              placeholder="SBG-202609-001"
-              class="w-full px-3.5 py-2.5 bg-white border border-emerald-300 rounded-xl text-sm font-mono font-bold text-emerald-900"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              class="block text-xs font-semibold text-emerald-900 uppercase tracking-wider mb-1"
-              >Skema Transaksi</label
-            >
-            <input
-              v-model="sbgData.jenisTransaksi"
-              type="text"
-              class="w-full px-3.5 py-2.5 bg-slate-50 border border-emerald-300 rounded-xl text-sm font-medium text-emerald-900"
-              readonly
-            />
-          </div>
-
-          <div>
-            <label
-              class="block text-xs font-semibold text-emerald-900 uppercase tracking-wider mb-1"
-              >Jenis Produk Gadai</label
-            >
-            <select
-              v-model="sbgData.jenisBarang"
-              class="w-full px-3.5 py-2.5 bg-white border border-emerald-300 rounded-xl text-sm font-medium text-emerald-900"
-            >
-              <option value="Emas">Emas / Perhiasan</option>
-              <option value="Kendaraan">Kendaraan (Motor/Mobil)</option>
-              <option value="Elektronik">Elektronik (HP/Laptop)</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label
-            class="block text-xs font-semibold text-emerald-900 uppercase tracking-wider mb-1"
-            >Deskripsi Barang Gadai SBG</label
-          >
-          <input
-            v-model="sbgData.deskripsiBarang"
-            type="text"
-            placeholder="Deskripsi barang jaminan akad..."
-            class="w-full px-3.5 py-2.5 bg-white border border-emerald-300 rounded-xl text-sm"
-          />
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label
-              class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
-              >Tanggal Pencairan SBG</label
-            >
-            <input
-              v-model="sbgData.tglPencairan"
-              type="date"
-              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm"
-            />
-          </div>
-
-          <div>
-            <label
-              class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
-              >Tanggal Jatuh Tempo</label
-            >
-            <input
-              v-model="sbgData.tglJatuhTempo"
-              type="date"
-              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label
-            class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1"
-            >Catatan Realisasi SBG / Akad</label
-          >
-          <textarea
-            v-model="sbgData.catatanSbg"
-            rows="2"
-            placeholder="Catatan transaksi deal SBG..."
-            class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm"
-          ></textarea>
-        </div>
-
-        <div
-          class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100"
-        >
-          <button
-            @click="prevStep"
-            type="button"
-            class="px-4 py-2 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <AppIcon name="arrow-left" class="w-4 h-4" />
-            <span>Kembali</span>
-          </button>
-
-          <button
-            @click="submitWithStatus('SBG', true)"
-            type="button"
-            class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-100 flex items-center gap-1.5 cursor-pointer transition-all"
-            :disabled="isSubmitting"
-          >
-            <AppIcon
-              name="loader"
-              v-if="isSubmitting"
-              class="w-3.5 h-3.5 animate-spin"
-            />
-            <span v-else>Simpan</span>
-          </button>
         </div>
       </div>
 
@@ -1523,7 +1432,7 @@ const { mutate: inputRencanaMutate, isPending: isMutating } =
 const isSubmitting = computed(() => isMutating.value);
 const stepWarning = ref("");
 
-const pipelineSteps = ["Leads", "Prospect", "Hot Prospect", "SBG"];
+const pipelineSteps = ["Leads", "Prospect", "SBG"];
 const refSources = ref<any[]>([]);
 const historyList = ref<any[]>([]);
 
@@ -1540,11 +1449,13 @@ const customerInfo = reactive({
   statusRo: "Baru",
   alamat: "",
   rt: "",
-  hp: 0,
+  hp: 0 as any,
+  status_wa: "belum_validasi",
   rw: "",
-  kelurahan: "",
-  kecamatan: "",
-  kota: "",
+  nm_kelurahan: "",
+  kd_kelurahan: "",
+  nm_kecamatan: "",
+  kd_kecamatan: "",
   kd_kota: "",
   nm_kota: "",
   keterangan: "",
@@ -1552,6 +1463,18 @@ const customerInfo = reactive({
   soa: "",
   aktifitas: "",
   jenisAplikasi: "",
+});
+
+const customerWhatsAppUrl = computed(() => {
+  if (!customerInfo.hp) return '#';
+  let phone = String(customerInfo.hp).replace(/\D/g, '');
+  if (phone.startsWith('0')) phone = '62' + phone.substring(1);
+  else if (phone.startsWith('8')) phone = '62' + phone;
+  else if (!phone.startsWith('62') && phone.length > 5) phone = '62' + phone;
+  const leadId = idRencana.value ? ` (No. Rencana #${idRencana.value})` : '';
+  const barangTag = customerInfo.keteranganBarang ? ` untuk estimasi taksiran barang ${customerInfo.keteranganBarang}` : '';
+  const msg = `Halo Kak ${customerInfo.nama || 'Nasabah'}, terima kasih telah menghubungi Selada Gadai. Pengajuan Leads Anda sedang kami proses${leadId}${barangTag}.`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
 });
 
 const soaList = SOA_LIST;
@@ -1838,9 +1761,7 @@ const selectTab = (targetTab: string) => {
 // Navigate backwards one step in wizard (mundur step)
 const prevStep = () => {
   stepWarning.value = "";
-  if (activeTab.value === "SBG") {
-    selectTab("Hot Prospect");
-  } else if (activeTab.value === "Hot Prospect") {
+  if (activeTab.value === "SBG" || activeTab.value === "Hot Prospect") {
     selectTab("Prospect");
   } else if (activeTab.value === "Prospect") {
     selectTab("Leads");
@@ -1876,12 +1797,14 @@ const onSelectKelurahan = (item: any) => {
     clearTimeout(kelurahanBlurTimer);
     kelurahanBlurTimer = null;
   }
-  customerInfo.kelurahan = item.nm_kelurahan || "";
-  customerInfo.kecamatan = item.nm_kecamatan || "";
-  customerInfo.kd_kota = item.kd_kota ? String(item.kd_kota) : "";
+
+  console.log('item gue nih ', item);
+  customerInfo.nm_kelurahan = item.nm_kelurahan || "";
+  customerInfo.kd_kelurahan = item.kd_kelurahan || "";
+  customerInfo.nm_kecamatan = item.nm_kecamatan || "";
+  customerInfo.kd_kecamatan = item.kd_kecamatan ? String(item.kd_kecamatan) : "";
   customerInfo.nm_kota = item.nm_kota || "";
-  // Masuk ke field kota hanya kodenya saja
-  customerInfo.kota = customerInfo.kd_kota;
+  customerInfo.kd_kota = item.kd_kota || "";
   kelurahanSearchInput.value = item.nm_kelurahan || "";
   showKelurahanDropdown.value = false;
 };
@@ -1937,6 +1860,7 @@ watch(
       customerInfo.nama =
         found.nama || found.nm_customer || found.name || "Customer";
       customerInfo.hp = found.hp || found.phone || found.no_hp || "";
+      customerInfo.status_wa = found.status_wa || "belum_validasi";
 
       const matchedSource = sources.find(
         (s: any) => s.kd_ref_cust === found.id_sumbercust,
@@ -1959,9 +1883,14 @@ watch(
       customerInfo.alamat = found.alamat || "";
       customerInfo.rt = found.rt || "";
       customerInfo.rw = found.rw || "";
-      customerInfo.kelurahan = found.nm_kelurahan || found.kelurahan || "";
-      customerInfo.kecamatan = found.nm_kecamatan || found.kecamatan || "";
-      customerInfo.kota = found.kota || "";
+
+      isFetchKota.value = true;
+      isFetchKecamatan.value = true;
+      isFetchKelurahan.value = true;
+      
+      customerInfo.nm_kelurahan = found.nm_kelurahan || found.kelurahan || "";
+      customerInfo.nm_kecamatan = found.nm_kecamatan || found.kecamatan || "";
+      customerInfo.nm_kota = found.kota || "";
       customerInfo.kd_kota = found.kota || "";
       customerInfo.nm_kota = found.nm_kota || "";
 
@@ -1989,12 +1918,10 @@ watch(
           const st = statusFromDb.toLowerCase();
           if (st.includes("lead")) {
             activeTab.value = "Leads";
-          } else if (st.includes("hot")) {
-            activeTab.value = "Hot Prospect";
           } else if (st.includes("prospect") || st.includes("prospek")) {
             activeTab.value = "Prospect";
           } else {
-            // Status di luar Leads, Prospect, dan Hot Prospect -> langsung SBG
+            // Status di luar Leads dan Prospect -> langsung ke tab SBG
             activeTab.value = "SBG";
           }
         }
@@ -2058,9 +1985,8 @@ const getStepProgressWidth = (status: string) => {
     case "Leads":
       return "0%";
     case "Prospect":
-      return "33%";
     case "Hot Prospect":
-      return "66%";
+      return "50%";
     case "SBG":
       return "100%";
     default:
@@ -2071,6 +1997,9 @@ const getStepProgressWidth = (status: string) => {
 const isStepActive = (stepName: string, currentStatus: string) => {
   const currentIdx = pipelineSteps.indexOf(currentStatus);
   const stepIdx = pipelineSteps.indexOf(stepName);
+  if (currentStatus === "Hot Prospect") {
+    return stepName === "Leads" || stepName === "Prospect";
+  }
   return stepIdx <= currentIdx;
 };
 
@@ -2080,6 +2009,8 @@ const statusMap: Record<string, number> = {
   "Hot Prospect": 3,
   Batal: 6,
   SBG: 7,
+  Booking: 7,
+  "Booking / SBG": 7,
 };
 
 const queryClient = useQueryClient();
@@ -2155,10 +2086,10 @@ const submitWithStatus = (
     alamat: customerInfo.alamat,
     rt: customerInfo.rt,
     rw: customerInfo.rw,
-    kelurahan: customerInfo.kelurahan,
-    kecamatan: customerInfo.kecamatan,
-    kota: customerInfo.kd_kota || customerInfo.kota,
-    kd_kota: customerInfo.kd_kota || customerInfo.kota,
+    kelurahan: customerInfo.nm_kelurahan || "",
+    kecamatan: customerInfo.nm_kecamatan || "",
+    kota: customerInfo.nm_kota || customerInfo.kd_kota || "",
+    kd_kota: customerInfo.kd_kota || "",
     aktiv: 1,
     soa: customerInfo.soa,
     aktifitas: customerInfo.aktifitas,
@@ -2175,11 +2106,8 @@ const submitWithStatus = (
       if (navigateNext) {
         if (activeTab.value === "Leads") {
           nextTab = "Prospect";
-        } else if (activeTab.value === "Prospect") {
-          nextTab = "Hot Prospect";
-        } else if (activeTab.value === "Hot Prospect") {
-          router.push("/inquiry");
-          return;
+        } else if (activeTab.value === "Prospect" || activeTab.value === "Hot Prospect") {
+          nextTab = "SBG";
         } else {
           router.push("/inquiry");
           return;

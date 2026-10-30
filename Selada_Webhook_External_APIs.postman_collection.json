@@ -1,0 +1,249 @@
+{
+	"info": {
+		"_postman_id": "a9b8c7d6-e5f4-4321-abcd-selada-webhook-v1",
+		"name": "Selada Advanced - WABA Webhook & External API",
+		"description": "Koleksi Postman untuk pengujian Webhook WhatsApp Business API (WABA) dan API Hit Pihak Ketiga (Update Nomor Telepon & Booking).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "api_key",
+			"value": "selada_external_secret_2026",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. WhatsApp Webhook (WABA)",
+			"item": [
+				{
+					"name": "GET Webhook Verification (Meta Challenge)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/webhook/whatsapp?hub.mode=subscribe&hub.verify_token=selada_wa_webhook_token&hub.challenge=CHALLENGE_TEST_12345",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"webhook",
+								"whatsapp"
+							],
+							"query": [
+								{
+									"key": "hub.mode",
+									"value": "subscribe"
+								},
+								{
+									"key": "hub.verify_token",
+									"value": "selada_wa_webhook_token"
+								},
+								{
+									"key": "hub.challenge",
+									"value": "CHALLENGE_TEST_12345"
+								}
+							]
+						},
+						"description": "Pengujian verifikasi webhook yang dilakukan oleh Meta Developer saat mendaftarkan Callback URL."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Webhook - Status Pesan Terkirim / Delivered (Validasi WA + Leads -> Prospect)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"entry\": [\n    {\n      \"changes\": [\n        {\n          \"value\": {\n            \"statuses\": [\n              {\n                \"id\": \"wamid.HBgLMjAyNjEwMjcwMDAx\",\n                \"status\": \"delivered\",\n                \"recipient_id\": \"6281299998888\"\n              }\n            ]\n          }\n        }\n      ]\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/webhook/whatsapp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"webhook",
+								"whatsapp"
+							]
+						},
+						"description": "Simulasi event saat WhatsApp berhasil mengirim pesan ke nomor customer (status delivered/read). Mengubah status_wa jadi 'tervalidasi' dan menaikkan status dari Leads (1) ke Prospect (2)."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Webhook - Balasan Chat Nasabah Masuk (Leads -> Prospect)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"entry\": [\n    {\n      \"changes\": [\n        {\n          \"value\": {\n            \"messages\": [\n              {\n                \"from\": \"6281299998888\",\n                \"id\": \"wamid.HBgLMjAyNjEwMjcwMDAy\",\n                \"timestamp\": \"1719482100\",\n                \"text\": {\n                  \"body\": \"Halo, saya tertarik dengan taksiran emasnya\"\n                },\n                \"type\": \"text\"\n              }\n            ]\n          }\n        }\n      ]\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/webhook/whatsapp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"webhook",
+								"whatsapp"
+							]
+						},
+						"description": "Simulasi saat customer membalas pesan WhatsApp. Sistem otomatis mencatat balasan dan meningkatkan status nasabah ke Prospect (2)."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Webhook - Generic Gateway (Fonnte / Wablas Format)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"phone\": \"081299998888\",\n  \"message\": \"Bisa info estimasi taksiran cincin emas 5 gram?\",\n  \"status\": \"delivered\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/webhook/whatsapp",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"webhook",
+								"whatsapp"
+							]
+						},
+						"description": "Format sederhana jika menggunakan WABA gateway lokal (seperti Fonnte/Wablas)."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. External API (Pihak Ketiga)",
+			"item": [
+				{
+					"name": "POST Update Nomor Telepon Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Api-Key",
+								"value": "{{api_key}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"old_phone\": \"081299998888\",\n  \"new_phone\": \"081987654321\",\n  \"reason\": \"Customer mengajukan pembaruan nomor kontak via aplikasi mobile\",\n  \"updated_by\": \"Aplikasi Mobile / CS\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/external/customer/update-phone",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"external",
+								"customer",
+								"update-phone"
+							]
+						},
+						"description": "API untuk pihak ketiga mengubah nomor telepon customer. Mengubah hp di tb_customer, mereset status_wa ke 'belum_validasi', dan mencatat riwayat perubahan di tb_rencana_det."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Hit Booking Eksternal (Prospect -> Booking)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Api-Key",
+								"value": "{{api_key}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"api_key\": \"{{api_key}}\",\n  \"reference_id\": \"BOOK-20261028-001\",\n  \"phone\": \"081987654321\",\n  \"nama\": \"Budi Santoso\",\n  \"booking_details\": {\n    \"tanggal_booking\": \"2026-10-29 10:00:00\",\n    \"jenis_barang\": \"Emas / Logam Mulia\",\n    \"estimasi_pinjaman\": 15000000,\n    \"cabang_tujuan\": \"Cabang Jakarta Pusat\",\n    \"catatan\": \"Nasabah booking janji temu taksiran emas batangan 10 gram\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/external/booking",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"external",
+								"booking"
+							]
+						},
+						"description": "API untuk pihak ketiga mengonfirmasi booking janji temu. Mengubah status inquiry dari Prospect (2) ke Booking / SBG Deal (7)."
+					},
+					"response": []
+				},
+				{
+					"name": "POST Webhook - Booking Berhasil (Event Callback)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event\": \"booking_success\",\n  \"booking_id\": \"BOOK-WEB-9912\",\n  \"phone\": \"081987654321\",\n  \"nama\": \"Siti Rahmawati\",\n  \"jadwal\": \"2026-10-29 14:00:00\",\n  \"cabang\": \"Cabang Surabaya\",\n  \"barang\": \"Perhiasan Emas 22K\",\n  \"nominal\": 8000000,\n  \"catatan\": \"Booking berhasil via form web\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/webhook/booking",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"webhook",
+								"booking"
+							]
+						},
+						"description": "Webhook endpoint listener yang dipanggil saat ada event booking berhasil dari sistem luar. Otomatis mengubah status inquiry ke BOOKING (7)."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
