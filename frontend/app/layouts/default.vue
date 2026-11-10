@@ -97,16 +97,16 @@ onMounted(async () => {
     }
   }
 
-  // If user_branch_name is missing, numeric, or holds previous stale 'TIBAN', fetch the actual branch name from API
-  const currentBranchName = (userBranchName.value || '').trim()
-  if (!currentBranchName || /^\d+$/.test(currentBranchName) || currentBranchName.toUpperCase() === 'TIBAN') {
-    try {
-      const res = await useApi<any>('/branch/current')
-      if (res && res.branch_name) {
-        userBranchName.value = res.branch_name
-      }
-    } catch {}
-  }
+  // Always sync the latest branch name from the backend API so stale cookies are updated
+  try {
+    const { data } = await useApi<any>('/branch/current')
+    if (data?.branch_name) {
+      userBranchName.value = data.branch_name
+    }
+    if (data?.cabang) {
+      userBranch.value = data.cabang
+    }
+  } catch {}
 })
 
 const handleLogout = async () => {

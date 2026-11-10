@@ -1092,12 +1092,14 @@ func fetchActiveSalesList() []SalesInfo {
 
 	// 3. Fetch sales users in POS (sam_pos.tbl_user) strictly for trainee (6), junior (17), senior (29)
 	var posRows []SalesInfo
-	query := config.DBMysqlPos.Table("tbl_user u").
-		Select("u.username, u.nama, u.id_jabatan, COALESCE(j.nm_jabatan, 'Sales') AS nm_jabatan").
-		Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
-		Where("u.id_jabatan IN (6, 17, 29)")
+	if config.DBMysqlPos != nil {
+		query := config.DBMysqlPos.Table("tbl_user u").
+			Select("u.username, u.nama, u.id_jabatan, COALESCE(j.nm_jabatan, 'Sales') AS nm_jabatan").
+			Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
+			Where("u.id_jabatan IN (6, 17, 29)")
 
-	_ = query.Scan(&posRows).Error
+		_ = query.Scan(&posRows).Error
+	}
 
 	seenUsers := make(map[string]bool)
 	for _, r := range posRows {

@@ -96,11 +96,15 @@ func definition(c column) (string, error) {
 	if c.nullable == "NO" {
 		out += " NOT NULL"
 	}
-	if c.def.Valid {
-		if strings.EqualFold(c.def.String, "CURRENT_TIMESTAMP") {
+	if c.def.Valid && !strings.EqualFold(strings.TrimSpace(c.def.String), "NULL") {
+		defStr := strings.TrimSpace(c.def.String)
+		if strings.EqualFold(defStr, "CURRENT_TIMESTAMP") || strings.EqualFold(defStr, "current_timestamp()") {
 			out += " DEFAULT CURRENT_TIMESTAMP"
-		} else {
-			out += " DEFAULT " + literal(c.def.String)
+	} else {
+			if len(defStr) >= 2 && strings.HasPrefix(defStr, "'") && strings.HasSuffix(defStr, "'") {
+				defStr = strings.ReplaceAll(defStr[1:len(defStr)-1], "''", "'")
+			}
+			out += " DEFAULT " + literal(defStr)
 		}
 	} else if c.nullable == "NO" {
 		// The source uses permissive MySQL defaults for omitted fields.
@@ -114,8 +118,10 @@ func definition(c column) (string, error) {
 	return out, nil
 }
 func run(apply bool) error {
-	if err := config.LoadEnv(".env"); err != nil {
-		return err
+	for _, envPath := range []string{".env", "backend/.env", "../../.env"} {
+		if err := config.LoadEnv(envPath); err != nil {
+			return err
+		}
 	}
 	dsn, err := config.SourceMySQLDSN()
 	if err != nil {
@@ -270,7 +276,8 @@ func run(apply bool) error {
 			return e
 		}
 		defer admin.Close()
-		if _, e = admin.Exec("CREATE DATABASE " + qi(os.Getenv("DB_PG2_NAME"))); e != nil {
+		dbName := strings.Trim(strings.TrimSpace(os.Getenv("DB_PG2_NAME")), "\"'")
+		if _, e = admin.Exec("CREATE DATABASE " + qi(dbName)); e != nil {
 			return e
 		}
 	}
@@ -402,6 +409,16 @@ func run(apply bool) error {
 	for _, f := range fks {
 		q := "ALTER TABLE public." + qi(f.table) + " ADD CONSTRAINT " + qi(f.name) + " FOREIGN KEY (" + strings.Join(f.cols, ",") + ") REFERENCES public." + qi(f.target) + " (" + strings.Join(f.refs, ",") + ") ON UPDATE " + f.update + " ON DELETE " + f.delete
 		if _, err = dt.Exec(q); err != nil {
+			return err
+		}
+	}
+	for _, alterStmt := range []string{
+		`ALTER TABLE IF EXISTS public."tb_customer" ADD COLUMN IF NOT EXISTS "aktivitas" VARCHAR(255) NOT NULL DEFAULT ''`,
+		`ALTER TABLE IF EXISTS public."tb_customer" ADD COLUMN IF NOT EXISTS "jenis" VARCHAR(255) NOT NULL DEFAULT ''`,
+		`ALTER TABLE IF EXISTS public."tb_rencana" ADD COLUMN IF NOT EXISTS "id_aktivitas" VARCHAR(255) NOT NULL DEFAULT ''`,
+		`ALTER TABLE IF EXISTS public."tb_rencana" ADD COLUMN IF NOT EXISTS "id_jenis" VARCHAR(255) NOT NULL DEFAULT ''`,
+	} {
+		if _, err = dt.Exec(alterStmt); err != nil {
 			return err
 		}
 	}

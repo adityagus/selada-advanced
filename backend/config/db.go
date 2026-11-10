@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
+	"sync"
 	"time"
 
 	"gorm.io/driver/mysql"
@@ -13,10 +15,14 @@ import (
 var DBPostgres *gorm.DB
 var DBSelada *gorm.DB
 var DBMysqlPos *gorm.DB
+var mysqlPosMu sync.Mutex
 
 func getEnv(key, fallback string) string {
 	if value, exists := os.LookupEnv(key); exists {
-		return value
+		cleaned := strings.Trim(strings.TrimSpace(value), "\"'")
+		if cleaned != "" {
+			return cleaned
+		}
 	}
 	return fallback
 }
@@ -52,11 +58,11 @@ func ConnectDatabases() {
 	var err error
 
 	// 1. PostgreSQL DB Connection (sam_live)
-	pgHost := getEnv("DB_PG_HOST", "10.10.10.8")
-	pgPort := getEnv("DB_PG_PORT", "5434")
-	pgUser := getEnv("DB_PG_USER", "it_gms")
-	pgPass := getEnv("DB_PG_PASS", "Gadai@passw0rd")
-	pgName := getEnv("DB_PG_NAME", "db_gadaimulia")
+	pgHost := getEnv("DB_PG_HOST", "")
+	pgPort := getEnv("DB_PG_PORT", "")
+	pgUser := getEnv("DB_PG_USER", "")
+	pgPass := getEnv("DB_PG_PASS", "")
+	pgName := getEnv("DB_PG_NAME", "")
 	dsnPG := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", pgHost, pgUser, pgPass, pgName, pgPort)
 
 	DBPostgres, err = gorm.Open(postgres.Open(dsnPG), &gorm.Config{})
@@ -86,19 +92,46 @@ func ConnectDatabases() {
 	}
 
 	// 3. MySQL POS Connection (sam_pos)
-	myPosHost := getEnv("DB_MYSQL_POS_HOST", "10.10.10.8")
-	myPosPort := getEnv("DB_MYSQL_POS_PORT", "3307")
-	myPosUser := getEnv("DB_MYSQL_POS_USER", "root")
-	myPosPass := getEnv("DB_MYSQL_POS_PASS", "stagingdev@6177")
-	myPosName := getEnv("DB_MYSQL_POS_NAME", "sam_pos")
-	dsnMSPos := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", myPosUser, myPosPass, myPosHost, myPosPort, myPosName)
+	ConnectMySQLPos()
+}
 
-	DBMysqlPos, err = gorm.Open(mysql.Open(dsnMSPos), &gorm.Config{})
+// ConnectMySQLPos initializes or retries the MySQL POS (sam_pos) connection from environment variables.
+func ConnectMySQLPos() *gorm.DB {
+	mysqlPosMu.Lock()
+	defer mysqlPosMu.Unlock()
+
+	if DBMysqlPos != nil {
+		if sqlDB, err := DBMysqlPos.DB(); err == nil && sqlDB.Ping() == nil {
+			return DBMysqlPos
+		}
+	}
+
+	myPosHost := getEnv("DB_MYSQL_POS_HOST", "")
+	myPosPort := getEnv("DB_MYSQL_POS_PORT", "")
+	myPosUser := getEnv("DB_MYSQL_POS_USER", "")
+	myPosPass := getEnv("DB_MYSQL_POS_PASS", "")
+	myPosName := getEnv("DB_MYSQL_POS_NAME", "")
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&timeout=5s&readTimeout=10s&writeTimeout=10s",
+		myPosUser, myPosPass, myPosHost, myPosPort, myPosName)
+
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		fmt.Printf("Gagal koneksi ke MySQL (sam_pos): %v\n", err)
 		DBMysqlPos = nil
-	} else {
-		tunePool(DBMysqlPos)
-		fmt.Println("Koneksi MySQL (sam_pos) Berhasil!")
+		return nil
 	}
+	if sqlDB, errPing := db.DB(); errPing != nil || sqlDB.Ping() != nil {
+		if errPing == nil {
+			errPing = sqlDB.Ping()
+		}
+		fmt.Printf("Gagal ping ke MySQL (sam_pos): %v\n", errPing)
+		DBMysqlPos = nil
+		return nil
+	}
+
+	tunePool(db)
+	DBMysqlPos = db
+	fmt.Println("Koneksi MySQL (sam_pos) Berhasil!")
+	return DBMysqlPos
 }

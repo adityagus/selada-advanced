@@ -40,16 +40,30 @@ func (r *repository) FindAll(ctx context.Context) ([]Branch, error) {
 func (r *repository) FindNameByCodeOrUser(ctx context.Context, branchCode, username string) (string, error) {
 	var branchName string
 
-	// 1. Coba lookup via MySQL POS (mst_cabang) jika branchCode dari POS
-	if branchCode != "" && r.dbPOS != nil {
-		_ = r.dbPOS.WithContext(ctx).Table("mst_cabang").
-			Select("nm_cabang").
-			Where("id_cabang = ? OR nick_cabang = ?", branchCode, branchCode).
-			Limit(1).
-			Pluck("nm_cabang", &branchName).Error
+	// 1. Coba lookup via MySQL POS (tbl_user -> mst_cabang berdasarkan username atau branchCode)
+	if r.dbPOS != nil {
+		if username != "" {
+			_ = r.dbPOS.WithContext(ctx).Table("tbl_user u").
+				Select("c.nm_cabang").
+				Joins("JOIN mst_cabang c ON c.id_cabang = u.id_cabang OR c.nick_cabang = u.id_cabang").
+				Where("LOWER(u.username) = LOWER(?)", username).
+				Limit(1).
+				Pluck("c.nm_cabang", &branchName).Error
 
-		if branchName != "" {
-			return branchName, nil
+			if branchName != "" {
+				return branchName, nil
+			}
+		}
+		if branchCode != "" {
+			_ = r.dbPOS.WithContext(ctx).Table("mst_cabang").
+				Select("nm_cabang").
+				Where("id_cabang = ? OR nick_cabang = ?", branchCode, branchCode).
+				Limit(1).
+				Pluck("nm_cabang", &branchName).Error
+
+			if branchName != "" {
+				return branchName, nil
+			}
 		}
 	}
 

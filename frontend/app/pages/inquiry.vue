@@ -203,7 +203,7 @@
                   </label>
                   <select v-model="form.soa" @change="onSoaChange" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all" required>
                     <option value="">- Pilih SOA -</option>
-                    <option v-for="soaOpt in soaList" :key="soaOpt" :value="soaOpt">{{ soaOpt }}</option>
+                    <option v-for="soaOpt in soaList" :key="soaOpt.id || soaOpt.code || soaOpt.name || soaOpt" :value="String(soaOpt.id || soaOpt.code || soaOpt.name || soaOpt)">{{ typeof soaOpt === 'object' ? (soaOpt.name || soaOpt.nm_ref_cust || soaOpt.code) : soaOpt }}</option>
                   </select>
                 </div>
 
@@ -214,7 +214,7 @@
                   </label>
                   <select v-model="form.aktifitas" :disabled="!form.soa" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all disabled:bg-slate-100 disabled:cursor-not-allowed" required>
                     <option value="">- Pilih Aktifitas -</option>
-                    <option v-for="aktOpt in availableAktifitasOptions" :key="aktOpt" :value="aktOpt">{{ aktOpt }}</option>
+                    <option v-for="aktOpt in availableAktifitasOptions" :key="aktOpt.id || aktOpt.code || aktOpt.name || aktOpt" :value="String(aktOpt.id || aktOpt.code || aktOpt.name || aktOpt)">{{ typeof aktOpt === 'object' ? (aktOpt.name || aktOpt.nm_ref_cust || aktOpt.code) : aktOpt }}</option>
                   </select>
                 </div>
 
@@ -225,7 +225,7 @@
                   </label>
                   <select v-model="form.jenisAplikasi" :disabled="!form.soa" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all disabled:bg-slate-100 disabled:cursor-not-allowed" required>
                     <option value="">- Pilih Jenis Aplikasi -</option>
-                    <option v-for="jenisOpt in availableJenisAplikasiOptions" :key="jenisOpt" :value="jenisOpt">{{ jenisOpt }}</option>
+                    <option v-for="jenisOpt in availableJenisAplikasiOptions" :key="jenisOpt.id || jenisOpt.code || jenisOpt.name || jenisOpt" :value="String(jenisOpt.id || jenisOpt.code || jenisOpt.name || jenisOpt)">{{ typeof jenisOpt === 'object' ? (jenisOpt.name || jenisOpt.code) : jenisOpt }}</option>
                   </select>
                 </div>
               </div>
@@ -312,15 +312,15 @@
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-slate-100 pb-5">
                 <div>
                   <span class="text-xs text-slate-400 block mb-0.5">SOA</span>
-                  <span class="font-medium text-slate-800">{{ selectedItem.soa || selectedItem.SOA || '-' }}</span>
+                  <span class="font-medium text-slate-800">{{ parseSoaText(selectedItem.soa || selectedItem.SOA || selectedItem.id_sumbercust, dynamicSoaList) }}</span>
                 </div>
                 <div>
                   <span class="text-xs text-slate-400 block mb-0.5">Aktifitas</span>
-                  <span class="font-medium text-slate-800">{{ selectedItem.aktifitas || selectedItem.ket_aktivitas || '-' }}</span>
+                  <span class="font-medium text-slate-800">{{ parseAktifitasText(selectedItem.aktifitas || selectedItem.aktivitas, dynamicAktifitasList) }}</span>
                 </div>
                 <div>
                   <span class="text-xs text-slate-400 block mb-0.5">Jenis Aplikasi</span>
-                  <span class="font-medium text-slate-800">{{ selectedItem.jenis_aplikasi || selectedItem.jenisAplikasi || '-' }}</span>
+                  <span class="font-medium text-slate-800">{{ parseJenisAplikasiText(selectedItem.jenis_aplikasi || selectedItem.jenisAplikasi || selectedItem.jenis, dynamicJenisList) }}</span>
                 </div>
                 <div class="sm:col-span-2">
                   <span class="text-xs text-slate-400 block mb-0.5">Alamat</span>
@@ -441,7 +441,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useApi } from '~/composables/useApi'
 import { getRencanaDetails } from '~/utils/rencanaDetails'
-import { SOA_LIST, getAktifitasOptions, getJenisAplikasiOptions, parseSoaText, parseAktifitasText } from '~/utils/soa'
+import { DEFAULT_SOA_ITEMS, DEFAULT_AKTIFITAS_ITEMS, DEFAULT_JENIS_APLIKASI_ITEMS, getAktifitasOptions, getJenisAplikasiOptions, parseSoaText, parseAktifitasText, parseJenisAplikasiText } from '~/utils/soa'
 import { getFotoBarang } from '~/utils/imageStorage'
 
 const inquiries = ref<any[]>([])
@@ -481,10 +481,44 @@ const form = reactive({
   jenisAplikasi: ''
 })
 
-const soaList = SOA_LIST
+const dynamicSoaList = ref<any[]>(DEFAULT_SOA_ITEMS)
+const dynamicAktifitasList = ref<any[]>(DEFAULT_AKTIFITAS_ITEMS)
+const dynamicJenisList = ref<any[]>(DEFAULT_JENIS_APLIKASI_ITEMS)
 
-const availableAktifitasOptions = computed(() => getAktifitasOptions(form.soa))
-const availableJenisAplikasiOptions = computed(() => getJenisAplikasiOptions(form.soa))
+const soaList = computed(() => dynamicSoaList.value)
+const availableAktifitasOptions = computed(() => getAktifitasOptions(form.soa, dynamicAktifitasList.value))
+const availableJenisAplikasiOptions = computed(() => getJenisAplikasiOptions(form.soa, dynamicJenisList.value))
+
+const fetchDynamicSoaOptions = async () => {
+  try {
+    const { data } = await useApi<any>('/master/soa-options')
+    if (data) {
+      if (Array.isArray(data.soa) && data.soa.length > 0) {
+        dynamicSoaList.value = data.soa.map((s: any) => ({
+          id: s.id,
+          code: s.code || s.kd_ref_cust,
+          name: s.name || s.nm_ref_cust
+        }))
+      }
+      if (Array.isArray(data.aktifitas) && data.aktifitas.length > 0) {
+        dynamicAktifitasList.value = data.aktifitas.map((a: any) => ({
+          id: a.id,
+          code: a.kd_ref_cust || a.code,
+          name: a.nm_ref_cust || a.name
+        }))
+      }
+      if (Array.isArray(data.jenis_aplikasi) && data.jenis_aplikasi.length > 0) {
+        dynamicJenisList.value = data.jenis_aplikasi.map((j: any) => ({
+          id: j.id,
+          code: j.code,
+          name: j.name
+        }))
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load dynamic SOA options:', e)
+  }
+}
 
 const onSoaChange = () => {
   form.aktifitas = ''
@@ -494,6 +528,7 @@ const onSoaChange = () => {
 const sourcesList = ref<string[]>(['Walk In', 'Media Sosial', 'Event', 'Referensi'])
 
 onMounted(() => {
+  fetchDynamicSoaOptions()
   fetchSummaryCounts()
   fetchInquiries()
   fetchExistingCustomers()

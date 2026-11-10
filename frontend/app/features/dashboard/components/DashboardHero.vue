@@ -116,10 +116,20 @@
               </p>
             </div>
 
-            <!-- Motivation Footer -->
-            <div class="pt-1 flex items-center gap-2 text-xs text-slate-300">
-              <AppIcon name="bolt" class="w-4 h-4 text-amber-400 shrink-0" />
-              <span class="leading-snug">{{ motivationText }}</span>
+            <!-- Motivation Footer (leading-snug Carousel) -->
+            <div
+              class="pt-1 flex items-center gap-2 text-xs text-slate-300 overflow-hidden min-h-[24px]"
+              @mouseenter="pauseCarousel = true"
+              @mouseleave="pauseCarousel = false"
+            >
+              <AppIcon :name="currentMotivationSlide.icon" class="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+              <div class="relative flex-1 overflow-hidden">
+                <Transition name="motivation-slide" mode="out-in">
+                  <span :key="activeSlideIndex" class="leading-snug block">
+                    {{ currentMotivationSlide.text }}
+                  </span>
+                </Transition>
+              </div>
             </div>
           </div>
         </div>
@@ -128,41 +138,83 @@
       <!-- Leaderboard / Ranking Card (1 col) -->
       <div
         class="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs flex flex-col items-center justify-between text-center relative group overflow-hidden"
+        @mouseenter="pauseLbCarousel = true"
+        @mouseleave="pauseLbCarousel = false"
       >
-        <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-500">
+        <!-- Animated Background Sparkles -->
+        <div class="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform duration-500 lb-bg-sparkle pointer-events-none">
           <AppIcon name="sparkles" class="w-24 h-24 text-slate-900" />
         </div>
 
-        <div>
+        <div class="w-full">
+          <!-- Animated Icon Box -->
           <div
-            class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-3 shadow-inner border border-amber-100"
+            class="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-3 shadow-inner border border-amber-100 leaderboard-float relative"
           >
-            <AppIcon name="sparkles" class="w-7 h-7" />
+            <AppIcon name="sparkles" class="w-7 h-7 lb-icon-twinkle" />
           </div>
+
           <h3 class="text-slate-400 text-xs font-semibold mb-1">
             Posisi Leaderboard
           </h3>
+
           <div class="text-3xl font-bold text-slate-800 tracking-tight mb-2">
-            #{{ leaderboard.rank }}
-            <span class="text-sm font-normal text-slate-500">dari {{ leaderboard.total_participants }} Sales</span>
+            <Transition name="rank-pop" mode="out-in">
+              <span :key="leaderboard.rank" class="inline-block">#{{ animatedRank }}</span>
+            </Transition>
+            <span class="text-sm font-normal text-slate-500"> dari {{ leaderboard.total_participants }} Sales</span>
           </div>
-          <p class="text-xs text-slate-500 max-w-[240px] leading-relaxed mx-auto">
-            <template v-if="leaderboard.rank === 1">
-              <strong class="text-emerald-600 font-semibold">Luar biasa!</strong> Anda memimpin peringkat #1!
-            </template>
-            <template v-else>
-              Butuh
-              <strong class="text-emerald-600 font-semibold">Rp {{ formatNum(leaderboard.gap_to_next) }}</strong>
-              omzet lagi untuk menyalip ke peringkat #{{ leaderboard.rank - 1 }}.
-            </template>
-          </p>
+
+          <!-- Leaderboard Text Carousel -->
+          <div class="min-h-[40px] flex items-center justify-center overflow-hidden">
+            <Transition name="motivation-slide" mode="out-in">
+              <p
+                :key="activeLbSlideIndex"
+                class="text-xs text-slate-500 max-w-[240px] leading-snug mx-auto"
+              >
+                <template v-if="activeLbSlideIndex === 0">
+                  <template v-if="leaderboard.rank === 1">
+                    <strong class="text-emerald-600 font-semibold">Luar biasa!</strong> Anda memimpin peringkat #1!
+                  </template>
+                  <template v-else>
+                    Butuh
+                    <strong class="text-emerald-600 font-semibold">Rp {{ formatNum(animatedGap) }}</strong>
+                    omzet lagi untuk menyalip ke peringkat #{{ Math.max(1, leaderboard.rank - 1) }}.
+                  </template>
+                </template>
+                <template v-else-if="activeLbSlideIndex === 1 && topPerformerOne">
+                  Peringkat #1 saat ini:
+                  <strong class="text-amber-600 font-semibold">{{ topPerformerOne.name }}</strong>
+                  (Rp {{ formatNum(topPerformerOne.total_omzet) }})
+                </template>
+                <template v-else>
+                  <strong class="text-amber-600 font-semibold">Kejar terus transaksi!</strong>
+                  Raih posisi puncak Leaderboard bulan ini.
+                </template>
+              </p>
+            </Transition>
+          </div>
+
+          <!-- Subtle Carousel Dots inside Leaderboard Card -->
+          <div class="flex items-center justify-center gap-1.5 mt-2">
+            <button
+              v-for="idx in lbSlideCount"
+              :key="idx"
+              type="button"
+              @click="activeLbSlideIndex = idx - 1"
+              class="h-1 rounded-full transition-all duration-300 cursor-pointer"
+              :class="activeLbSlideIndex === idx - 1 ? 'w-4 bg-amber-400' : 'w-1.5 bg-slate-200 hover:bg-slate-300'"
+              :aria-label="`Leaderboard slide ${idx}`"
+            />
+          </div>
         </div>
 
         <button
           @click="$emit('open-leaderboard')"
-          class="mt-4 px-4 py-2.5 text-xs font-semibold bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 w-full cursor-pointer"
+          class="mt-4 px-4 py-2.5 text-xs font-semibold bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 w-full cursor-pointer relative overflow-hidden group/btn"
         >
-          <AppIcon name="chart" class="w-4 h-4" />
+          <span class="absolute inset-0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none"></span>
+          <AppIcon name="chart" class="w-4 h-4 transition-transform duration-300 group-hover/btn:scale-110" />
           <span>Lihat Leaderboard Lengkap</span>
         </button>
       </div>
@@ -171,7 +223,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { LeaderboardInfo } from '../types/dashboard.types'
 
 interface Props {
@@ -188,10 +240,14 @@ interface Props {
   targetProgressPct?: number
   targetDescription?: string
   motivationText?: string
+  labelPoint?: { icon: string; text: string }
+  labelLeaderboard?: { icon: string; text: string }
+  emasSubText?: string
+  nonEmasSubText?: string
   leaderboard?: LeaderboardInfo
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   isReview: false,
   selectedSalesUser: '',
   sortedSalesList: () => [],
@@ -205,6 +261,10 @@ withDefaults(defineProps<Props>(), {
   targetProgressPct: 0,
   targetDescription: 'Mengejar Qualified 1 (Target: 25 Poin)',
   motivationText: 'Semangat! Kejar Poin untuk Bonus Insentif!',
+  labelPoint: undefined,
+  labelLeaderboard: undefined,
+  emasSubText: '',
+  nonEmasSubText: '',
   leaderboard: () => ({ rank: 1, total_participants: 1, gap_to_next: 0, top_performers: [] })
 })
 
@@ -217,8 +277,193 @@ defineEmits<{
 
 const isPrivate = ref(true)
 
+// --- Motivation Leading-Snug Carousel ---
+const activeSlideIndex = ref(0)
+const pauseCarousel = ref(false)
+
+const motivationSlides = computed(() => {
+  const slides: Array<{ icon: string; text: string }> = []
+
+  if (props.motivationText) {
+    slides.push({ icon: 'bolt', text: props.motivationText })
+  }
+  if (props.labelPoint?.text) {
+    slides.push({ icon: 'star', text: props.labelPoint.text })
+  } else {
+    const remainingPts = Math.max(0, (props.targetGoalPoints || 25) - (props.pointTotal || 0))
+    if (props.isQualified) {
+      slides.push({
+        icon: 'check-circle',
+        text: 'Target Qualified Tercapai! Tambah transaksi untuk raih insentif maksimal.'
+      })
+    } else {
+      slides.push({
+        icon: 'star',
+        text: `Kejar ${remainingPts} Poin lagi sebelum akhir bulan agar insentif cair!`
+      })
+    }
+  }
+
+  if (props.labelLeaderboard?.text) {
+    slides.push({ icon: 'sparkles', text: props.labelLeaderboard.text })
+  } else if (props.leaderboard?.rank) {
+    slides.push({
+      icon: 'sparkles',
+      text:
+        props.leaderboard.rank === 1
+          ? 'Peringkat #1 Leaderboard! Pertahankan posisimu di puncak bulan ini.'
+          : `Peringkat #${props.leaderboard.rank}! Tambah pencairan untuk naik posisi di Leaderboard.`
+    })
+  }
+
+  if (props.emasSubText) {
+    slides.push({ icon: 'coin', text: `Gadai Emas: ${props.emasSubText}` })
+  }
+
+  return slides
+})
+
+const currentMotivationSlide = computed(() => {
+  const list = motivationSlides.value
+  if (!list.length) return { icon: 'bolt', text: props.motivationText }
+  return list[activeSlideIndex.value % list.length] || list[0]
+})
+
+const goToSlide = (idx: number) => {
+  activeSlideIndex.value = idx
+}
+
+// --- Leaderboard Card Carousel & Count-Up Animation ---
+const activeLbSlideIndex = ref(0)
+const pauseLbCarousel = ref(false)
+const animatedRank = ref(props.leaderboard?.rank || 1)
+const animatedGap = ref(props.leaderboard?.gap_to_next || 0)
+
+const topPerformerOne = computed(() => {
+  return (props.leaderboard?.top_performers || [])[0] || null
+})
+
+const lbSlideCount = computed(() => {
+  return topPerformerOne.value ? 3 : 2
+})
+
+const animateNumber = (from: number, to: number, duration: number, onUpdate: (val: number) => void) => {
+  if (typeof window === 'undefined') {
+    onUpdate(to)
+    return
+  }
+  const start = performance.now()
+  const step = (now: number) => {
+    const progress = Math.min(1, (now - start) / duration)
+    const eased = 1 - Math.pow(1 - progress, 3)
+    onUpdate(Math.round(from + (to - from) * eased))
+    if (progress < 1) {
+      requestAnimationFrame(step)
+    }
+  }
+  requestAnimationFrame(step)
+}
+
+watch(
+  () => [props.leaderboard?.rank, props.leaderboard?.gap_to_next],
+  ([newRank, newGap]) => {
+    animateNumber(animatedRank.value, Number(newRank) || 1, 600, (v) => (animatedRank.value = v))
+    animateNumber(animatedGap.value, Number(newGap) || 0, 800, (v) => (animatedGap.value = v))
+  },
+  { immediate: true }
+)
+
+let carouselTimer: ReturnType<typeof setInterval> | null = null
+let tickerTimer: ReturnType<typeof setInterval> | null = null
+
+onMounted(() => {
+  carouselTimer = setInterval(() => {
+    if (!pauseCarousel.value && motivationSlides.value.length > 1) {
+      activeSlideIndex.value = (activeSlideIndex.value + 1) % motivationSlides.value.length
+    }
+  }, 4000)
+
+  tickerTimer = setInterval(() => {
+    if (!pauseLbCarousel.value && lbSlideCount.value > 1) {
+      activeLbSlideIndex.value = (activeLbSlideIndex.value + 1) % lbSlideCount.value
+    }
+  }, 3500)
+})
+
+onUnmounted(() => {
+  if (carouselTimer) clearInterval(carouselTimer)
+  if (tickerTimer) clearInterval(tickerTimer)
+})
+
 const formatNum = (val?: number) => {
   if (!val && val !== 0) return '0'
   return new Intl.NumberFormat('id-ID').format(val)
 }
 </script>
+
+<style scoped>
+.motivation-slide-enter-active,
+.motivation-slide-leave-active {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.motivation-slide-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.motivation-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.rank-pop-enter-active,
+.rank-pop-leave-active {
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.rank-pop-enter-from {
+  opacity: 0;
+  transform: scale(0.8) translateY(6px);
+}
+.rank-pop-leave-to {
+  opacity: 0;
+  transform: scale(1.1) translateY(-6px);
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes twinkleSpin {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.12) rotate(8deg);
+  }
+}
+
+@keyframes bgSparkleFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-6px) rotate(6deg) scale(1.06);
+  }
+}
+
+.leaderboard-float {
+  animation: floatSlow 3s ease-in-out infinite;
+}
+
+.lb-icon-twinkle {
+  animation: twinkleSpin 2.6s ease-in-out infinite;
+}
+
+.lb-bg-sparkle {
+  animation: bgSparkleFloat 4.5s ease-in-out infinite;
+}
+</style>

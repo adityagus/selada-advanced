@@ -42,6 +42,16 @@ func TestSeladaPostgresIntegration(t *testing.T) {
 		t.Fatal(tx.Error)
 	}
 	defer tx.Rollback()
+	for _, stmt := range []string{
+		"ALTER TABLE tb_customer ADD COLUMN IF NOT EXISTS aktivitas VARCHAR(255) NOT NULL DEFAULT ''",
+		"ALTER TABLE tb_customer ADD COLUMN IF NOT EXISTS jenis VARCHAR(255) NOT NULL DEFAULT ''",
+		"ALTER TABLE tb_rencana ADD COLUMN IF NOT EXISTS id_aktivitas VARCHAR(255) NOT NULL DEFAULT ''",
+		"ALTER TABLE tb_rencana ADD COLUMN IF NOT EXISTS id_jenis VARCHAR(255) NOT NULL DEFAULT ''",
+	} {
+		if err := tx.Exec(stmt).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
 	previous := config.DBSelada
 	config.DBSelada = tx
 	defer func() { config.DBSelada = previous }()

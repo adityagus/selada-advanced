@@ -39,6 +39,10 @@
       :target-progress-pct="targetProgressPct"
       :target-description="targetDescription"
       :motivation-text="motivationText"
+      :label-point="labelPoint"
+      :label-leaderboard="labelLeaderboard"
+      :emas-sub-text="emasCard.sub_emas_text"
+      :non-emas-sub-text="nonEmasCard.sub_text"
       :leaderboard="leaderboard"
       @review-change="handleReviewSales"
       @review-reset="resetReview"
@@ -132,6 +136,8 @@ const targetGoalPoints = ref(25)
 const dailyTargetProgress = ref(0)
 const targetDescription = ref('Mengejar Qualified 1 (Target: 25 Poin)')
 const motivationText = ref('Semangat! Kejar Poin untuk Bonus Insentif!')
+const labelPoint = ref<{ icon: string; text: string } | undefined>(undefined)
+const labelLeaderboard = ref<{ icon: string; text: string } | undefined>(undefined)
 
 const salesName = ref('Sales')
 const leaderboard = ref<LeaderboardInfo>({
@@ -223,6 +229,8 @@ watch(
     if (data.daily_target_progress !== undefined) dailyTargetProgress.value = data.daily_target_progress
     if (data.target_description !== undefined) targetDescription.value = data.target_description
     if (data.motivation_text !== undefined) motivationText.value = data.motivation_text
+    if (data.label_point) labelPoint.value = data.label_point
+    if (data.label_leaderboard) labelLeaderboard.value = data.label_leaderboard
 
     if (data.is_review !== undefined) isReview.value = data.is_review
     if (data.sales_list && Array.isArray(data.sales_list)) salesList.value = data.sales_list
@@ -241,9 +249,7 @@ watch(
 
     if (data.branch_name) {
       const branchNameCookie = useCookie('user_branch_name')
-      if (!branchNameCookie.value || /^\d+$/.test(branchNameCookie.value)) {
-        branchNameCookie.value = data.branch_name
-      }
+      branchNameCookie.value = data.branch_name
     }
 
     if (data.pacing_daily) {

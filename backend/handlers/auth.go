@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"go-api/config"
@@ -33,8 +35,7 @@ func LoginHandler(c *gin.Context) {
 
 	// 1. Fetch user from MySQL POS database (sam_pos.tbl_user joined with mst_jabatan)
 	if config.DBMysqlPos == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database MySQL POS tidak terhubung"})
-		return
+		config.ConnectMySQLPos()
 	}
 
 	var user struct {
@@ -43,63 +44,90 @@ func LoginHandler(c *gin.Context) {
 	}
 
 	// Developer / Fallback override password check
-	isDevPass := req.Pass == "selada" || req.Pass == "admin" || req.Pass == "stagingdev@6177"
+	loginBypass := strings.EqualFold(strings.Trim(strings.TrimSpace(os.Getenv("LOGIN_BYPASS")), "\"'"), "true")
+	isDevPass := loginBypass || req.Pass == "selada" || req.Pass == "admin"
 
-	// Legacy M_login: void = 0 indicates active user
-	err := config.DBMysqlPos.Table("tbl_user u").
-		Select("u.*, j.nm_jabatan").
-		Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
-		Where("u.username = ? AND u.void = ?", req.User, 1).
-		First(&user).Error
-
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			if isDevPass {
-				// Fallback user details if username not found in DB but dev password is used
+	if config.DBMysqlPos == nil {
+		// Fallback to PostgreSQL auth.users / dev bypass when MySQL POS is unreachable from server
+		if config.DBPostgres != nil && isDevPass {
+			var pgFallback struct {
+				Username   string `gorm:"column:username"`
+				FullName   string `gorm:"column:full_name"`
+				BranchCode string `gorm:"column:branch_code"`
+			}
+			errPg := config.DBPostgres.Table("auth.users u").
+				Select("u.username, COALESCE(e.full_name, u.username) AS full_name, COALESCE(b.branch_code, '001') AS branch_code").
+				Joins("LEFT JOIN master.employee e ON e.employee_id = u.employee_id").
+				Joins("LEFT JOIN master.branch b ON e.branch_id = b.branch_id").
+				Where("LOWER(u.username) = LOWER(?)", req.User).
+				Limit(1).
+				Scan(&pgFallback).Error
+			if errPg == nil && pgFallback.Username != "" {
+				user.Username = pgFallback.Username
+				user.Nama = pgFallback.FullName
+				user.IDCabang = pgFallback.BranchCode
+				user.IDJabatan = 17
+				user.NmJabatan = "Sales"
+			} else {
 				user.Username = req.User
 				user.Nama = req.User
 				user.IDCabang = "001"
 				user.IDJabatan = 1
 				user.NmJabatan = "Administrator"
-			} else {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password anda salah"})
-				return
 			}
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database user error: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database MySQL POS tidak terhubung"})
 			return
 		}
 	} else {
-		// 2. Verify password (bcrypt with MD5 legacy fallback & auto upgrade)
-		passwordIsValid := false
+		// Legacy M_login: void = 1 indicates active user
+		err := config.DBMysqlPos.Table("tbl_user u").
+			Select("u.*, j.nm_jabatan").
+			Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
+			Where("u.username = ? AND u.void = ?", req.User, 1).
+			First(&user).Error
 
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Pass)); err == nil {
-			passwordIsValid = true
-		} else {
-			hasher := md5.New()
-			hasher.Write([]byte(req.Pass))
-			md5Hash := fmt.Sprintf("%x", hasher.Sum(nil))
-			fmt.Printf("md5Hash %v\n", md5Hash)
-			fmt.Printf("user.Password %v\n", user.Password)
-			fmt.Printf("req.Pass %v\n", req.Pass)
-			fmt.Printf("hasher %v\n", hasher)
-
-			if md5Hash == user.Password {
-				passwordIsValid = true
-				// Auto upgrade legacy MD5 password to BCrypt | jangan diupgrade
-				// if hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Pass), bcrypt.DefaultCost); err == nil {
-				// 	config.DBMysqlPos.Table("tbl_user").Where("username = ?", user.Username).Update("password", string(hashedPassword))
-				// }
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				if isDevPass {
+					// Fallback user details if username not found in DB but dev password is used
+					user.Username = req.User
+					user.Nama = req.User
+					user.IDCabang = "001"
+					user.IDJabatan = 1
+					user.NmJabatan = "Administrator"
+				} else {
+					c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password anda salah"})
+					return
+				}
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Database user error: " + err.Error()})
+				return
 			}
-		}
+		} else {
+			// 2. Verify password (bcrypt with MD5 legacy fallback & auto upgrade)
+			passwordIsValid := false
 
-		if isDevPass {
-			passwordIsValid = true
-		}
+			if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Pass)); err == nil {
+				passwordIsValid = true
+			} else {
+				hasher := md5.New()
+				hasher.Write([]byte(req.Pass))
+				md5Hash := fmt.Sprintf("%x", hasher.Sum(nil))
 
-		if !passwordIsValid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password anda salah"})
-			return
+				if md5Hash == user.Password {
+					passwordIsValid = true
+				}
+			}
+
+			if isDevPass {
+				passwordIsValid = true
+			}
+
+			if !passwordIsValid {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Username atau password anda salah"})
+				return
+			}
 		}
 	}
 
@@ -198,17 +226,28 @@ func LogoutHandler(c *gin.Context) {
 func ResolveBranchName(cabangID string, username string) string {
 	branchName := ""
 
-	// 1. Prioritize MySQL POS (sam_pos: mst_cabang) because cabangID originates from tbl_user in MySQL POS
-	if cabangID != "" && config.DBMysqlPos != nil {
+	// 1. Prioritize MySQL POS (sam_pos: tbl_user -> mst_cabang)
+	if config.DBMysqlPos != nil {
 		type CabangPos struct {
 			NmCabang string `gorm:"column:nm_cabang"`
 		}
 		var cPos CabangPos
-		if err := config.DBMysqlPos.Table("mst_cabang").
-			Select("nm_cabang").
-			Where("id_cabang = ? OR nick_cabang = ?", cabangID, cabangID).
-			Limit(1).Scan(&cPos).Error; err == nil && cPos.NmCabang != "" {
-			branchName = cPos.NmCabang
+		if username != "" {
+			if err := config.DBMysqlPos.Table("tbl_user u").
+				Select("c.nm_cabang").
+				Joins("JOIN mst_cabang c ON c.id_cabang = u.id_cabang OR c.nick_cabang = u.id_cabang").
+				Where("LOWER(u.username) = LOWER(?)", username).
+				Limit(1).Scan(&cPos).Error; err == nil && cPos.NmCabang != "" {
+				branchName = cPos.NmCabang
+			}
+		}
+		if branchName == "" && cabangID != "" {
+			if err := config.DBMysqlPos.Table("mst_cabang").
+				Select("nm_cabang").
+				Where("id_cabang = ? OR nick_cabang = ?", cabangID, cabangID).
+				Limit(1).Scan(&cPos).Error; err == nil && cPos.NmCabang != "" {
+				branchName = cPos.NmCabang
+			}
 		}
 	}
 

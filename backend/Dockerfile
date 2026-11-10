@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build statically linked release binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go-api
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go-api .
 
 # Stage 2: Production container
 FROM alpine:latest

@@ -1,132 +1,134 @@
 <template>
   <Teleport to="body">
-    <div
-      v-if="show"
-      class="fixed inset-0 z-[999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 md:p-6 animate-in fade-in duration-200"
-      @click.self="$emit('update:show', false)"
-    >
+    <Transition name="lb-modal">
       <div
-        class="bg-white rounded-3xl max-w-4xl xl:max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-200"
+        v-if="show"
+        class="fixed inset-0 z-[999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 md:p-6"
+        @click.self="$emit('update:show', false)"
       >
-        <!-- Modal Header -->
-        <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-amber-50/50 via-white to-slate-50/50">
-          <div class="flex items-center gap-3.5">
-            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20">
-              <AppIcon name="sparkles" class="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="font-bold text-slate-800 text-lg md:text-xl">Leaderboard Performa Sales</h3>
-                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                  <AppIcon name="chart" class="w-3 h-3 text-amber-600" />
-                  Bulan Berjalan
-                </span>
+        <div
+          class="lb-modal-card bg-white rounded-3xl max-w-4xl xl:max-w-5xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden"
+        >
+          <!-- Modal Header -->
+          <div class="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-amber-50/50 via-white to-slate-50/50">
+            <div class="flex items-center gap-3.5">
+              <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-400 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/20 lb-badge-pulse">
+                <AppIcon name="sparkles" class="w-6 h-6 text-white" />
               </div>
-              <p class="text-xs text-slate-500 mt-0.5">Peringkat performa pencairan omzet & akumulasi poin per sales</p>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-slate-800 text-lg md:text-xl">Leaderboard Performa Sales</h3>
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                    <AppIcon name="chart" class="w-3 h-3 text-amber-600" />
+                    Bulan Berjalan
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">Peringkat performa pencairan omzet & akumulasi poin per sales</p>
+              </div>
             </div>
+            <button
+              @click="$emit('update:show', false)"
+              class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              title="Tutup (Esc)"
+            >
+              <AppIcon name="close" class="w-5 h-5" />
+            </button>
           </div>
-          <button
-            @click="$emit('update:show', false)"
-            class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-            title="Tutup (Esc)"
-          >
-            <AppIcon name="close" class="w-5 h-5" />
-          </button>
-        </div>
 
-        <!-- Scrollable Modal Body -->
-        <div class="p-6 overflow-y-auto space-y-5">
-          <!-- Top 3 Podium Highlights -->
-          <div v-if="topThreePerformers.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            <!-- Rank 1: Gold -->
-            <div
-              v-if="topThreePerformers[0]"
-              class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-b from-amber-50 via-amber-50/40 to-white border-2 border-amber-300 shadow-xs flex flex-col justify-between"
-            >
-              <div class="absolute -right-3 -top-3 w-16 h-16 bg-amber-200/40 rounded-full blur-xl pointer-events-none"></div>
-              <div class="flex items-start justify-between gap-2 mb-2">
-                <div class="flex items-center gap-2">
-                  <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
-                    1
-                  </span>
-                  <div class="min-w-0">
-                    <span class="text-[10px] font-bold text-amber-700 tracking-wider uppercase">Juara 1</span>
-                    <h4 class="font-bold text-slate-900 text-sm truncate" :title="topThreePerformers[0].name">
-                      {{ topThreePerformers[0].name }}
-                    </h4>
+          <!-- Scrollable Modal Body -->
+          <div class="p-6 overflow-y-auto space-y-5">
+            <!-- Top 3 Podium Highlights -->
+            <div v-if="topThreePerformers.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              <!-- Rank 1: Gold -->
+              <div
+                v-if="topThreePerformers[0]"
+                class="podium-card podium-delay-1 relative overflow-hidden rounded-2xl p-4 bg-gradient-to-b from-amber-50 via-amber-50/40 to-white border-2 border-amber-300 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
+              >
+                <div class="podium-shimmer pointer-events-none"></div>
+                <div class="absolute -right-3 -top-3 w-16 h-16 bg-amber-200/40 rounded-full blur-xl pointer-events-none"></div>
+                <div class="flex items-start justify-between gap-2 mb-2 relative z-10">
+                  <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
+                      1
+                    </span>
+                    <div class="min-w-0">
+                      <span class="text-[10px] font-bold text-amber-700 tracking-wider uppercase">Juara 1</span>
+                      <h4 class="font-bold text-slate-900 text-sm truncate" :title="topThreePerformers[0].name">
+                        {{ topThreePerformers[0].name }}
+                      </h4>
+                    </div>
                   </div>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-200 shrink-0">
+                    <AppIcon name="star" class="w-3 h-3 text-amber-600 animate-pulse" />
+                    {{ topThreePerformers[0].points }} pts
+                  </span>
                 </div>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-200 shrink-0">
-                  <AppIcon name="star" class="w-3 h-3 text-amber-600" />
-                  {{ topThreePerformers[0].points }} pts
-                </span>
+                <div class="mt-2 pt-1 flex items-baseline justify-between text-xs relative z-10">
+                  <span class="text-slate-500 text-[11px]">Total Omzet:</span>
+                  <span class="font-mono font-bold text-amber-900">
+                    <span class="text-[10px] text-amber-600 font-sans mr-0.5">Rp</span>{{ formatNum(topThreePerformers[0].total_omzet) }}
+                  </span>
+                </div>
               </div>
-              <div class="mt-2 pt-1 flex items-baseline justify-between text-xs">
-                <span class="text-slate-500 text-[11px]">Total Omzet:</span>
-                <span class="font-mono font-bold text-amber-900">
-                  <span class="text-[10px] text-amber-600 font-sans mr-0.5">Rp</span>{{ formatNum(topThreePerformers[0].total_omzet) }}
-                </span>
+
+              <!-- Rank 2: Silver -->
+              <div
+                v-if="topThreePerformers[1]"
+                class="podium-card podium-delay-2 relative overflow-hidden rounded-2xl p-4 bg-gradient-to-b from-slate-50 via-slate-50/50 to-white border border-slate-200 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
+              >
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-slate-400 to-slate-300 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
+                      2
+                    </span>
+                    <div class="min-w-0">
+                      <span class="text-[10px] font-bold text-slate-500 tracking-wider uppercase">Peringkat 2</span>
+                      <h4 class="font-bold text-slate-800 text-sm truncate" :title="topThreePerformers[1].name">
+                        {{ topThreePerformers[1].name }}
+                      </h4>
+                    </div>
+                  </div>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
+                    {{ topThreePerformers[1].points }} pts
+                  </span>
+                </div>
+                <div class="mt-2 pt-1 flex items-baseline justify-between text-xs">
+                  <span class="text-slate-500 text-[11px]">Total Omzet:</span>
+                  <span class="font-mono font-bold text-slate-800">
+                    <span class="text-[10px] text-slate-400 font-sans mr-0.5">Rp</span>{{ formatNum(topThreePerformers[1].total_omzet) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Rank 3: Bronze -->
+              <div
+                v-if="topThreePerformers[2]"
+                class="podium-card podium-delay-3 relative overflow-hidden rounded-2xl p-4 bg-gradient-to-b from-orange-50/60 via-orange-50/20 to-white border border-orange-200 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between"
+              >
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-700 to-orange-500 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
+                      3
+                    </span>
+                    <div class="min-w-0">
+                      <span class="text-[10px] font-bold text-amber-800 tracking-wider uppercase">Peringkat 3</span>
+                      <h4 class="font-bold text-slate-800 text-sm truncate" :title="topThreePerformers[2].name">
+                        {{ topThreePerformers[2].name }}
+                      </h4>
+                    </div>
+                  </div>
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-orange-100 text-orange-900 border border-orange-200 shrink-0">
+                    {{ topThreePerformers[2].points }} pts
+                  </span>
+                </div>
+                <div class="mt-2 pt-1 flex items-baseline justify-between text-xs">
+                  <span class="text-slate-500 text-[11px]">Total Omzet:</span>
+                  <span class="font-mono font-bold text-orange-950">
+                    <span class="text-[10px] text-orange-700 font-sans mr-0.5">Rp</span>{{ formatNum(topThreePerformers[2].total_omzet) }}
+                  </span>
+                </div>
               </div>
             </div>
-
-            <!-- Rank 2: Silver -->
-            <div
-              v-if="topThreePerformers[1]"
-              class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-b from-slate-50 via-slate-50/50 to-white border border-slate-200 shadow-xs flex flex-col justify-between"
-            >
-              <div class="flex items-start justify-between gap-2 mb-2">
-                <div class="flex items-center gap-2">
-                  <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-slate-400 to-slate-300 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
-                    2
-                  </span>
-                  <div class="min-w-0">
-                    <span class="text-[10px] font-bold text-slate-500 tracking-wider uppercase">Peringkat 2</span>
-                    <h4 class="font-bold text-slate-800 text-sm truncate" :title="topThreePerformers[1].name">
-                      {{ topThreePerformers[1].name }}
-                    </h4>
-                  </div>
-                </div>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 shrink-0">
-                  {{ topThreePerformers[1].points }} pts
-                </span>
-              </div>
-              <div class="mt-2 pt-1 flex items-baseline justify-between text-xs">
-                <span class="text-slate-500 text-[11px]">Total Omzet:</span>
-                <span class="font-mono font-bold text-slate-800">
-                  <span class="text-[10px] text-slate-400 font-sans mr-0.5">Rp</span>{{ formatNum(topThreePerformers[1].total_omzet) }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Rank 3: Bronze -->
-            <div
-              v-if="topThreePerformers[2]"
-              class="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-b from-orange-50/60 via-orange-50/20 to-white border border-orange-200 shadow-xs flex flex-col justify-between"
-            >
-              <div class="flex items-start justify-between gap-2 mb-2">
-                <div class="flex items-center gap-2">
-                  <span class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-700 to-orange-500 text-white font-extrabold text-sm flex items-center justify-center shadow-sm">
-                    3
-                  </span>
-                  <div class="min-w-0">
-                    <span class="text-[10px] font-bold text-amber-800 tracking-wider uppercase">Peringkat 3</span>
-                    <h4 class="font-bold text-slate-800 text-sm truncate" :title="topThreePerformers[2].name">
-                      {{ topThreePerformers[2].name }}
-                    </h4>
-                  </div>
-                </div>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-orange-100 text-orange-900 border border-orange-200 shrink-0">
-                  {{ topThreePerformers[2].points }} pts
-                </span>
-              </div>
-              <div class="mt-2 pt-1 flex items-baseline justify-between text-xs">
-                <span class="text-slate-500 text-[11px]">Total Omzet:</span>
-                <span class="font-mono font-bold text-orange-950">
-                  <span class="text-[10px] text-orange-700 font-sans mr-0.5">Rp</span>{{ formatNum(topThreePerformers[2].total_omzet) }}
-                </span>
-              </div>
-            </div>
-          </div>
 
           <!-- Controls Bar: Filter Pills & Search -->
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
@@ -175,12 +177,13 @@
                   <th class="w-28 px-3.5 py-3 text-right">Poin</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100">
+              <TransitionGroup tag="tbody" name="lb-row" class="divide-y divide-slate-100">
                 <tr
-                  v-for="p in filteredPerformers"
+                  v-for="(p, idx) in filteredPerformers"
                   :key="p.employee_id || p.name"
-                  class="hover:bg-slate-50/80 transition-colors"
+                  class="hover:bg-slate-50/80 transition-all duration-200"
                   :class="isCurrentUser(p) ? 'bg-amber-50/50 font-medium' : ''"
+                  :style="{ transitionDelay: `${Math.min(idx * 25, 250)}ms` }"
                 >
                   <!-- Rank Column -->
                   <td class="w-14 px-3.5 py-3.5 text-center font-bold">
@@ -276,7 +279,7 @@
                 </tr>
 
                 <!-- Empty State (No Results) -->
-                <tr v-if="filteredPerformers.length === 0">
+                <tr v-if="filteredPerformers.length === 0" key="empty-state">
                   <td colspan="6" class="py-12 text-center">
                     <div class="max-w-xs mx-auto flex flex-col items-center">
                       <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-3">
@@ -296,7 +299,7 @@
                     </div>
                   </td>
                 </tr>
-              </tbody>
+              </TransitionGroup>
             </table>
           </div>
         </div>
@@ -321,6 +324,7 @@
         </div>
       </div>
     </div>
+    </Transition>
   </Teleport>
 </template>
 
@@ -437,3 +441,84 @@ const formatNum = (val?: number) => {
   return new Intl.NumberFormat('id-ID').format(val)
 }
 </script>
+
+<style scoped>
+.lb-modal-enter-active,
+.lb-modal-leave-active {
+  transition: opacity 0.25s ease;
+}
+.lb-modal-enter-from,
+.lb-modal-leave-to {
+  opacity: 0;
+}
+.lb-modal-enter-active .lb-modal-card {
+  animation: modalPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lb-modal-leave-active .lb-modal-card {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  transform: scale(0.96) translateY(8px);
+  opacity: 0;
+}
+
+@keyframes modalPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes podiumSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.podium-card {
+  animation: podiumSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.podium-delay-1 {
+  animation-delay: 0.05s;
+}
+.podium-delay-2 {
+  animation-delay: 0.14s;
+}
+.podium-delay-3 {
+  animation-delay: 0.22s;
+}
+
+@keyframes shimmerSweep {
+  0% {
+    transform: translateX(-120%) skewX(-15deg);
+  }
+  100% {
+    transform: translateX(220%) skewX(-15deg);
+  }
+}
+
+.podium-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.18), transparent);
+  animation: shimmerSweep 3.5s ease-in-out infinite;
+}
+
+.lb-row-move,
+.lb-row-enter-active,
+.lb-row-leave-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.lb-row-enter-from,
+.lb-row-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+</style>
