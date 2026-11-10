@@ -205,20 +205,13 @@
           </div>
         </div>
 
-        <!-- Ringkasan Max Loan & UP -->
+        <!-- Ringkasan Nilai Pinjaman -->
         <div class="space-y-2">
           <p class="font-bold text-slate-800 text-sm">Ringkasan Nilai Pinjaman</p>
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border border-slate-200 rounded-2xl p-4 bg-slate-50/80">
-            <div class="flex items-center justify-between md:justify-start gap-2 text-sm">
-              <span class="text-slate-600 font-medium">Max Uang Pinjaman :</span>
-              <span class="text-amber-600 font-extrabold text-lg md:text-xl">Rp {{ formatNum(elekResult.maxLoan) }}</span>
-            </div>
-            <div class="flex items-center justify-between md:justify-start gap-2 text-sm">
-              <span class="text-slate-500 font-medium">Total Pinjaman (UP):</span>
-              <div class="flex items-center bg-white border border-slate-300 rounded-xl overflow-hidden shadow-2xs">
-                <span class="px-3.5 py-1.5 font-extrabold text-emerald-600 text-base">Rp {{ formatNum(elekResult.requestedLoan) }}</span>
-                <span class="bg-slate-100 px-2.5 py-1.5 text-xs text-slate-600 font-bold border-l border-slate-200">LTV 95%</span>
-              </div>
+          <div class="flex items-center justify-end gap-3 border border-slate-200 rounded-2xl p-4 bg-slate-50/80">
+            <div class="flex items-center gap-3 text-sm">
+              <span class="text-slate-700 font-bold">Total Pinjaman :</span>
+              <span class="text-emerald-600 font-extrabold text-lg md:text-xl">Rp {{ formatNum(elekResult.maxLoan) }}</span>
             </div>
           </div>
         </div>

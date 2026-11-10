@@ -39,9 +39,11 @@ func ensureCustomerColumns(db *gorm.DB) {
 	for _, stmt := range []string{
 		"ALTER TABLE tb_customer ADD COLUMN IF NOT EXISTS aktivitas VARCHAR(255) NOT NULL DEFAULT ''",
 		"ALTER TABLE tb_customer ADD COLUMN IF NOT EXISTS jenis VARCHAR(255) NOT NULL DEFAULT ''",
+		"ALTER TABLE tb_rencana ADD COLUMN IF NOT EXISTS id_aktivitas VARCHAR(255) NOT NULL DEFAULT ''",
+		"ALTER TABLE tb_rencana ADD COLUMN IF NOT EXISTS id_jenis VARCHAR(255) NOT NULL DEFAULT ''",
 	} {
 		if err := db.Exec(stmt).Error; err != nil {
-			fmt.Printf("Gagal menambah kolom tb_customer: %v\n", err)
+			fmt.Printf("Gagal menambah kolom: %v\n", err)
 		}
 	}
 }

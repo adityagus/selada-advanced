@@ -113,9 +113,12 @@
                 </span>
               </td>
               <td class="px-5 py-3.5">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide">
-                  {{ item.aktivitas }}
-                </span>
+                <div class="flex flex-col gap-1 max-w-xs">
+                  <p v-if="item.keterangan_aktivitas || item.ket_aktivitas" class="text-xs text-slate-600 line-clamp-2 leading-relaxed font-normal" :title="item.keterangan_aktivitas || item.ket_aktivitas">
+                    {{ item.keterangan_aktivitas || item.ket_aktivitas }}
+                  </p>
+                  <span v-else-if="!item.aktivitas || item.aktivitas === '-'" class="text-xs text-slate-400">-</span>
+                </div>
               </td>
               <td class="px-5 py-3.5">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide">
@@ -438,7 +441,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useApi } from '~/composables/useApi'
 import { getRencanaDetails } from '~/utils/rencanaDetails'
-import { SOA_LIST, getAktifitasOptions, getJenisAplikasiOptions } from '~/utils/soa'
+import { SOA_LIST, getAktifitasOptions, getJenisAplikasiOptions, parseSoaText, parseAktifitasText } from '~/utils/soa'
 import { getFotoBarang } from '~/utils/imageStorage'
 
 const inquiries = ref<any[]>([])
@@ -559,9 +562,11 @@ const fetchInquiries = async () => {
 
     if (rawList && rawList.length >= 0) {
       let list = rawList.map((i: any) => {
-        const sourceObj = sourcesData.find((value: any) => value.kd_ref_cust === i.id_sumbercust)
-        const source = sourceObj?.nm_ref_cust || i.id_sumbercust || 'Walk In'
+        const sourceObj = sourcesData.find((value: any) => String(value.id) === String(i.id_sumbercust) || value.kd_ref_cust === i.id_sumbercust || value.code === i.id_sumbercust)
+        const source = parseSoaText(sourceObj?.nm_ref_cust || sourceObj?.name || i.id_sumbercust || 'Walk In')
         const statusName = i.nama_hslaktiv || (Number(i.id_hslaktiv) === 1 ? 'Leads' : Number(i.id_hslaktiv) === 2 ? 'Prospect' : Number(i.id_hslaktiv) === 3 ? 'Hot Prospect' : Number(i.id_hslaktiv) === 7 ? 'SBG' : 'Leads')
+        const details = getRencanaDetails(i)
+        const rawAkt = details.aktifitas || i.aktivitas || '-'
         return {
           ...i,
           id_customer: i.id_customer || i.id_rencana,
@@ -570,9 +575,10 @@ const fetchInquiries = async () => {
           status: statusName,
           source: source,
           foto: i.url_img || i.foto || i.gambar || '',
-          aktivitas: i.ket_aktivitas || '-',
-          ...getRencanaDetails(i),
-          keterangan: getRencanaDetails(i).keterangan_aktivitas
+          ...details,
+          aktivitas: parseAktifitasText(rawAkt),
+          keterangan_aktivitas: i.ket_aktivitas || details.keterangan_aktivitas || '',
+          keterangan: i.ket_aktivitas || details.keterangan_aktivitas || '-',
         }
       })
 

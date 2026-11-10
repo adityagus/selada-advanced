@@ -14,7 +14,7 @@
           class="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all min-w-[240px]"
         >
           <option v-for="s in sortedSalesList" :key="s.username" :value="s.username">
-            {{ s.nama }} - {{ s.nm_jabatan || "SALES" }}
+            {{ s.nama }} - {{ s.nm_jabatan || "SALES" }} (Omzet: Rp {{ formatNum(s.total_omzet || 0) }})
           </option>
         </select>
         <button

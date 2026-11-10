@@ -343,7 +343,7 @@ func GetWilayahHandler(c *gin.Context) {
 				Select("rg.region_id, rg.region_name").
 				Joins("JOIN master.branch b ON b.region_id = rg.region_id").
 				Joins("JOIN product.gold_stle_rules gsr ON gsr.branch_id = b.branch_id").
-				Where("gsr.collateral_item_id = ? AND gsr.is_active = ?", parentId, true).
+				Where("gsr.collateral_item_id = ? AND gsr.is_active = ? AND rg.is_active = ?", parentId, true, true).
 				Group("rg.region_id, rg.region_name").
 				Order("rg.region_name ASC").
 				Scan(&results).Error
@@ -351,17 +351,18 @@ func GetWilayahHandler(c *gin.Context) {
 			_ = config.DBPostgres.Table("master.region rg").
 				Select("rg.region_id, rg.region_name").
 				Joins("JOIN product.collateral_item_prices cip ON cip.region_id = rg.region_id").
-				Where("cip.collateral_item_detail_id = ? AND cip.is_active = ?", parentId, true).
+				Where("cip.collateral_item_detail_id = ? AND cip.is_active = ? AND rg.is_active = ?", parentId, true, true).
 				Group("rg.region_id, rg.region_name").
 				Order("rg.region_name ASC").
 				Scan(&results).Error
 		}
 	}
 
-	// Fallback to all active regions if results empty or id empty
+	// Fallback to all active regions from db_gadaimulia if results empty or id empty (strictly is_active = true)
 	if len(results) == 0 {
 		_ = config.DBPostgres.Table("master.region").
 			Select("region_id, region_name").
+			Where("is_active = ?", true).
 			Order("region_name ASC").
 			Scan(&results).Error
 	}
@@ -583,7 +584,7 @@ func SimpanTransaksiHandler(c *gin.Context) {
 // GetTaksiranHistoryHandler fetches estimation history records filtered by creator/user
 func GetTaksiranHistoryHandler(c *gin.Context) {
 	if config.DBSelada == nil {
-		c.JSON(http.StatusOK, gin.H{"data": []gin.H{}})
+		c.JSON(http.StatusOK, gin.H{"data": []gin.H{}, "is_it_spv": false})
 		return
 	}
 
@@ -595,18 +596,57 @@ func GetTaksiranHistoryHandler(c *gin.Context) {
 		return
 	}
 
-	targetUser := userId.(string)
-	if salesParam := c.Query("sales_user"); salesParam != "" {
-		targetUser = salesParam
-	} else if userParam := c.Query("user"); userParam != "" {
-		targetUser = userParam
+	fmt.Println("userId", userId, "exists", exists)
+
+	currentUsername := userId.(string)
+	isItSpv := false
+
+	// Check if user is IT SPV from context or sam_pos / auth.users
+	if nmJabatanVal, ok := c.Get("nm_jabatan"); ok {
+		jStr := strings.ToUpper(fmt.Sprintf("%v", nmJabatanVal))
+		if strings.Contains(jStr, "IT SPV") || strings.Contains(jStr, "SPV IT") || strings.Contains(jStr, "SUPERVISOR IT") || strings.Contains(jStr, "ADMIN") {
+			isItSpv = true
+		}
+	}
+
+	// Double-check from sam_pos tbl_user & mst_jabatan
+	if !isItSpv && config.DBMysqlPos != nil {
+		var uJabatan struct {
+			NmJabatan string `gorm:"column:nm_jabatan"`
+		}
+		err := config.DBMysqlPos.Table("tbl_user u").
+			Select("j.nm_jabatan").
+			Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
+			Where("u.username = ?", currentUsername).
+			Limit(1).Scan(&uJabatan).Error
+		if err == nil {
+			jUpper := strings.ToUpper(uJabatan.NmJabatan)
+			if strings.Contains(jUpper, "IT SPV") || strings.Contains(jUpper, "SPV IT") || strings.Contains(jUpper, "SUPERVISOR IT") || strings.Contains(jUpper, "ADMIN") {
+				isItSpv = true
+			}
+		}
+	}
+
+	// Developer / admin override
+	uLower := strings.ToLower(currentUsername)
+	if uLower == "admin" || uLower == "administrator" || strings.Contains(uLower, "it.spv") || strings.Contains(uLower, "it_spv") {
+		isItSpv = true
 	}
 
 	var histories []models.TaksiranHistory
 	query := config.DBSelada.Table("tb_taksiran_history").Order("id DESC")
 
-	if targetUser != "all" && targetUser != "*" && targetUser != "" {
-		query = query.Where("created_by = ?", targetUser)
+	if isItSpv {
+		salesParam := c.Query("sales_user")
+		if salesParam == "" {
+			salesParam = c.Query("user")
+		}
+		if salesParam != "" && salesParam != "all" && salesParam != "*" {
+			query = query.Where("created_by = ?", salesParam)
+		}
+	} else {
+		// Regular user can ONLY see their own taksiran history
+		query = query.Where("created_by = ?", currentUsername)
 	}
 
 	search := c.Query("search")
@@ -616,11 +656,14 @@ func GetTaksiranHistoryHandler(c *gin.Context) {
 	}
 
 	if err := query.Limit(100).Find(&histories).Error; err != nil {
-		c.JSON(http.StatusOK, gin.H{"data": []gin.H{}})
+		c.JSON(http.StatusOK, gin.H{"data": []gin.H{}, "is_it_spv": isItSpv})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": histories})
+	c.JSON(http.StatusOK, gin.H{
+		"data":      histories,
+		"is_it_spv": isItSpv,
+	})
 }
 
 // GetElectronicScoringHandler fetches scoring sections, options, items, and option scores from DB2 Postgres matching new-feature/simulasi-taksiran

@@ -13,11 +13,12 @@ type Repository interface {
 }
 
 type repository struct {
-	dbPG *gorm.DB
+	dbPG  *gorm.DB
+	dbPOS *gorm.DB
 }
 
-func NewRepository(dbPG *gorm.DB) Repository {
-	return &repository{dbPG: dbPG}
+func NewRepository(dbPG *gorm.DB, dbPOS *gorm.DB) Repository {
+	return &repository{dbPG: dbPG, dbPOS: dbPOS}
 }
 
 func (r *repository) FindAll(ctx context.Context) ([]Branch, error) {
@@ -37,20 +38,33 @@ func (r *repository) FindAll(ctx context.Context) ([]Branch, error) {
 }
 
 func (r *repository) FindNameByCodeOrUser(ctx context.Context, branchCode, username string) (string, error) {
+	var branchName string
+
+	// 1. Coba lookup via MySQL POS (mst_cabang) jika branchCode dari POS
+	if branchCode != "" && r.dbPOS != nil {
+		_ = r.dbPOS.WithContext(ctx).Table("mst_cabang").
+			Select("nm_cabang").
+			Where("id_cabang = ? OR nick_cabang = ?", branchCode, branchCode).
+			Limit(1).
+			Pluck("nm_cabang", &branchName).Error
+
+		if branchName != "" {
+			return branchName, nil
+		}
+	}
+
 	if r.dbPG == nil {
 		return "", fmt.Errorf("postgres database is not initialized")
 	}
 
-	var branchName string
-
-	// 1. Coba lookup via user -> employee -> branch
+	// 2. Coba lookup via auth.users -> employee -> branch di Postgres
 	if username != "" {
 		err := r.dbPG.WithContext(ctx).
-			Table("master.user u").
+			Table("auth.users u").
 			Select("b.branch_name").
 			Joins("JOIN master.employee e ON e.employee_id = u.employee_id").
 			Joins("JOIN master.branch b ON b.branch_id = e.branch_id").
-			Where("u.username = ?", username).
+			Where("LOWER(u.username) = LOWER(?)", username).
 			Limit(1).
 			Pluck("b.branch_name", &branchName).Error
 
@@ -59,7 +73,7 @@ func (r *repository) FindNameByCodeOrUser(ctx context.Context, branchCode, usern
 		}
 	}
 
-	// 2. Coba lookup via branch_code atau branch_id
+	// 3. Coba lookup via branch_code atau branch_id di Postgres master.branch
 	if branchCode != "" {
 		err := r.dbPG.WithContext(ctx).
 			Table("master.branch").

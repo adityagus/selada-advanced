@@ -109,6 +109,11 @@ func LoginHandler(c *gin.Context) {
 	employeeCode := ""
 	branchName := ""
 
+	// Always resolve branch name from user.IDCabang in sam_pos (mst_cabang) first
+	if user.IDCabang != "" {
+		branchName = ResolveBranchName(user.IDCabang, user.Username)
+	}
+
 	if config.DBPostgres != nil {
 		// var pgUser map[string]interface{}
 		var pgUser models.UserPg
@@ -134,7 +139,7 @@ func LoginHandler(c *gin.Context) {
 			if pgUser.EmployeeCode != nil {
 				employeeCode = *pgUser.EmployeeCode
 			}
-			if pgUser.BranchName != nil {
+			if branchName == "" && pgUser.BranchName != nil {
 				branchName = *pgUser.BranchName
 			}
 
@@ -189,12 +194,26 @@ func LogoutHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Logout berhasil"})
 }
 
-// ResolveBranchName resolves the textual branch name from Postgres master.branch or MySQL POS
+// ResolveBranchName resolves the textual branch name from MySQL POS (mst_cabang) or Postgres master.branch
 func ResolveBranchName(cabangID string, username string) string {
 	branchName := ""
 
-	if config.DBPostgres != nil {
-		// 1. Try resolving via employee associated with the username in auth.users
+	// 1. Prioritize MySQL POS (sam_pos: mst_cabang) because cabangID originates from tbl_user in MySQL POS
+	if cabangID != "" && config.DBMysqlPos != nil {
+		type CabangPos struct {
+			NmCabang string `gorm:"column:nm_cabang"`
+		}
+		var cPos CabangPos
+		if err := config.DBMysqlPos.Table("mst_cabang").
+			Select("nm_cabang").
+			Where("id_cabang = ? OR nick_cabang = ?", cabangID, cabangID).
+			Limit(1).Scan(&cPos).Error; err == nil && cPos.NmCabang != "" {
+			branchName = cPos.NmCabang
+		}
+	}
+
+	// 2. If still empty, check employee in Postgres auth.users
+	if branchName == "" && config.DBPostgres != nil {
 		if username != "" {
 			_ = config.DBPostgres.Table("auth.users u").
 				Select("b.branch_name").
@@ -202,10 +221,10 @@ func ResolveBranchName(cabangID string, username string) string {
 				Joins("LEFT JOIN master.branch b ON e.branch_id = b.branch_id").
 				Where("LOWER(u.username) = LOWER(?)", username).
 				Limit(1).
-				Scan(&branchName).Error
+				Pluck("b.branch_name", &branchName).Error
 		}
 
-		// 2. Fallback to master.branch lookup using cabangID (branch_id or branch_code)
+		// 3. Fallback to Postgres master.branch
 		if branchName == "" && cabangID != "" {
 			idInt, errConv := strconv.Atoi(cabangID)
 			query := config.DBPostgres.Table("master.branch").Select("branch_name")
@@ -215,25 +234,6 @@ func ResolveBranchName(cabangID string, username string) string {
 				query = query.Where("branch_code = ? OR LOWER(branch_name) = LOWER(?)", cabangID, cabangID)
 			}
 			_ = query.Limit(1).Scan(&branchName).Error
-		}
-	}
-
-	// 3. Fallback to MySQL POS (sam_pos) tbl_cabang or mst_cabang
-	if branchName == "" && cabangID != "" && config.DBMysqlPos != nil {
-		type CabangPos struct {
-			NmCabang string `gorm:"column:nm_cabang"`
-		}
-		var cPos CabangPos
-		if err := config.DBMysqlPos.Table("tbl_cabang").
-			Select("nm_cabang").
-			Where("id_cabang = ? OR kd_cabang = ?", cabangID, cabangID).
-			Limit(1).Scan(&cPos).Error; err == nil && cPos.NmCabang != "" {
-			branchName = cPos.NmCabang
-		} else if err := config.DBMysqlPos.Table("mst_cabang").
-			Select("nm_cabang").
-			Where("id_cabang = ? OR kd_cabang = ?", cabangID, cabangID).
-			Limit(1).Scan(&cPos).Error; err == nil && cPos.NmCabang != "" {
-			branchName = cPos.NmCabang
 		}
 	}
 

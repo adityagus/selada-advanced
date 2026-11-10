@@ -109,11 +109,9 @@
     <!-- Sidebar User Footer -->
     <div class="p-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
       <div class="flex items-center gap-2.5 overflow-hidden">
-        <img
-          :src="`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName || 'user'}`"
-          alt="User Avatar"
-          class="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex-shrink-0 object-cover"
-        />
+        <div class="w-9 h-9 rounded-full border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/80 flex-shrink-0">
+          <AppIcon name="user" class="w-4 h-4" />
+        </div>
         <div v-show="isExpanded" class="flex flex-col min-w-0">
           <span class="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{{ userName || 'User' }}</span>
           <span class="text-[11px] text-slate-400 dark:text-slate-500 truncate">{{ displayBranchText }}</span>

@@ -11,7 +11,6 @@ type Customer struct {
 	Kelurahan       string  `gorm:"column:kelurahan" json:"kelurahan,omitempty"`
 	Kecamatan       string  `gorm:"column:kecamatan" json:"kecamatan,omitempty"`
 	IDLogin         string  `gorm:"column:id_login" json:"id_login"`
-	Nickname        string  `gorm:"column:nickname" json:"nickname"`
 	TmpLahir        string  `gorm:"column:tmp_lahir" json:"tmp_lahir"`
 	Identitas       string  `gorm:"column:identitas" json:"identitas"`
 	JenisKelamin    string  `gorm:"column:jenis_kelamin" json:"jenis_kelamin,omitempty"`

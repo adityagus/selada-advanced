@@ -106,12 +106,14 @@ const salesList = ref<any[]>([])
 const selectedSalesUser = ref('')
 
 const sortedSalesList = computed(() => {
-  return [...salesList.value].sort((a, b) => {
-    const omzetA = Number(a.total_omzet ?? 0)
-    const omzetB = Number(b.total_omzet ?? 0)
-    if (omzetB !== omzetA) return omzetB - omzetA
-    return (a.nama || '').localeCompare(b.nama || '')
-  })
+  return [...salesList.value]
+    .filter((s) => [6, 17, 29].includes(Number(s.id_jabatan)))
+    .sort((a, b) => {
+      const omzetA = Number(a.total_omzet ?? 0)
+      const omzetB = Number(b.total_omzet ?? 0)
+      if (omzetB !== omzetA) return omzetB - omzetA
+      return (a.nama || '').localeCompare(b.nama || '')
+    })
 })
 
 const monthlyFunnel = reactive({

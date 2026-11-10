@@ -150,6 +150,7 @@
             </label>
             <select
               id="tipe3"
+              disabled
               v-model="form.jnstrx"
               @change="onJnsTrxChange"
               class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
@@ -169,6 +170,7 @@
               id="warna3"
               v-model="form.produk"
               class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all"
+              disabled
             >
               <option value="0">-- Pilih Produk --</option>
               <option v-for="prod in produkList" :key="prod.kd_produk" :value="prod.kd_produk">

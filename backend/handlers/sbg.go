@@ -98,7 +98,7 @@ func SearchSopigaTransactionsHandler(c *gin.Context) {
 		t.transaction_id,
 		COALESCE(t.doc_no, '') AS no_sbg,
 		COALESCE(c.full_name, '') AS nama_customer,
-		COALESCE(c.mobile_phone, c.phone, '') AS hp,
+		COALESCE(c.phone, '') AS hp,
 		COALESCE(c.identity_number, '') AS nik,
 		COALESCE(c.address, '') AS alamat,
 		COALESCE(o.offering_name, 'Gadai Reguler') AS nama_produk,
@@ -121,7 +121,6 @@ func SearchSopigaTransactionsHandler(c *gin.Context) {
 		query = query.Where(`(
 			t.doc_no ILIKE ? OR 
 			c.full_name ILIKE ? OR 
-			c.mobile_phone ILIKE ? OR 
 			c.phone ILIKE ? OR
 			c.identity_number ILIKE ?
 		)`, likePattern, likePattern, likePattern, likePattern, likePattern)
@@ -219,6 +218,7 @@ func GetSbgListHandler(c *gin.Context) {
 
 	searchTerm := strings.TrimSpace(strings.ToLower(c.Query("term")))
 	jnstrx := strings.TrimSpace(c.Query("jnstrx"))
+	fmt.Println("searchTerm", searchTerm)
 
 	// 1. Get already used SBG numbers (no_do in tb_rencana_det)
 	var usedSbg []string
@@ -265,8 +265,8 @@ func GetSbgListHandler(c *gin.Context) {
 
 	if searchTerm != "" {
 		likeTerm := "%" + searchTerm + "%"
-		query = query.Where("(LOWER(t.doc_no) LIKE ? OR LOWER(c.full_name) LIKE ? OR LOWER(c.mobile_phone) LIKE ? OR LOWER(c.phone) LIKE ?)",
-			likeTerm, likeTerm, likeTerm, likeTerm)
+		query = query.Where("(LOWER(t.doc_no) LIKE ? OR LOWER(c.full_name) LIKE ? OR LOWER(c.phone) LIKE ? AND t.application_status in ?)",
+			likeTerm, likeTerm, likeTerm, []string{"NEW", "ADO", "REO"})
 	}
 
 	var rows []RawSbgRow

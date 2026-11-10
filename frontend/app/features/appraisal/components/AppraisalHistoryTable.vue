@@ -3,7 +3,7 @@
     <!-- Filter Bar: Sales User Filter & Search -->
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
-        <div class="w-full sm:w-64">
+        <div class="w-full sm:w-64" v-if="isItSpv"> 
           <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Pembuat (Sales User)</label>
           <select
             v-model="historySalesUser"
@@ -23,7 +23,7 @@
 
         <div class="flex-1">
           <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Cari Barang / User</label>
-          <div class="flex gap-2">
+          <div class="flex items-center gap-2">
             <input
               v-model="historySearch"
               @keyup.enter="fetchTaksiranHistory"
@@ -34,23 +34,20 @@
             <button
               type="button"
               @click="fetchTaksiranHistory"
-              class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer"
+              class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-semibold transition-all cursor-pointer flex-shrink-0"
             >
               Cari
             </button>
+            <button
+              type="button"
+              @click="fetchTaksiranHistory"
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition-all border border-slate-200 flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+            >
+              <AppIcon name="refresh" class="w-4 h-4 text-slate-500" />
+              Refresh
+            </button>
           </div>
         </div>
-      </div>
-
-      <div class="flex items-end">
-        <button
-          type="button"
-          @click="fetchTaksiranHistory"
-          class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition-all border border-slate-200 flex items-center gap-2 cursor-pointer"
-        >
-          <AppIcon name="refresh" class="w-4 h-4 text-slate-500" />
-          Refresh
-        </button>
       </div>
     </div>
 
@@ -61,7 +58,7 @@
           <tr class="bg-slate-100/80 border-b border-slate-200 text-slate-700 font-bold uppercase text-xs">
             <th class="p-3.5 text-center w-12">No</th>
             <th class="p-3.5">Tanggal & Waktu</th>
-            <th class="p-3.5">Pembuat (Sales)</th>
+            <th class="p-3.5" v-if="isItSpv">Pembuat (Sales)</th>
             <th class="p-3.5">Jenis Barang</th>
             <th class="p-3.5">Nama Barang</th>
             <th class="p-3.5 text-right">Nilai Taksir</th>
@@ -83,7 +80,7 @@
           >
             <td class="p-3.5 text-center font-medium text-slate-500">{{ idx + 1 }}</td>
             <td class="p-3.5 text-slate-700 font-medium">{{ formatDate(item.created_at) }}</td>
-            <td class="p-3.5">
+            <td class="p-3.5" v-if="isItSpv">
               <span class="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded border border-slate-200 uppercase text-xs">{{ item.created_by }}</span>
             </td>
             <td class="p-3.5">

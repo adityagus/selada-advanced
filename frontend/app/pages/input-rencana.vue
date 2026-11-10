@@ -221,13 +221,21 @@
             <div
               class="bg-slate-50 border border-slate-200/80 rounded-xl p-3 space-y-1"
             >
-              <div class="flex items-center justify-between">
-                <span
-                  class="text-xs font-semibold px-2 py-0.5 rounded-md border"
-                  :class="getStatusBadgeClass(h.status)"
-                >
-                  {{ h.status }}
-                </span>
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span
+                    class="text-xs font-semibold px-2 py-0.5 rounded-md border"
+                    :class="getStatusBadgeClass(h.status)"
+                  >
+                    {{ h.status }}
+                  </span>
+                  <span
+                    v-if="h.aktivitas && h.aktivitas !== '-'"
+                    class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-200/70 text-slate-700 uppercase"
+                  >
+                    {{ h.aktivitas }}
+                  </span>
+                </div>
                 <span class="text-xs text-slate-400 font-mono">{{
                   h.tgl
                 }}</span>
@@ -321,8 +329,12 @@
               required
             >
               <option value="">- Pilih SOA -</option>
-              <option v-for="soaOpt in soaList" :key="soaOpt" :value="soaOpt">
-                {{ soaOpt }}
+              <option
+                v-for="soaOpt in soaList"
+                :key="soaOpt.id || soaOpt.code || soaOpt"
+                :value="String(soaOpt.id || soaOpt.code || soaOpt)"
+              >
+                {{ soaOpt.name || soaOpt }}
               </option>
             </select>
           </div>
@@ -336,17 +348,16 @@
             </label>
             <select
               v-model="customerInfo.aktifitas"
-              :disabled="!customerInfo.soa"
-              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all"
               required
             >
               <option value="">- Pilih Aktifitas -</option>
               <option
                 v-for="aktOpt in availableCustomerAktifitasOptions"
-                :key="aktOpt"
-                :value="aktOpt"
+                :key="aktOpt.id || aktOpt.code || aktOpt"
+                :value="String(aktOpt.id || aktOpt.code || aktOpt)"
               >
-                {{ aktOpt }}
+                {{ aktOpt.name || aktOpt }}
               </option>
             </select>
           </div>
@@ -360,17 +371,16 @@
             </label>
             <select
               v-model="customerInfo.jenisAplikasi"
-              :disabled="!customerInfo.soa"
-              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
+              class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all"
               required
             >
               <option value="">- Pilih Jenis Aplikasi -</option>
               <option
                 v-for="jenisOpt in availableCustomerJenisAplikasiOptions"
-                :key="jenisOpt"
-                :value="jenisOpt"
+                :key="jenisOpt.id || jenisOpt.code || jenisOpt"
+                :value="String(jenisOpt.id || jenisOpt.code || jenisOpt)"
               >
-                {{ jenisOpt }}
+                {{ jenisOpt.name || jenisOpt }}
               </option>
             </select>
           </div>
@@ -1074,15 +1084,6 @@
 
           <div class="flex items-center gap-2">
             <button
-              @click="submitWithStatus('Prospect', false)"
-              type="button"
-              class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs"
-              :disabled="isSubmitting"
-            >
-              Simpan Data Prospek
-            </button>
-
-            <button
               @click="promptSubmitHotProspect"
               type="button"
               class="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-200 flex items-center gap-2 cursor-pointer transition-all"
@@ -1482,9 +1483,12 @@ import {
 } from "~/composables/useMasterQueries";
 import { getRencanaDetails } from "~/utils/rencanaDetails";
 import {
-  SOA_LIST,
-  getAktifitasOptions,
-  getJenisAplikasiOptions,
+  DEFAULT_SOA_ITEMS,
+  DEFAULT_AKTIFITAS_ITEMS,
+  DEFAULT_JENIS_APLIKASI_ITEMS,
+  parseSoaText,
+  parseAktifitasText,
+  parseJenisAplikasiText,
 } from "~/utils/soa";
 import {
   compressImage,
@@ -1527,6 +1531,61 @@ const pipelineSteps = ["Leads", "Prospect", "Hot Prospect", "SBG"];
 const refSources = ref<any[]>([]);
 const historyList = ref<any[]>([]);
 
+const fetchCustomerHistory = async (targetId: string | number) => {
+  if (!targetId) return;
+  try {
+    const { data } = await useApi<any[]>(`/customer/${targetId}/inquiries`);
+    if (data && Array.isArray(data) && data.length > 0) {
+      historyList.value = data.map((m: any) => {
+        const details = getRencanaDetails(m);
+        let noteText = m.ket_aktivitas || details.keterangan_aktivitas || m.ket_rencana || "-";
+        if (!noteText || noteText.trim() === "") {
+          noteText = "-";
+        }
+
+        let dateStr = "-";
+        if (m.tgl_rencana) {
+          try {
+            const d = new Date(m.tgl_rencana);
+            if (!isNaN(d.getTime())) {
+              dateStr = d.toLocaleDateString("id-ID", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+            } else {
+              dateStr = m.tgl_rencana;
+            }
+          } catch {
+            dateStr = m.tgl_rencana;
+          }
+        }
+
+        const sourceObj = refSources.value.find(
+          (s: any) => s.kd_ref_cust === m.id_sumbercust,
+        );
+        const sourceName =
+          sourceObj?.nm_ref_cust ||
+          m.id_sumbercust ||
+          customerInfo.source ||
+          "Walk In";
+
+        return {
+          tgl: dateStr,
+          status: m.nama_hslaktiv || "Leads",
+          keterangan: noteText,
+          source: parseSoaText(sourceName),
+          aktivitas: parseAktifitasText(m.aktivitas || details.aktifitas),
+        };
+      });
+    }
+  } catch (e) {
+    console.error("Failed to fetch customer history:", e);
+  }
+};
+
 // Wizard Tab & Status Control
 const activeTab = ref<string>("Leads");
 const dbStatus = ref<string>("Leads");
@@ -1554,18 +1613,39 @@ const customerInfo = reactive({
   jenisAplikasi: "",
 });
 
-const soaList = SOA_LIST;
+const dynamicSoaList = ref<any[]>(DEFAULT_SOA_ITEMS);
+const dynamicAktifitasList = ref<any[]>(DEFAULT_AKTIFITAS_ITEMS);
+const dynamicJenisList = ref<any[]>(DEFAULT_JENIS_APLIKASI_ITEMS);
 
-const availableCustomerAktifitasOptions = computed(() =>
-  getAktifitasOptions(customerInfo.soa),
-);
-const availableCustomerJenisAplikasiOptions = computed(() =>
-  getJenisAplikasiOptions(customerInfo.soa),
-);
+const soaList = computed(() => dynamicSoaList.value);
+const availableCustomerAktifitasOptions = computed(() => dynamicAktifitasList.value);
+const availableCustomerJenisAplikasiOptions = computed(() => dynamicJenisList.value);
+
+const fetchDynamicSoaOptions = async () => {
+  try {
+    const { data } = await useApi<any>("/master/soa-options");
+    if (data) {
+      if (Array.isArray(data.soa) && data.soa.length > 0) {
+        dynamicSoaList.value = data.soa;
+      }
+      if (Array.isArray(data.aktifitas) && data.aktifitas.length > 0) {
+        dynamicAktifitasList.value = data.aktifitas.map((a: any) => ({
+          id: a.id,
+          code: a.kd_ref_cust || a.code,
+          name: a.nm_ref_cust || a.name,
+        }));
+      }
+      if (Array.isArray(data.jenis_aplikasi) && data.jenis_aplikasi.length > 0) {
+        dynamicJenisList.value = data.jenis_aplikasi;
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load dynamic SOA options:", e);
+  }
+};
 
 const onCustomerSoaChange = () => {
-  customerInfo.aktifitas = "";
-  customerInfo.jenisAplikasi = "";
+  // Retain selection
 };
 
 const barangInfo = reactive({
@@ -1819,6 +1899,10 @@ const removeBarangFoto = () => {
 onMounted(() => {
   fetchProductOfferings();
   fetchEmasDb();
+  fetchDynamicSoaOptions();
+  if (route.query.id) {
+    fetchCustomerHistory(route.query.id as string);
+  }
 });
 
 const form = reactive({
@@ -2002,30 +2086,36 @@ watch(
       }
 
       // Build history entries matching customer
-      const matches = rawList.filter(
-        (i: any) =>
-          (i.id_customer &&
-            found.id_customer &&
-            String(i.id_customer) === String(found.id_customer)) ||
-          (i.nama &&
-            found.nama &&
-            i.nama.toLowerCase() === found.nama.toLowerCase()),
-      );
+      const targetHistoryId = found.id_customer || found.id_rencana || id;
+      if (targetHistoryId) {
+        fetchCustomerHistory(targetHistoryId);
+      } else {
+        const matches = rawList.filter(
+          (i: any) =>
+            (i.id_customer &&
+              found.id_customer &&
+              String(i.id_customer) === String(found.id_customer)) ||
+            (i.nama &&
+              found.nama &&
+              i.nama.toLowerCase() === found.nama.toLowerCase()),
+        );
 
-      historyList.value = matches.map((m: any) => ({
-        tgl:
-          m.tgl_aktivitas ||
-          m.tgl_rencana ||
-          m.tgl ||
-          new Date().toISOString().split("T")[0],
-        status: m.nama_hslaktiv || m.status || "Leads",
-        keterangan: m.ket_aktivitas || m.ket_rencana || m.keterangan || "-",
-        source:
-          sources.find((s: any) => s.kd_ref_cust === m.id_sumbercust)
-            ?.nm_ref_cust ||
-          m.nm_ref_cust ||
-          "Walk In",
-      }));
+        historyList.value = matches.map((m: any) => ({
+          tgl:
+            m.tgl_aktivitas ||
+            m.tgl_rencana ||
+            m.tgl ||
+            new Date().toISOString().split("T")[0],
+          status: m.nama_hslaktiv || m.status || "Leads",
+          keterangan: m.ket_aktivitas || m.ket_rencana || m.keterangan || "-",
+          source:
+            sources.find((s: any) => s.kd_ref_cust === m.id_sumbercust)
+              ?.nm_ref_cust ||
+            m.nm_ref_cust ||
+            "Walk In",
+          aktivitas: m.aktivitas || "-",
+        }));
+      }
 
       // Init SBG defaults
       sbgData.noSbg = `SBG-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, "0")}-${Math.floor(100 + Math.random() * 900)}`;
@@ -2114,9 +2204,7 @@ const submitWithStatus = (
   form.newStatus = saveStatus;
   const hslAktivVal = statusMap[saveStatus] || 1;
 
-  let noteText = form.note
-    ? `[${saveStatus}] ${form.note}`
-    : `Update progress status: ${saveStatus}`;
+  let noteText = form.note || "";
   if (saveStatus === "Hot Prospect") {
     const prodObj = productOfferings.value.find(
       (p) => p.kd_produk === selectedProdukCode.value,
@@ -2203,6 +2291,18 @@ const submitWithStatus = (
         }
       } else if (barangFotoBase64.value && customerInfo.id_customer) {
         setFotoBarang(customerInfo.id_customer, barangFotoBase64.value);
+      }
+
+      // Refresh customer history so timeline updates immediately without page reload
+      const historyTarget =
+        customerInfo.id_customer ||
+        res?.id_customer ||
+        res?.id_rencana ||
+        currentIdRencana.value ||
+        idRencana.value ||
+        (route.query.id as string);
+      if (historyTarget) {
+        fetchCustomerHistory(historyTarget);
       }
 
       if (redirectToInquiry) {

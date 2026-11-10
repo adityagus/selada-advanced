@@ -7,15 +7,15 @@
         <p class="text-slate-500 text-sm">Monitoring realisasi aktivitas inquiry & rencana sales, tingkat konversi, dan rekapitulasi per periode.</p>
       </div>
       <div class="flex items-center gap-3">
-        <button @click="printReport" class="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-4 py-2.5 rounded-xl text-sm transition-all border border-slate-300 cursor-pointer">
-          <AppIcon name="printer" class="w-4 h-4 text-slate-600" />
-          Cetak Laporan
+        <button @click="exportExcel" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition-all shadow-xs cursor-pointer">
+          <AppIcon name="download" class="w-4 h-4 text-white" />
+          Export Excel
         </button>
       </div>
     </div>
 
     <!-- Summary Performance Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-3 gap-4">
       <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Booking Periodik</span>
         <div class="text-2xl font-bold text-slate-800 mt-1">{{ summaryMetrics.totalBookings }}</div>
@@ -26,10 +26,10 @@
         <div class="text-2xl font-bold text-emerald-600 mt-1">{{ summaryMetrics.totalSbg }}</div>
       </div>
 
-      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+      <!-- <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Conversion Rate</span>
         <div class="text-2xl font-bold text-amber-600 mt-1">{{ summaryMetrics.conversionRate }}%</div>
-      </div>
+      </div> -->
 
       <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs">
         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Estimasi UP Terkumpul</span>
@@ -72,7 +72,7 @@
           </select>
         </div>
 
-        <div class="w-full sm:w-48">
+        <!-- <div class="w-full sm:w-48">
           <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Status Lead</label>
           <select v-model="inputStatus" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-800">
             <option value="all">Semua Status</option>
@@ -82,7 +82,7 @@
             <option value="SBG">SBG (Deal)</option>
             <option value="Batal">Batal</option>
           </select>
-        </div>
+        </div> -->
 
         <button @click="applyFilter" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl text-sm transition-all shadow-sm flex items-center gap-1.5 cursor-pointer">
           <AppIcon name="search" class="w-4 h-4" />
@@ -232,7 +232,7 @@ const years = Array.from({ length: 5 }, (_, i) => currentYear - i)
 
 const inputMonth = ref(new Date().getMonth() + 1)
 const inputYear = ref(currentYear)
-const inputStatus = ref('all')
+const inputStatus = ref('SBG')
 
 const showTable = ref(true)
 const allBookings = ref<any[]>([])
@@ -295,10 +295,86 @@ const showDetail = (item: any) => {
   selectedItem.value = item
 }
 
-const printReport = () => {
-  if (typeof window !== 'undefined') {
-    window.print()
+const exportExcel = () => {
+  if (!filteredBookings.value.length) {
+    alert('Tidak ada data untuk diexport pada periode ini.')
+    return
   }
+
+  const monthName = months[inputMonth.value - 1] || `Bulan_${inputMonth.value}`
+  const fileName = `Laporan_Sales_${monthName}_${inputYear.value}.xls`
+
+  let tableHtml = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+      <meta charset="utf-8">
+      <!--[if gte mso 9]>
+      <xml>
+        <x:ExcelWorkbook>
+          <x:ExcelWorksheets>
+            <x:ExcelWorksheet>
+              <x:Name>Laporan Sales</x:Name>
+              <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+            </x:ExcelWorksheet>
+          </x:ExcelWorksheets>
+        </x:ExcelWorkbook>
+      </xml>
+      <![endif]-->
+      <style>
+        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 12px; }
+        th { background-color: #d97706; color: #ffffff; font-weight: bold; text-align: center; border: 1px solid #b45309; padding: 8px; }
+        td { border: 1px solid #d1d5db; padding: 6px; }
+        .text-center { text-align: center; }
+        .title { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+        .subtitle { font-size: 12px; color: #4b5563; margin-bottom: 15px; }
+      </style>
+    </head>
+    <body>
+      <div class="title">LAPORAN PERFORMANCE SALES - SELADA CRM</div>
+      <div class="subtitle">Periode: ${monthName} ${inputYear.value} | Total Leads/Booking: ${filteredBookings.value.length}</div>
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama Customer</th>
+            <th>Tanggal Rencana / Booking</th>
+            <th>Sumber Leads</th>
+            <th>Status Akhir</th>
+            <th>Keterangan</th>
+          </tr>
+        </thead>
+        <tbody>
+  `
+
+  filteredBookings.value.forEach((row, idx) => {
+    tableHtml += `
+      <tr>
+        <td class="text-center">${idx + 1}</td>
+        <td>${row.nama || '-'}</td>
+        <td class="text-center">${formatDate(row.tgl_rencana)}</td>
+        <td>${row.source || 'Walk In'}</td>
+        <td class="text-center"><b>${row.status || '-'}</b></td>
+        <td>${row.keterangan || '-'}</td>
+      </tr>
+    `
+  })
+
+  tableHtml += `
+        </tbody>
+      </table>
+    </body>
+    </html>
+  `
+
+  const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 const getSourceCount = (src: string) => {

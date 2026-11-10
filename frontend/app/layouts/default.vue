@@ -97,9 +97,9 @@ onMounted(async () => {
     }
   }
 
-  // If user_branch_name is missing or currently just a numeric ID (e.g. "001"), fetch the branch name from API
+  // If user_branch_name is missing, numeric, or holds previous stale 'TIBAN', fetch the actual branch name from API
   const currentBranchName = (userBranchName.value || '').trim()
-  if (!currentBranchName || /^\d+$/.test(currentBranchName)) {
+  if (!currentBranchName || /^\d+$/.test(currentBranchName) || currentBranchName.toUpperCase() === 'TIBAN') {
     try {
       const res = await useApi<any>('/branch/current')
       if (res && res.branch_name) {

@@ -113,24 +113,26 @@ func (r *repository) GetActiveSales(ctx context.Context) ([]SalesUser, error) {
 	// 2. Fetch omzet map for the current month
 	omzetMap := r.fetchMonthlyOmzetMap(ctx)
 
-	// 3. Fetch active users in POS
+	// 3. Fetch active users in POS with jabatan trainee, junior, senior (6, 17, 29) only
 	var posRows []SalesUser
 	query := r.dbPOS.WithContext(ctx).Table("tbl_user u").
 		Select("u.username, u.nama, u.id_jabatan, COALESCE(j.nm_jabatan, 'Sales') AS nm_jabatan").
 		Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
-		Where("u.void = ?", 1).
-		Where("u.id_jabatan IN (6, 17, 29, 74) OR LOWER(j.nm_jabatan) LIKE '%sales%' OR LOWER(j.nm_jabatan) LIKE '%trainee%' OR LOWER(j.nm_jabatan) LIKE '%junior%' OR LOWER(j.nm_jabatan) LIKE '%senior%'")
+		Where("u.id_jabatan IN (6, 17, 29)")
 
 	_ = query.Scan(&posRows).Error
 
 	var salesList []SalesUser
+	seenUsers := make(map[string]bool)
 	for _, s := range posRows {
 		uLower := strings.ToLower(strings.TrimSpace(s.Username))
 		nLower := strings.ToLower(strings.TrimSpace(s.Nama))
 
-		if len(activeSopigaUserMap) > 0 && !activeSopigaUserMap[uLower] {
+		if uLower == "" || seenUsers[uLower] {
 			continue
 		}
+		seenUsers[uLower] = true
+
 		s.FKUser = s.Username
 
 		if val, exists := omzetMap[uLower]; exists {

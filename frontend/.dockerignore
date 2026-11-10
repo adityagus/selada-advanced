@@ -8,3 +8,5 @@ dist
 *.log
 .git
 .vscode
+.env
+.env.*

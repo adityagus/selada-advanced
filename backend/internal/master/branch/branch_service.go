@@ -37,11 +37,11 @@ func (s *service) GetBranches(ctx context.Context) ([]BranchResponse, error) {
 func (s *service) ResolveCurrentBranch(ctx context.Context, branchCode, username, cachedBranchName string) CurrentBranchResponse {
 	finalName := cachedBranchName
 
-	if finalName == "" {
+	if finalName == "" || finalName == "TIBAN" {
 		name, err := s.repo.FindNameByCodeOrUser(ctx, branchCode, username)
 		if err == nil && name != "" {
 			finalName = name
-		} else {
+		} else if finalName == "" {
 			finalName = branchCode
 		}
 	}

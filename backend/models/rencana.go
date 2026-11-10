@@ -8,6 +8,8 @@ type Rencana struct {
 	IDCustomer   int    `gorm:"column:id_customer"`
 	IDLogin      string `gorm:"column:id_login"`
 	IDSumbercust string `gorm:"column:id_sumbercust"`
+	IDAktivitas  string `gorm:"column:id_aktivitas"`
+	IDJenis      string `gorm:"column:id_jenis"`
 }
 
 // TableName overrides the default table name for Rencana

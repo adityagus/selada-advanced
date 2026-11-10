@@ -41,6 +41,8 @@ type CustomerInquiryHistory struct {
 	KetAktivitas string `json:"ket_aktivitas" gorm:"column:ket_aktivitas"`
 	IDSumbercust string `json:"id_sumbercust" gorm:"column:id_sumbercust"`
 	NoSbg        string `json:"no_sbg" gorm:"column:no_sbg"`
+	Aktivitas    string `json:"aktivitas" gorm:"column:aktivitas"`
+	Jenis        string `json:"jenis" gorm:"column:jenis"`
 }
 
 // GetCustomerListHandler fetches Customer & CIF records from database
@@ -201,12 +203,15 @@ func GetCustomerInquiriesHandler(c *gin.Context) {
 			COALESCE(rd.ket_rencana, '') as ket_rencana,
 			COALESCE(rd.ket_aktivitas, '') as ket_aktivitas,
 			COALESCE(r.id_sumbercust, '') as id_sumbercust,
-			COALESCE(rd.no_do, '') as no_sbg
+			COALESCE(rd.no_do, '') as no_sbg,
+			COALESCE(NULLIF(r.id_aktivitas, ''), c.aktivitas, '') as aktivitas,
+			COALESCE(NULLIF(r.id_jenis, ''), c.jenis, '') as jenis
 		`).
 		Joins("JOIN tb_rencana_det rd ON rd.id_rencana = r.id_rencana").
+		Joins("LEFT JOIN tb_customer c ON c.id_customer = r.id_customer").
 		Joins("LEFT JOIN tb_hslaktivitas ha ON ha.id_hslaktiv = rd.id_hslaktiv").
-		Where("r.id_customer = ?", idCust).
-		Order("rd.id_rencana_det DESC").
+		Where("r.id_customer = ? OR r.id_rencana = ?", idCust, idCust).
+		Order("rd.id_rencana_det ASC").
 		Scan(&history).Error
 
 	if err != nil {

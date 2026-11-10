@@ -52,7 +52,16 @@ func InquiryCountsHandler(c *gin.Context) {
 
 	// log.Printf("isi query", query)
 	uLower := strings.ToLower(targetUser)
-	if uLower != "all" && uLower != "*" && uLower != "admin" && uLower != "superadmin" && uLower != "administrator" {
+	isSuper := uLower == "all" || uLower == "*" || uLower == "admin" || uLower == "superadmin" || uLower == "administrator"
+	if !isSuper {
+		if nmJabatanVal, ok := c.Get("nm_jabatan"); ok {
+			jStr := strings.ToUpper(fmt.Sprintf("%v", nmJabatanVal))
+			if strings.Contains(jStr, "IT SPV") || strings.Contains(jStr, "SPV") || strings.Contains(jStr, "SUPERVISOR") || strings.Contains(jStr, "ADMIN") {
+				isSuper = true
+			}
+		}
+	}
+	if !isSuper {
 		query = query.Where("a.id_login = ? OR a.id_login IS NULL OR a.id_login = ''", targetUser)
 	}
 
@@ -117,6 +126,8 @@ type InquiryItem struct {
 	KetRencana   string `json:"ket_rencana" gorm:"column:ket_rencana"`
 	IDRencanaDet int    `json:"id_rencana_det" gorm:"column:id_rencana_det"`
 	KetAktivitas string `json:"ket_aktivitas" gorm:"column:ket_aktivitas"`
+	Aktivitas    string `json:"aktivitas" gorm:"column:aktivitas"`
+	Jenis        string `json:"jenis" gorm:"column:jenis"`
 	IDSumbercust string `json:"id_sumbercust" gorm:"column:id_sumbercust"`
 	UrlImg       string `json:"url_img" gorm:"column:url_img"`
 	NameImg      string `json:"name_img" gorm:"column:name_img"`
@@ -138,6 +149,8 @@ func InquiryListHandler(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database Selada tidak terhubung"})
 		return
 	}
+
+	searchParam := c.Query("search")
 
 	userId, exists := c.Get("username")
 	if !exists {
@@ -164,16 +177,30 @@ func InquiryListHandler(c *gin.Context) {
 		targetUser = userParam
 	}
 
+	_ = config.DBSelada.Exec("ALTER TABLE tb_rencana ADD COLUMN IF NOT EXISTS id_aktivitas VARCHAR(255) NOT NULL DEFAULT '', ADD COLUMN IF NOT EXISTS id_jenis VARCHAR(255) NOT NULL DEFAULT ''").Error
+
 	baseQuery := config.DBSelada.Table("tb_rencana a").
 		Joins("JOIN tb_customer b ON b.id_customer = a.id_customer").
 		Joins("JOIN tb_rencana_det rd ON rd.id_rencana = a.id_rencana").
 		Joins("JOIN (SELECT id_rencana, MAX(id_rencana_det) as max_id FROM tb_rencana_det GROUP BY id_rencana) latest ON rd.id_rencana_det = latest.max_id").
 		Joins("LEFT JOIN tb_hslaktivitas ha ON ha.id_hslaktiv = rd.id_hslaktiv").
-		Joins("LEFT JOIN tb_img img ON img.detren_img = rd.id_rencana_det").
-		Where("rd.id_hslaktiv NOT IN ?", []int{6})
+		Joins("LEFT JOIN tb_img img ON img.detren_img = rd.id_rencana_det")
+
+	if searchParam == "" {
+		baseQuery = baseQuery.Where("rd.id_hslaktiv NOT IN ?", []int{6})
+	}
 
 	uLower := strings.ToLower(targetUser)
-	if uLower != "all" && uLower != "*" && uLower != "admin" && uLower != "superadmin" && uLower != "administrator" {
+	isSuper := uLower == "all" || uLower == "*" || uLower == "admin" || uLower == "superadmin" || uLower == "administrator"
+	if !isSuper {
+		if nmJabatanVal, ok := c.Get("nm_jabatan"); ok {
+			jStr := strings.ToUpper(fmt.Sprintf("%v", nmJabatanVal))
+			if strings.Contains(jStr, "IT SPV") || strings.Contains(jStr, "SPV") || strings.Contains(jStr, "SUPERVISOR") || strings.Contains(jStr, "ADMIN") {
+				isSuper = true
+			}
+		}
+	}
+	if !isSuper {
 		baseQuery = baseQuery.Where("a.id_login = ? OR a.id_login IS NULL OR a.id_login = ''", targetUser)
 	}
 
@@ -216,14 +243,15 @@ func InquiryListHandler(c *gin.Context) {
 	}
 
 	err := baseQuery.
-		Select("a.id_rencana, a.id_customer, b.nama, b.hp, b.alamat, b.rt, b.rw, b.kelurahan, b.kecamatan, b.kota, rd.tgl_rencana, ha.nama_hslaktiv, rd.id_hslaktiv, rd.ket_rencana, rd.id_rencana_det, rd.ket_aktivitas, a.id_sumbercust, b.nama as nama_cust, COALESCE(img.url_img, '') as url_img, COALESCE(img.name_img, '') as name_img").
+		Select("a.id_rencana, a.id_customer, b.nama, b.hp, b.alamat, b.rt, b.rw, b.kelurahan, b.kecamatan, b.kota, rd.tgl_rencana, ha.nama_hslaktiv, rd.id_hslaktiv, rd.ket_rencana, rd.id_rencana_det, rd.ket_aktivitas, a.id_sumbercust, b.nama as nama_cust, COALESCE(img.url_img, '') as url_img, COALESCE(img.name_img, '') as name_img, COALESCE(b.aktivitas, '') as aktivitas, COALESCE(b.jenis, '') as jenis").
 		Order("rd.id_rencana_det DESC").
 		Offset(req.Start).
 		Limit(req.Length).
 		Scan(&items).Error
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil list inquiry"})
+		log.Printf("Gagal mengambil list inquiry: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal mengambil list inquiry: " + err.Error()})
 		return
 	}
 
@@ -391,6 +419,7 @@ func InputRencanaHandler(c *gin.Context) {
 			}
 		}
 
+		fmt.Println("isi nya apa", req)
 		newCust := models.Customer{
 			Nama:      strings.TrimSpace(req.Nama),
 			Hp:        telp,
@@ -472,10 +501,19 @@ func InputRencanaHandler(c *gin.Context) {
 		}
 	}
 
+	_ = tx.Exec("ALTER TABLE tb_rencana ADD COLUMN IF NOT EXISTS id_aktivitas varchar(50), ADD COLUMN IF NOT EXISTS id_jenis varchar(50);").Error
+
+	soaValue := req.SOA
+	if soaValue == "" {
+		soaValue = req.SumberCust
+	}
+
 	if targetIDRencana == 0 {
 		newRencana := models.Rencana{
 			IDCustomer:   idCustomer,
-			IDSumbercust: req.SumberCust,
+			IDSumbercust: soaValue,
+			IDAktivitas:  strings.TrimSpace(req.Aktifitas),
+			IDJenis:      strings.TrimSpace(req.JenisAplikasi),
 			IDLogin:      userId.(string),
 		}
 		if err := tx.Create(&newRencana).Error; err != nil {
@@ -484,6 +522,20 @@ func InputRencanaHandler(c *gin.Context) {
 			return
 		}
 		targetIDRencana = newRencana.IDRencana
+	} else {
+		rencanaUpdates := map[string]interface{}{}
+		if soaValue != "" {
+			rencanaUpdates["id_sumbercust"] = soaValue
+		}
+		if req.Aktifitas != "" {
+			rencanaUpdates["id_aktivitas"] = strings.TrimSpace(req.Aktifitas)
+		}
+		if req.JenisAplikasi != "" {
+			rencanaUpdates["id_jenis"] = strings.TrimSpace(req.JenisAplikasi)
+		}
+		if len(rencanaUpdates) > 0 {
+			_ = tx.Model(&models.Rencana{}).Where("id_rencana = ?", targetIDRencana).Updates(rencanaUpdates).Error
+		}
 	}
 
 	// Item descriptions are stored separately from activity notes and SOA.
@@ -506,31 +558,58 @@ func InputRencanaHandler(c *gin.Context) {
 		}
 		barangDescription = prevKet
 	}
-	if req.SOA != "" {
-		if err := tx.Model(&models.Rencana{}).Where("id_rencana = ?", targetIDRencana).Update("id_sumbercust", req.SOA).Error; err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan SOA"})
-			return
+
+	var latestDet models.RencanaDet
+	hasLatestDet := false
+	if targetIDRencana > 0 {
+		err := tx.Table("tb_rencana_det").
+			Where("id_rencana = ?", targetIDRencana).
+			Order("id_rencana_det DESC").
+			First(&latestDet).Error
+		if err == nil {
+			hasLatestDet = true
 		}
 	}
 
-	finalKet := req.Ket
-	var metaParts []string
-	if req.SOA != "" {
-		metaParts = append(metaParts, "SOA: "+req.SOA)
+	trimmedKet := strings.TrimSpace(req.Ket)
+
+	// Item 3: "kalo dia masih leads dan tidak ada perubahan jangan masukin ke riwayat aktivitas nya"
+	isUnchangedLeads := hasLatestDet &&
+		latestDet.IDHslaktiv == 1 &&
+		hslAktiv == 1 &&
+		(trimmedKet == "" || trimmedKet == latestDet.KetAktivitas) &&
+		(barangDescription == "" || barangDescription == latestDet.KetRencana)
+
+	if isUnchangedLeads {
+		if err := tx.Commit().Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal menyimpan transaksi"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message":      "Data Leads berhasil diperbarui",
+			"id_rencana":   targetIDRencana,
+			"id_customer":  idCustomer,
+			"ro_status":    ro,
+			"final_status": hslAktiv,
+			"skipped_det":  true,
+		})
+		return
 	}
-	if req.Aktifitas != "" {
-		metaParts = append(metaParts, "Aktifitas: "+req.Aktifitas)
-	}
-	if req.JenisAplikasi != "" {
-		metaParts = append(metaParts, "Jenis: "+req.JenisAplikasi)
-	}
-	if len(metaParts) > 0 {
-		metaHeader := "[" + strings.Join(metaParts, " | ") + "]"
-		if finalKet != "" && !strings.Contains(finalKet, metaHeader) {
-			finalKet = metaHeader + " " + finalKet
-		} else if finalKet == "" {
-			finalKet = metaHeader
+
+	// Item 4: "berikan keterangan apa yang perubahan di leads, prospect, maupun hot prospect"
+	activityNote := trimmedKet
+	if activityNote == "" {
+		switch hslAktiv {
+		case 1:
+			activityNote = "Pendaftaran data Leads baru"
+		case 2:
+			activityNote = "Update progress ke Prospect (Prospek penawaran gadai)"
+		case 3:
+			activityNote = "Update progress ke Hot Prospect (Negosiasi taksiran & produk)"
+		case 7:
+			activityNote = "Realisasi transaksi SBG"
+		default:
+			activityNote = "Follow up aktivitas customer"
 		}
 	}
 
@@ -540,7 +619,7 @@ func InputRencanaHandler(c *gin.Context) {
 		IDHslaktiv:   hslAktiv,
 		Status:       1,
 		KetRencana:   barangDescription,
-		KetAktivitas: finalKet,
+		KetAktivitas: activityNote,
 	}
 
 	if req.Cust == "Lama" {
@@ -1011,25 +1090,24 @@ func fetchActiveSalesList() []SalesInfo {
 	// 2. Fetch omzet map for the current month
 	omzetMap := fetchSalesMonthlyOmzetMap()
 
-	// 3. Fetch active users in POS (sam_pos.tbl_user) where void = 0 and sales position
+	// 3. Fetch sales users in POS (sam_pos.tbl_user) strictly for trainee (6), junior (17), senior (29)
 	var posRows []SalesInfo
 	query := config.DBMysqlPos.Table("tbl_user u").
 		Select("u.username, u.nama, u.id_jabatan, COALESCE(j.nm_jabatan, 'Sales') AS nm_jabatan").
 		Joins("LEFT JOIN mst_jabatan j ON j.id_jabatan = u.id_jabatan").
-		Where("u.void = ?", 1)
-
-	// Filter for sales positions in POS (IDs 6, 17, 29, 74 or nm_jabatan matching sales keywords)
-	query = query.Where("u.id_jabatan IN (6, 17, 29, 74) OR LOWER(j.nm_jabatan) LIKE '%sales%' OR LOWER(j.nm_jabatan) LIKE '%trainee%' OR LOWER(j.nm_jabatan) LIKE '%junior%' OR LOWER(j.nm_jabatan) LIKE '%senior%'")
+		Where("u.id_jabatan IN (6, 17, 29)")
 
 	_ = query.Scan(&posRows).Error
 
+	seenUsers := make(map[string]bool)
 	for _, r := range posRows {
 		uLower := strings.ToLower(strings.TrimSpace(r.Username))
 		nLower := strings.ToLower(strings.TrimSpace(r.Nama))
-		// If Sopiga Pro DB is connected and active map has entries, ensure user is active in Sopiga Pro
-		if len(activeSopigaUserMap) > 0 && !activeSopigaUserMap[uLower] {
+		if uLower == "" || seenUsers[uLower] {
 			continue
 		}
+		seenUsers[uLower] = true
+
 		r.FkUser = r.Username
 
 		// Attach omzet
@@ -1042,7 +1120,7 @@ func fetchActiveSalesList() []SalesInfo {
 		salesList = append(salesList, r)
 	}
 
-	// 4. Sort sales list by highest omzet first (descending), then alphabetically by nama
+	// 4. Sort sales list strictly by highest omzet first (descending), then alphabetically by nama
 	sort.SliceStable(salesList, func(i, j int) bool {
 		if salesList[i].TotalOmzet != salesList[j].TotalOmzet {
 			return salesList[i].TotalOmzet > salesList[j].TotalOmzet

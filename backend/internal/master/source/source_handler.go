@@ -36,8 +36,32 @@ func (h *Handler) GetSumberSource(c *gin.Context) {
 	c.JSON(http.StatusOK, res)
 }
 
+// GetApplicationTypes handles GET /api/master/application_types
+func (h *Handler) GetApplicationTypes(c *gin.Context) {
+	ctx := c.Request.Context()
+	res, err := h.service.GetApplicationTypes(ctx)
+	if err != nil {
+		c.JSON(http.StatusOK, []ApplicationTypeResponse{})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+// GetSoaOptions handles GET /api/master/soa-options
+func (h *Handler) GetSoaOptions(c *gin.Context) {
+	ctx := c.Request.Context()
+	res, err := h.service.GetSoaOptions(ctx)
+	if err != nil {
+		c.JSON(http.StatusOK, SoaOptionsResponse{})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
 // RegisterRoutes registers endpoints for source domain
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.GET("/sumbercust", h.GetSumberCust)
 	rg.GET("/master/sumber_source", h.GetSumberSource)
+	rg.GET("/master/application_types", h.GetApplicationTypes)
+	rg.GET("/master/soa-options", h.GetSoaOptions)
 }

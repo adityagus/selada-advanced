@@ -23,7 +23,7 @@ type MasterModule struct {
 // InitMasterModule constructs all master dependencies via Dependency Injection
 func InitMasterModule(dbPG *gorm.DB, dbSelada *gorm.DB, dbMysqlPos *gorm.DB) *MasterModule {
 	// Branch Domain Wiring
-	branchRepo := branch.NewRepository(dbPG)
+	branchRepo := branch.NewRepository(dbPG, dbMysqlPos)
 	branchService := branch.NewService(branchRepo)
 	branchHandler := branch.NewHandler(branchService)
 
